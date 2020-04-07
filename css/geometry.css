@@ -1,8 +1,10 @@
 @media print {
-   
     .pagebreak {
 	page-break-after: always;
     } 
+    .page {
+	width: 500px;
+    }
 
 }
 
@@ -15,10 +17,24 @@
     stroke-width : 1.75px;
     stroke-linejoin : round;
     stroke-linecap  : round;    
-    font-family : "CMU Serif";
+    font-family : sans-serif; 
     font-style : italic;
     font-size : 16px;
     page-break-after: always;
+}
+
+/* chart */
+.chart .line {
+    stroke-width: 1.5;
+}
+
+.red .points {
+    fill:#700;
+    stroke:white;
+}
+
+.red .line {
+    stroke:#700;
 }
 
 /* plot */
@@ -167,8 +183,7 @@
 .label {
     fill : black;
     font-size: 100%;
-    font-family: 'CMU Serif';
-    font-style : italic;
+    font-family: serif;
 }
 
 /* diffListPlot */

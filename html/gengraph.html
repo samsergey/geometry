@@ -16,12 +16,16 @@
   </head>
   <body>
     <script>
-      var A = new Point([0,0],'A')
-      var B = new Point([5,6],'B')
-      var C = new Point([-5,3],'C').labelOffset([1,1])
+      var A = new Point([5,6],'A')
+      var B = new Point([15,8],'B')
+      var C = new Point([10,15],'C')
+      var t = new Polygon([A,B,C])
       var a = new Segment(A,B,'a')
-      var r = new Ray(A,C,'r')
-      new Chart('fig1').put([A,B,C,a,r])
+      var r1 = CoordRay(new Point([-18,1]),20,{labelPosition:[0,1]})
+      var r2 = CoordRay(new Point([-18,0]),20,{labelPosition:[0,-1]})
+      var p = new Chart('fig1').put(r2).put(r1).put([A,B,a,t])
+
+      
     </script>
   </body>
 </html>	

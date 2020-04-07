@@ -1,0 +1,240 @@
+.graphics {
+    stroke-width : 1.5;
+    stroke-linejoin : round;
+    stroke-linecap  : round;    
+    font-family : sans-serif;
+    font-style : italic;
+    font-size : 11px;
+}
+
+/* listPlot */
+
+
+.listPlot .area {
+    fill : url(#h1);
+}
+
+.listPlot .line {
+    stroke : navy;
+}
+
+.points {
+    stroke : white;
+    stroke-width : 1;
+    stroke-opacity : 0.5;
+    fill : navy;
+}
+
+.needles {
+    stroke : darkorange;
+    stroke-width : 1.5;
+    stroke-opacity : 1;
+}
+
+.listPlot .A .line {
+    stroke : navy;
+}
+
+.listPlot .A .area {
+    fill : url(#h1);
+}
+
+.listPlot .B .line {
+    stroke : brown;
+}
+
+.listPlot .B .area {
+    fill : url(#h2);
+}
+
+.listPlot .A .points {
+    stroke : white;
+    stroke-width : 1;
+    fill : navy;
+}
+
+.listPlot .B .points {
+    stroke : white;
+    stroke-width : 1;
+    fill : brown;
+}
+
+/* plot */
+
+
+.plot .area {
+    fill : url(#h1);
+}
+
+.plot .line {
+    stroke : navy;
+}
+
+.plot .points {
+    stroke : white;
+    stroke-width : 1;
+    stroke-opacity : 0.5;
+    fill : navy;
+}
+
+.A .line {
+    stroke : navy;
+    stroke-opacity : 0.75;
+}
+
+.A .area {
+    fill : url(#h2);
+}
+
+.B .line {
+    stroke : brown;
+    stroke-opacity : 1;
+}
+
+.B .area {
+    fill : url(#h2);
+}
+
+.D .line {
+    stroke : darkorange;
+    stroke-opacity : 1;
+}
+
+.D .area {
+    fill : url(#h2);
+}
+
+.C .line {
+    stroke : darkgreen;
+    stroke-opacity : 0.75;
+}
+
+.C .area {
+    fill : url(#h2);
+}
+
+.refference {
+    stroke:black;
+}
+
+/* Axes */
+
+.axis {
+    stroke-width : 1.25;
+    font-family : sans-serif;
+    font-style : italic;
+    font-size : 80%;
+}
+
+.axis .tick {
+    stroke-width : 1.25;
+    font-family : sans-serif;
+    font-style : italic;
+    font-size : 100%;
+}
+
+.axis .label {
+    fill : black;
+}
+
+/* labels */
+
+.label {
+    fill : #503;
+    font-size:80%;
+    font-family: 'Arial';
+    font-style : italic;
+}
+
+/* diffListPlot */
+
+.diffListPlot .areaAbove {
+    fill : #F80
+}
+
+.diffListPlot .areaBelow {
+    fill : #08F
+}
+
+.diffListPlot1 .above line {
+    stroke : pink;
+    stroke-width:2;
+}
+
+.diffListPlot1 .below line {
+    stroke : skyblue;
+    stroke-width:2;
+}
+
+
+/* Lorentz curve */
+
+.Lorentz .upper .area {
+    fill : orange;
+}
+
+.Lorentz .upper .line {
+    stroke : indianred;
+    stroke-width : 3;
+}
+
+.Lorentz .lower .area {
+    fill : palegreen;
+}
+
+.Lorentz .lower .line {
+    stroke : black;
+}
+
+.gridLine {
+    stroke : blue;
+    stroke-opacity:0.25;
+}
+
+.gridLineLabel {
+    stroke : none;
+    fill:skyblue;
+}
+
+
+.histogram rect {
+    stroke : none;
+    fill : darkorange;
+}
+
+.histogram .stairs {
+    stroke : navy;
+}
+
+
+.QQdiagonal {
+    stroke : red;
+    stroke-width: 4px;
+    stroke-opacity: 0.5;
+}
+
+.QQdata {
+    fill : black;
+}
+
+.marks {
+    fill:red;
+    stroke:white;
+}
+
+.clip {
+    fill:white;
+    stroke:none;
+}
+
+.matrixPlot .negatives {
+    fill : navy;
+}
+
+.matrixPlot .positives {
+    fill : indianred;
+}
+
+.hatch {
+    stroke : black;
+}

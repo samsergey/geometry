@@ -16,16 +16,23 @@
   </head>
   <body>
     <script>
-      var A = new Point([5,6],'A')
-      var B = new Point([15,8],'B')
-      var C = new Point([10,15],'C')
-      var t = new Polygon([A,B,C])
-      var a = new Segment(A,B,'a')
-      var r1 = CoordRay(new Point([-18,1]),20,{labelPosition:[0,1]})
-      var r2 = CoordRay(new Point([-18,0]),20,{labelPosition:[0,-1]})
-      var p = new Chart('fig1').put(r2).put(r1).put([A,B,a,t])
-
+      var A = new Point('A').at([-5, -5])
+      var B = new Point('B').at([5, 8])
+      var a = new Segment('a').joining(A,B)
+      var l = new Line().through(A).atAngle(30)
+      var l2 = new Line().orthogonalTo(l).through(B)
+      var M = new Point().onLine(l,5)
+      new Chart('fig1').put([a,l,l2,A,B,M])
       
+/*      
+      var a = new Line().through(A).atAngle(20)
+      var b = new Line().through(B).atAngle(-30)
+      var C = new Point('C').intersection(a,b)
+      var an = new Angle().between(a,b)
+      var c = new Line().through(A)
+      
+      new Chart('fig1').put([a,b,A,B,C,an])*/
+
     </script>
   </body>
 </html>	

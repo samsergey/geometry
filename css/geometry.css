@@ -28,6 +28,11 @@
     stroke-width: 1.5;
 }
 
+.chart .angle .line {
+    stroke:black;
+    stroke-width: 1;
+}
+
 .red .points {
     fill:#700;
     stroke:white;

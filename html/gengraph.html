@@ -15,18 +15,14 @@
   </head>
   <body>
     <script>
-      var A = new Point('A').at([-5, -5])
+      var A = new Point('A').at([-5, -5]).labelPosition([-1,-1])
       var B = new Point('B').at([5, 8])    
-      var a = new Line().through(A).atAngle(20)
-      var b = new Line().through(B).atAngle(-30)
-      var C = new Point('C').intersection(a,b)
+      var C = new Point('C').azimuth(B,60,A,60)
       var an = new Angle('α').within(A,C,B)
       var bn = new Angle('β',{strokes:2}).adjacentTo(an)
       var c = new Segment().bisectrisse(an).extendToLine(line(A,B))
       var t = triangle(A,B,C)
-      var m = t.median(1)
-      
-      new Chart('fig1').put([t, t.median(1),t.median(2),t.median(3)])
+      new Chart('fig1').put([A,B,C,t])
 
       
     </script>

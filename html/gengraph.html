@@ -7,7 +7,6 @@
     <script src='../lib/functions.js'></script>
     <script src='../lib/tools.js'></script>
     <script src='../lib/matrix.js'></script>
-    <script src='../lib/statistics.js'></script>
     <script src='../lib/graphics.js'></script>
     <script src='../lib/geometry.js'></script>
     <link rel="stylesheet" href="../css/geometry.css">
@@ -17,25 +16,17 @@
   <body>
     <script>
       var A = new Point('A').at([-5, -5])
-      var B = new Point('B').at([5, 8])
-      var a = new Line('a').joining(A,B).rotateAt(A,30)
-      var b = new Line('b').through(B).parallelTo(a)//.extendTo(a)
-      var C = new Point().intersection(a,b)
-/*      
-      var l = new Line('l').through(A).atAngle(30)
-      var l2 = new Ray().orthogonalTo(l).through(B).turn(180)
-      var M = new Point().onLine(l,5)
-*/
-      new Chart('fig1').put([a,b,A,B,C])
-      
-/*      
+      var B = new Point('B').at([5, 8])    
       var a = new Line().through(A).atAngle(20)
       var b = new Line().through(B).atAngle(-30)
       var C = new Point('C').intersection(a,b)
-      var an = new Angle().between(a,b)
-      var c = new Line().through(A)
+      var an = new Angle('α').within(A,C,B)
+      var bn = new Angle('β',{strokes:2}).adjacentTo(an)
+      var c = new Segment().bisectrisse(an).extendToLine(line(A,B))
+      var t = triangle(A,B,C)
+      var m = t.median(1)
       
-      new Chart('fig1').put([a,b,A,B,C,an])*/
+      new Chart('fig1').put([t, t.median(1),t.median(2),t.median(3)])
 
       
     </script>

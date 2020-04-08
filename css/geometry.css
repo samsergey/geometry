@@ -42,6 +42,28 @@
     stroke:#700;
 }
 
+.thin .line {
+    stroke : black;
+    stroke-width : 0.5px;
+}
+
+.thick .line {
+    stroke : black;
+    stroke-width : 2.5px;
+}
+
+.dashed .line {
+    stroke : black;
+    stroke-width : 1.5;
+    stroke-dasharray : 5,5;
+}
+
+.dotted .line {
+    stroke : black;
+    stroke-width : 1;
+    stroke-dasharray : 2,3;
+}
+
 /* plot */
 
 .plot .area {
@@ -98,46 +120,6 @@
 
 .C .line {
     stroke : black;
-}
-
-.thin .area {
-    fill : none;
-}
-
-.thin .line {
-    stroke : black;
-    stroke-width : 0.1px;
-    stroke-opacity : 0.125;
-}
-
-.thinest .line {
-    stroke : black;
-    stroke-width : 0.1px;
-    stroke-opacity : 0.05;
-}
-
-.thiner .line {
-    stroke : black;
-    stroke-width : 1px;
-    stroke-opacity : 0.5;
-}
-
-.thick .line {
-    stroke : black;
-    stroke-width : 1.5px;
-}
-
-
-.dashed .line {
-    stroke : black;
-    stroke-width : 1;
-    stroke-dasharray : 5,5;
-}
-
-.dotted .line {
-    stroke : black;
-    stroke-width : 1;
-    stroke-dasharray : 2,3;
 }
 
 .marker {

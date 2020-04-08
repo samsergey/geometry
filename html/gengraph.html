@@ -18,13 +18,15 @@
     <script>
       var A = new Point('A').at([-5, -5])
       var B = new Point('B').at([5, 8])
-      var a = new Segment('a').joining(A,B)
+      var a = new Line('a').joining(A,B).rotateAt(A,30)
+      var b = new Line('b').through(B).parallelTo(a)//.extendTo(a)
+      var C = new Point().intersection(a,b)
 /*      
       var l = new Line('l').through(A).atAngle(30)
       var l2 = new Ray().orthogonalTo(l).through(B).turn(180)
       var M = new Point().onLine(l,5)
 */
-      new Chart('fig1').put([a,A,B])
+      new Chart('fig1').put([a,b,A,B,C])
       
 /*      
       var a = new Line().through(A).atAngle(20)
@@ -35,6 +37,7 @@
       
       new Chart('fig1').put([a,b,A,B,C,an])*/
 
+      
     </script>
   </body>
 </html>	

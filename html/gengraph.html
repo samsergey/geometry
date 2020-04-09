@@ -15,14 +15,20 @@
   </head>
   <body>
     <script>
-      var A = new Point('A').at([-5, -5]).labelPosition([-1,-1])
-      var B = new Point('B').at([5, 8])    
-      var C = new Point('C').azimuth(B,60,A,60)
-      var an = new Angle('α').within(A,C,B)
-      var bn = new Angle('β',{strokes:2}).adjacentTo(an)
-      var c = new Segment().bisectrisse(an).extendToLine(line(A,B))
-      var t = triangle(A,B,C)
-      new Chart('fig1').put([A,B,C,t])
+      var A = new Point('A').at([0, 0]).labelPosition([-1,-1])
+      var B = new Point('B').at([5, 0])
+//      var s = new Ray().joining(A,B)
+      var C = new Point('C').azimuth(A,91
+				     ,B,40)
+/*      var t = triangle(A,B,C)
+      var h = t.height(1).dashed()
+      var D = h.end.label('D')
+      var t1 = new Triangle().copy(t).reflectAt(line(B,C))
+      var t2 = triangle(A,D,C).reflectAt(line(A,C))
+      var t3 = triangle(A,D,B).reflectAt(line(A,B))
+      var ra = t.angle(1)
+*/      
+      new Chart('fig1').put([A,B,C])
 
       
     </script>

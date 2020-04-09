@@ -24,8 +24,9 @@
 }
 
 /* chart */
-.chart .line {
+.regular .line {
     stroke-width: 1.5;
+    stroke:black;
 }
 
 .chart .angle .line {
@@ -62,6 +63,26 @@
     stroke : black;
     stroke-width : 1;
     stroke-dasharray : 2,3;
+}
+
+.yellow .area {
+    fill: wheat;
+    stroke:black; 
+}
+
+.pink .area {
+    fill: pink;
+        stroke:black; 
+}
+
+.green .area {
+    fill: palegreen;
+        stroke:black; 
+}
+
+.blue .area {
+    fill: lightblue;
+        stroke:black; 
 }
 
 /* plot */

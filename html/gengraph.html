@@ -15,11 +15,16 @@
   </head>
   <body>
     <script>
+
       var A = new Point('A').at([-6, -2]).option('labelPosition',[-1,-1])
       var B = new Point('B').at([6, 2])
-      var l = new Line(l).joining(A,B)
+      var a = new Ray('a').joining(A,B)
       var C = new Point('C').azimuth(A,30,B,40)
-      var Cp= new Point().copy(C).reflectAt(l)
+      var Cp= new Point().copy(C).reflectAt(a)
+      var b = new Segment('b').through(Cp).heightTo(a)
+      var M = new Point('M').intersection(a,b)
+      var an = angle(C,A,B)
+      var r = new Ray().through(A).bisectrisse(an)
      /*
       var t = triangle(A,B,C)
       var h = t.height(1).dashed()
@@ -27,9 +32,8 @@
       var t1 = new Triangle().copy(t).reflectAt(line(B,C))
       var t2 = triangle(A,D,C).reflectAt(line(A,C))
       var t3 = triangle(A,D,B).reflectAt(line(A,B))
-*/
-      new Chart('fig1').put([l,A,B,C,Cp])
-
+      */
+      new Chart('fig1').put([a,b,an,r,A,B,C,M])
       
     </script>
   </body>

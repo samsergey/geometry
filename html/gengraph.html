@@ -16,10 +16,10 @@
   <body>
     <script>
 
-      var C1 = new Circle(3).at(point([5,2]))
-      var C2 = new Circle(5).at(point([2,2]))
-      pts = new Group(C1.intersectionC(C2))
-      new Chart('fig1').put(C1,C2,pts)
+      var s = new Square().withSide(4)
+      var c = new Square().withSide(4).rotate(45)
+      var pts = new Group(s.intersection(c))
+      new Chart('fig1').put(s,c,pts)
       
     </script>
   </body>

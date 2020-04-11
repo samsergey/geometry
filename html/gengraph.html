@@ -15,11 +15,13 @@
   </head>
   <body>
     <script>
-
-      var s = new Square().withSide(4)
-      var c = new Square().withSide(4).rotate(45)
-      var pts = new Group(s.intersection(c))
-      new Chart('fig1').put(s,c,pts)
+      var ch = new Chart('fig1')
+      var c = new Circle(6)
+      var A = new Point('A').onCircle(c,pi/3)
+      var r = new Ray()
+      var l = new Segment().through(A).tangentTo(c).extendToLine(r)
+      var an = new Angle('value').within(origin, l.end, A)
+      ch.put(c, l, r, A, an, origin, l.end)
       
     </script>
   </body>

@@ -23,8 +23,8 @@
       var l = new Segment().through(A).tangentTo(c).extendToLine(r)
       var C = new Point('C').at(l.end.pt)
       var an = new Angle('value').within(origin, C, A)
-      var B = new Point('B').azimuth(A, 90, C, 90)
-      ch.put(c, l, r, A, an, origin, C,B)
+      var B = new Point('B').azimuth(A, 60, C, 45)
+      ch.put(c, l, r, A, an, origin, C, B)
       
     </script>
   </body>

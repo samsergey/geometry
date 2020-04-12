@@ -13,7 +13,7 @@
 }
 
 body {
-    background : #444;
+    background : #333;
     fill:orangered;
 }
 
@@ -64,7 +64,8 @@ circle.regular {
 }
 
 .label {
-    font-family : serif; 
+    #    font-family : serif;
+    font-family : 'CMU Serif'; 
     font-style : italic;
     font-size : 20px;
     fill:white;

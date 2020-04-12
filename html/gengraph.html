@@ -9,6 +9,7 @@
     <script src='../lib/matrix.js'></script>
     <script src='../lib/graphics.js'></script>
     <script src='../lib/geometry.js'></script>
+    <script src='../lib/geomtests.js'></script>
     <link rel="stylesheet" href="../css/dark.css">
     <style>
     </style>
@@ -17,11 +18,13 @@
     <script>
       var ch = new Chart('fig1')
       var c = new Circle(6)
-      var A = new Point('A').onCircle(c,pi/3)
+      var A = new Point('A').on(c,pi/3)
       var r = new Ray()
       var l = new Segment().through(A).tangentTo(c).extendToLine(r)
-      var an = new Angle('value').within(origin, l.end, A)
-      ch.put(c, l, r, A, an, origin, l.end)
+      var C = new Point('C').at(l.end.pt)
+      var an = new Angle('value').within(origin, C, A)
+      var B = new Point('B').azimuth(A, 90, C, 90)
+      ch.put(c, l, r, A, an, origin, C,B)
       
     </script>
   </body>

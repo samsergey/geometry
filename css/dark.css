@@ -18,7 +18,7 @@ body {
 }
 
 svg {
-    border: 1px dotted gray;
+#    border: 1px dotted gray;
 }
 
 .graphics {
@@ -27,7 +27,7 @@ svg {
     stroke-linecap  : miter;    
     font-family : sans-serif; 
     font-style : italic;
-    font-size : 18px;
+    font-size : 13px;
     page-break-after: always;
 }
 
@@ -65,10 +65,10 @@ circle.regular {
 
 .label {
     #    font-family : serif;
-    font-family : 'CMU Serif'; 
+    font-family : 'CMU Serif' serif; 
     font-style : italic;
-    font-size : 20px;
-    fill:white;
+    font-size : 14px;
+    fill:wheat;
 }
 
 

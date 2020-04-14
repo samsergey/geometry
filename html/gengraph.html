@@ -28,7 +28,7 @@
       var r = new Ray()
       var l = new Segment().through(A).tangentTo(c).extendToLine(r)
       var C = l.end.copy()
-      var an = new Angle('value').within(origin, C, A).option('labelRadius',5)
+      var an = new Angle('value').within(A,C,origin).option('labelRadius',5)
       var B = new Point('B').azimuth(A, 60, C, 60)
       ch.put(c, l, r, A, an, origin, C, B)
 

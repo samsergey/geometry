@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='UTF-8'/>
+    <script src='../../lib/d3.js'></script>
+    <script src='../../lib/analysis.js'></script>
+    <script src='../../lib/functions.js'></script>
+    <script src='../../lib/tools.js'></script>
+    <script src='../../lib/matrix.js'></script>
+    <script src='../../lib/graphics.js'></script>
+    <script src='../../lib/geometry.js'></script>
+    <style>
+      body {
+	  background:#333;
+      }
+      svg {
+	  border: 1px dotted gray;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      ////////////////////////////////////////////////////////////	
+      // fig10
+      var ch10 = new Chart('fig10')
+      var g = new Group([
+	  r0 = new Ray()
+	  , new Ray().atAngle(-10)
+	  , r1 = new Ray().atAngle(30)
+	  , new Ray().atAngle(110)
+	  , new Ray().atAngle(147)
+	  , new Ray().atAngle(210)
+	  , new Ray().atAngle(270)
+      ])
+      ch10.put(g, origin.option('labelOffset',[1,-1]))
+      
+      ////////////////////////////////////////////////////////////	
+      // fig12
+      var ch12 = new Chart('fig12')
+      var p11 = new Point().on(r0,10)
+      var p12 = new Point().on(r0,20)
+      var p21 = new Point().on(r1,10)
+      var p22 = new Point().on(r1,20)
+      var ar2 = seg(p12,p22).arrow('true').dashed().color('wheat')
+      var ar1 = seg(p11,p21).arrow('true').dashed().color('wheat')
+      ch12.put(g, ar1, ar2, p11, p12, p21, p22, origin.option('labelOffset',[1,-1]))
+
+
+
+    </script>
+  </body>
+</html>	

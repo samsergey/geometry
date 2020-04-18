@@ -32,7 +32,7 @@
 	  , new Ray().atAngle(210)
 	  , new Ray().atAngle(270)
       ])
-      ch10.put(g, origin.option('labelOffset',[1,-1]))
+      ch10.put(g, origin.option('labelOffset',[1,-1.3]))
       
       ////////////////////////////////////////////////////////////	
       // fig12
@@ -43,13 +43,13 @@
       var p22 = new Point().on(r1,20)
       var ar2 = seg(p12,p22).arrow('true').dashed().color('wheat')
       var ar1 = seg(p11,p21).arrow('true').dashed().color('wheat')
-      ch12.put(g, ar1, ar2, p11, p12, p21, p22, origin.option('labelOffset',[1,-1]))
+      ch12.put(g, ar1, ar2, p11, p12, p21, p22, origin.option('labelOffset',[1,-1.3]))
 
       ////////////////////////////////////////////////////////////	
       // fig13
       var ch13 = new Chart('fig13')
       var an1 = new Angle(30).label(' ')
-      ch13.put(an1.startRay, an1.endRay, an1,origin).adjustSize()
+      ch13.put(an1.startRay, an1.endRay, an1, origin.option('labelOffset',[0,-1])).adjustSize()
 
       ////////////////////////////////////////////////////////////	
       // fig14

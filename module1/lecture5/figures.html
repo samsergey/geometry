@@ -22,79 +22,105 @@
     <script>
       ////////////////////////////////////////////////////////////	
       // fig10
-      var ch10 = new Chart('fig10')
-      var g = new Group([
-	  r0 = new Ray()
-	  , new Ray().atAngle(-10)
-	  , r1 = new Ray().atAngle(30)
-	  , new Line().atAngle(110)
-	  , new Ray().atAngle(147)
-	  , new Ray().atAngle(210)
-	  , new Ray().atAngle(270)
-      ])
-      ch10.put(g, origin.option('labelOffset',[1,-1.3]))
+      {
+	  var r0, r1;
+	  var ch10 = new Chart('fig10')
+	  var g = new Group([
+	      r0 = new Ray()
+	      , new Ray().atAngle(-10)
+	      , r1 = new Ray().atAngle(30)
+	      , new Line().atAngle(110)
+	      , new Ray().atAngle(147)
+	      , new Ray().atAngle(210)
+	      , new Ray().atAngle(270)
+	  ])
+	  ch10.put(g, origin.option('labelOffset',[1,-1.3]))
+      }
       
       ////////////////////////////////////////////////////////////	
       // fig12
-      var ch12 = new Chart('fig12')
-      var p11 = new Point().on(r0,10)
-      var p12 = new Point().on(r0,20)
-      var p21 = new Point().on(r1,10)
-      var p22 = new Point().on(r1,20)
-      var ar2 = seg(p12,p22).arrow('true').dashed().color('wheat')
-      var ar1 = seg(p11,p21).arrow('true').dashed().color('wheat')
-      ch12.put(g, ar1, ar2, p11, p12, p21, p22, origin.option('labelOffset',[1,-1.3]))
+      {
+	  var ch12 = new Chart('fig12')
+	  let p11 = new Point().on(r0,10)
+	  let p12 = new Point().on(r0,20)
+	  let p21 = new Point().on(r1,10)
+	  let p22 = new Point().on(r1,20)
+	  let ar2 = seg(p12,p22).arrow('true').dashed().color('wheat')
+	  let ar1 = seg(p11,p21).arrow('true').dashed().color('wheat')
+	  ch12.put(g, ar1, ar2, p11, p12, p21, p22, origin.option('labelOffset',[1,-1.3]))
+      }
 
       ////////////////////////////////////////////////////////////	
       // fig13
-      var ch13 = new Chart('fig13')
-      var an1 = new Angle(30).label(' ')
-      ch13.put(an1.startRay, an1.endRay, an1, origin.option('labelOffset',[0,-1])).adjustSize()
+      {
+	  var ch13 = new Chart('fig13')
+	  var an1 = new Angle(30).label(' ')
+	  ch13.put(an1.startRay, an1.endRay, an1, origin.option('labelOffset',[0,-1])).adjustSize()
+      }
 
       ////////////////////////////////////////////////////////////	
       // fig14
-      var ch14 = new Chart('fig14')
-      //      var tr = new Triangle(an1.startRay.eqn(25), origin, an1.endRay.eqn(25))
-      var tr = new Sector(origin, 25, 0, 30)
-      ch14.put(tr.lineStyle({'stroke':'none'})
-	       .fill("skyblue")
-	       .opacity(0.4)
-	       .points(false)
-	       , an1.startRay
-	       , an1.endRay
-	       , an1
-	       , origin).adjustSize()
+      {
+	  var ch14 = new Chart('fig14')
+	  let tr = new Sector(origin, 25, 0, 30)
+	  ch14.put(tr.lineStyle({'stroke':'none'})
+		   .fill("skyblue")
+		   .opacity(0.4)
+		   .points(false)
+		   , an1.startRay
+		   , an1.endRay
+		   , an1
+		   , origin).adjustSize()
+      }
 
       ////////////////////////////////////////////////////////////	
       // fig16
-      var ch16 = new Chart('fig16')
-      var A = new Point('A').at([0,0])
-      var B = new Point('B').at([20,0])
-      var C = new Point('C').at([13,0])
-      var s1 = new Segment().joining(A,B)
-      var r0 = new Ray('A')
-      var r1 = new Ray('C').atAngle(50)
-      var r2 = new Ray('B').atAngle(80)
-      var an1 = new Angle('a').between(r0, r1)
-      var an2 = new Angle('b').between(r1, r2)
-      ch16.put(new Group([s1,A,B,C]).shift([0,-7])
-	       , new Group([r0,r1,r2,an1, an2, origin])).adjustSize()
-      
+      {
+	  var ch16 = new Chart('fig16')
+	  let A = new Point('A').at([0,0])
+	  let B = new Point('B').at([20,0])
+	  let C = new Point('C').at([13,0])
+	  let s1 = new Segment().joining(A,B)
+	  let r0 = new Ray('A')
+	  let r1 = new Ray('C').atAngle(50)
+	  let r2 = new Ray('B').atAngle(80)
+	  let an1 = new Angle('a').between(r0, r1)
+	  let an2 = new Angle('b').between(r1, r2)
+	  ch16.put(new Group([s1,A,B,C]).shift([0,-7])
+		   , new Group([r0,r1,r2,an1, an2, origin])).adjustSize()
+      }
       ////////////////////////////////////////////////////////////	
       // fig17
-      var ch17 = new Chart('fig17');
-      var A = new Point('A').at([0,0]);
-      var B = new Point('B').at([60,0]);
-      var s1 = new Segment().joining(A,B);
-      var C = s1.middle.label('C');
-      var r0 = new Ray('A');
-      var r1 = new Ray('C').atAngle(40)
-      var r2 = new Ray('B').atAngle(80)
-      var an1 = new Angle('a').between(r0, r1)
-      var an2 = new Angle('a').between(r1, r2)
-      ch17.put(new Group([s1,A,B,C]).shift([0,-7])
-	       , new Group([r0,r1,r2,an1, an2, origin])).adjustSize()
-      
+      {
+	  var ch17 = new Chart('fig17');
+	  let A = new Point('A').at([0,0]);
+	  let B = new Point('B').at([20,0]);
+	  let s1 = new Segment().joining(A,B);
+	  let C = s1.middle.label('C');
+	  let r0 = new Ray('A');
+	  let r1 = new Ray('C').atAngle(40)
+	  let r2 = new Ray('B').atAngle(80)
+	  let an1 = new Angle('a').between(r0, r1)
+	  let an2 = new Angle('a').between(r1, r2)
+	  ch17.put(new Group([s1,A,B,C]).shift([0,-7])
+		   , new Group([r0,r1,r2,an1, an2, origin])).adjustSize()
+      }
+      ////////////////////////////////////////////////////////////	
+      // fig17
+      {
+	  var ch18 = new Chart('fig18');
+	  let A = new Point('A').at([0,0]);
+	  let B = new Point('B').at([20,0]);
+	  let s1 = new Segment().joining(A,B);
+	  let C = s1.middle.label('C');
+	  let r0 = new Ray('A');
+	  let r1 = new Ray('C').atAngle(40)
+	  let r2 = new Ray('B').atAngle(80)
+	  let an1 = new Angle('a').between(r0, r1)
+	  let an2 = new Angle('a').between(r1, r2)
+	  ch18.put(new Group([s1,A,B,C]).shift([0,-7])
+		   , new Group([r0,r1,r2,an1, an2, origin])).adjustSize()
+      }
 
     </script>
   </body>

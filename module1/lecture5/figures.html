@@ -27,7 +27,7 @@
 	  r0 = new Ray()
 	  , new Ray().atAngle(-10)
 	  , r1 = new Ray().atAngle(30)
-	  , new Ray().atAngle(110)
+	  , new Line().atAngle(110)
 	  , new Ray().atAngle(147)
 	  , new Ray().atAngle(210)
 	  , new Ray().atAngle(270)
@@ -54,8 +54,16 @@
       ////////////////////////////////////////////////////////////	
       // fig14
       var ch14 = new Chart('fig14')
-      var tr = triangle(an1.startRay.eqn(25), origin, an1.endRay.eqn(29))
-      ch14.put(tr.points(false).fill("skyblue").opacity(0.4), an1,origin).adjustSize()
+      //      var tr = new Triangle(an1.startRay.eqn(25), origin, an1.endRay.eqn(25))
+      var tr = new Sector(origin, 25, 0, 30)
+      ch14.put(tr.lineStyle({'stroke':'none'})
+	       .fill("skyblue")
+	       .opacity(0.4)
+	       .points(false)
+	       , an1.startRay
+	       , an1.endRay
+	       , an1
+	       , origin).adjustSize()
 
       ////////////////////////////////////////////////////////////	
       // fig16
@@ -76,7 +84,7 @@
       // fig17
       var ch17 = new Chart('fig17');
       var A = new Point('A').at([0,0]);
-      var B = new Point('B').at([20,0]);
+      var B = new Point('B').at([60,0]);
       var s1 = new Segment().joining(A,B);
       var C = s1.middle.label('C');
       var r0 = new Ray('A');

@@ -151,12 +151,11 @@
 			      , new Text("прямоугольные").on(ostr.side(3).flip(), 1/4)
 			      , new Text("пространство углов треугольников")
 			      .on(t.side(1), 1/6)
-			      .option('labelOffset',[0,-2])
-			      , ostr.on(seg(point([0,-2]),point([2,-2])))
-			      , new Text("остроугольные").at(point([2,-3]))
-			      , tup.on(seg(point([13,-3.7]),point([15,-3.7])))
-			      , new Text("тупоугольные").at(point([15,-3]))
-			    ])
+			      .option('labelOffset',[0,-2])])
+	  let legend = row([ostr.on(seg(point([0,-2]),point([2,-2]))),
+			    new Text("остроугольные").at(point([2,-3])),
+			    tup.on(seg(point([13,-3.7]),point([15,-3.7]))),
+			    new Text("тупоугольные").at(point([15,-3]))]).below(g)
 	      .superpose(trig([60,60]), origin)
 	      .scale(35/18)
 	  ch.put(g).adjustSize()

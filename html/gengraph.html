@@ -34,7 +34,10 @@
 
       var aa = new Segment().through(point([5,0])).tangentTo(cir1,1)
       ch.put(cir1, aa, tri1)
-      
+
+      let s = new Square(3).at(point([-15,15]))
+      let t = new Triangle().above(s,'center',1)
+      ch.put(s,t)      
     </script>
   </body>
 </html>	

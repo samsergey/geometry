@@ -122,6 +122,47 @@
 		   , new Group([r0,r1,r2,an1, an2, origin])).adjustSize()
       }
 
+      {
+	  const trig = ([a,b]) => point([(2*sqrt(3)*b+sqrt(3)*a)/3, a].scale(1/10))
+	  let gen = (a,b) => new Group([
+	      trig([a,b]),trig([b,a]),
+	      trig([a,180-a-b]),trig([180-a-b,a]),
+	      trig([b,180-a-b]),trig([180-a-b,b])
+	  ])
+
+	  gen = (a,b) => trig([a,b,180-a-b].sorted().take(2))
+
+	  let s = 18*2/sqrt(3)
+	  let ch = new Chart('fig')
+	  let t = new Triangle().on(new Segment().extendToLength(s))
+	  let eq = new Group([t.median(1), t.median(2), t.median(3)])
+	  var rect = new Triangle(trig([90,0]),trig([90,90]),trig([0,90]))
+	  var ostr = rect.fill('#1e90ff').opacity(0.5).points(false).noline()
+	  var tup = new Triangle(trig([90,0]),origin,trig([0,90]))
+	      .fill('green').opacity(0.25).points(false).noline();
+	  let tp = gen(50,10)
+	  let os = gen(50,50)
+	  let g = new Group([ ostr, tup, rect
+			      , tup.superpose(origin, trig([90, 0]))
+			      , tup.superpose(origin, trig([0, 90]))
+			      , t.dashed().points(false), eq
+			      , trig([60, 60])
+			      , new Text("равнобедренные").on(t.median(1), 1/7)
+			      , new Text("прямоугольные").on(ostr.side(3).flip(), 1/4)
+			      , new Text("пространство углов треугольников")
+			      .on(t.side(1), 1/6)
+			      .option('labelOffset',[0,-2])
+			      , ostr.on(seg(point([0,-2]),point([2,-2])))
+			      , new Text("остроугольные").at(point([2,-3]))
+			      , tup.on(seg(point([13,-3.7]),point([15,-3.7])))
+			      , new Text("тупоугольные").at(point([15,-3]))
+			    ])
+	      .superpose(trig([60,60]), origin)
+	      .scale(35/18)
+	  ch.put(g).adjustSize()
+	  
+      }   
+
     </script>
   </body>
 </html>	

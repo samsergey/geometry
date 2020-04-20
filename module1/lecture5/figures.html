@@ -55,7 +55,7 @@
       {
 	  var ch13 = new Chart('fig13')
 	  var an1 = new Angle(30).label(' ')
-	  ch13.put(an1.startRay, an1.endRay, an1, origin.option('labelOffset',[0,-1])).adjustSize()
+	  ch13.put(an1.startRay, an1.endRay, an1, origin.option('labelOffset',[-1,-1])).adjustSize()
       }
 
       ////////////////////////////////////////////////////////////	
@@ -106,69 +106,24 @@
 		   , new Group([r0,r1,r2,an1, an2, origin])).adjustSize()
       }
       ////////////////////////////////////////////////////////////	
-      // fig17
+      // fig18
       {
 	  var ch18 = new Chart('fig18');
-	  let A = new Point('A').at([0,0]);
-	  let B = new Point('B').at([20,0]);
-	  let s1 = new Segment().joining(A,B);
-	  let C = s1.middle.label('C');
-	  let r0 = new Ray('A');
-	  let r1 = new Ray('C').atAngle(40)
-	  let r2 = new Ray('B').atAngle(80)
-	  let an1 = new Angle('a').between(r0, r1)
-	  let an2 = new Angle('a').between(r1, r2)
-	  ch18.put(new Group([s1,A,B,C]).shift([0,-7])
-		   , new Group([r0,r1,r2,an1, an2, origin])).adjustSize()
+	  let r0 = new Ray();
+	  let rs = new Group(range(1,9).map(i => new Ray(i).atAngle(i*10)))
+	  let r2 = new Ray().atAngle(80)
+	  ch18.put(new Group([r0,rs,r2,origin])).adjustSize()
       }
 
       ////////////////////////////////////////////////////////////	
       // fig20
       {
-	  const trig = ([a,b]) => point([(2*sqrt(3)*b+sqrt(3)*a)/3, a].scale(1/10))
-		.option('pointSize',4)
-	  let gen = (a,b) => new Group([
-	      trig([a,b]),trig([b,a]),
-	      trig([a,180-a-b]),trig([180-a-b,a]),
-	      trig([b,180-a-b]),trig([180-a-b,b])
-	  ])
-	  //gen = (a,b) => trig([a,b,180-a-b].sorted().take(2))
-
-	  let s = 18*2/sqrt(3)
-	  var ch = new Chart('fig')
-	  let t = new Triangle().on(new Segment().extendToLength(s))
-	  let eq = new Group([t.median(1), t.median(2), t.median(3)])
-	  var rect = new Triangle(trig([90,0]),trig([90,90]),trig([0,90]))
-	      .points(false).color('#1e90ff')
-	  var ostr = rect.fill('#1e90ff').opacity(0.5).points(false).noline()
-	  var tup = new Triangle(trig([90,0]),origin,trig([0,90]))
-	      .fill('green').opacity(0.25).points(false).noline();
-	  let sample = trig([100,50]);
-	  let sampleOrth = new Segment().through(sample).dashed().color('black')
-	  samples = new Group([ sampleOrth.heightTo(t.side(1)).label('100')
-				.labelPosition(0.4)
-				, sampleOrth.heightTo(t.side(2)).label('30')
-				, sampleOrth.heightTo(t.side(3)).label('50')
-				, sample ])
-	  scale = new Scale(3, x => x*180).on(t.side(1)).setOrientation(-1)
-	  let g = new Group([ ostr, tup, rect
-			      , tup.superpose(origin, trig([90, 0]))
-			      , tup.superpose(origin, trig([0, 90]))
-			      , eq
-			      , scale
-			      , trig([60, 60])
-			      , samples
-			      , new Text("равнобедренные").on(t.median(1), 1/7)
-			      , new Text("прямоугольные").on(ostr.side(3).flip(), 1/4)
-			    ])
-	      .superpose(trig([60, 60]), origin).scale(35/18)
-	  var title = new Text("пространство углов треугольников")
-	  let legend = column([row([trig([60, 60]), new Text("равносторонний")],0,2),
-			       row([ostr.scale(1/4), new Text("остроугольные")]),
-			       row([tup.scale(1/4), new Text("тупоугольные")])],1,2)
-	  ch.put(g.boxAlign([1,1],legend,[1,1])).adjustSize()
-	  
-      }   
+	  let n = 20;
+	  var ch20 = new Chart('fig20');
+	  let r0 = new Ray();
+	  let rs = new Group(range(0,n+1).map(i => new Ray(i).atAngle(i*360/n)))
+	  ch20.put(new Group([rs])).adjustSize()
+      }
 
     </script>
   </body>

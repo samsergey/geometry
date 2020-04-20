@@ -33,7 +33,8 @@
       ch.put(c, l, r, A, an, origin, C, B)
 
       var aa = new Segment().through(point([5,0])).tangentTo(cir1,1)
-      ch.put(cir1, aa, tri1)
+      sc = circularScale(12).on(c).tickLength(-0.5).rotate(90).reflectAt(Oy)
+      ch.put(cir1, aa, tri1, sc)
 
     </script>
   </body>

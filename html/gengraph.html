@@ -30,12 +30,11 @@
       var C = l.end.copy()
       var an = new Angle('value').within(A,C,origin).option('labelRadius',5)
       var B = new Point('B').azimuth(A, 60, C, 60)
-      ch.put(c, l, r, A, an, origin, C, B)
-
       var aa = new Segment().through(point([5,0])).tangentTo(cir1,1)
-      sc = circularScale(12).on(c).tickLength(-0.5).rotate(90).reflectAt(Oy)
-      ch.put(cir1, aa, tri1, sc)
+      var sc = circularScale(7).on(c).rotate(90).reflectAt(Oy)
 
+      g = new Group([c, l, r, A, an, origin, C, B, cir1, aa, tri1, sc])
+      ch.put(g)
     </script>
   </body>
 </html>	

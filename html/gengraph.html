@@ -9,7 +9,7 @@
     <script src='../lib/matrix.js'></script>
     <script src='../lib/graphics.js'></script>
     <script src='../lib/geometry.js'></script>
-<!--    <script src='../lib/geomtests.js'></script> -->
+    <script src='../lib/geomtests.js'></script> 
     <style>
       body {
 	  background:#333;
@@ -23,23 +23,26 @@
     <script>
 
       var ch = new Chart('fig1')
-      var c = new Circle(10)
+      var c = new Circle(7)
       var A = new Point('A').on(c,pi/3)
       var r = new Ray()
-      var l = new Segment().through(r.point(15)).tangentTo(c,1)
-      ch.put(r,c,A,l)
-      /*
-      var l = new Segment().through(A).tangentTo(c)//.extendToLine(r)
+      var l2 = new Segment().through(point([15,0])).tangentTo(c,1)
+      var l = new Segment().through(A).tangentTo(c).extendToLine(r)
       var C = l.end.copy()
       var an = new Angle('value').within(A,C,origin).option('labelRadius',5)
       var B = new Point('B').azimuth(A, 60, C, 60)
-      var sc1 = circularScale(7).on(c).rotate(90).reflectAt(Oy)
-      var sc2 = new Scale().on(l)
-      var sc3= new Scale(10).on(r).range([-5,5])
+      var sc1 = circularScale(7).on(c.flip().rotate(90))
+      var sc2 = new Scale(5).on(l).unit(10)
+      var sc3= new Scale(5).on(r).range([0,5])
 
-      g = new Group([c, l, r, A, an, origin, C, B, sc1, sc2, sc3])
+      var p = new RegularPolygon(50,6).scale(1,1.9)
+	  .rotate(30).translate([-11,-11]).points(false)
+      var scp = new Scale(10, x=>x*10).on(p).tickLength(-0.75).closed()
+      g = new Group([c, l, l2, r, A, an, origin, C, B, sc1, sc2, sc3
+		     ,p, scp])
+
+      
       ch.put(g)
-*/
     </script>
   </body>
 </html>	

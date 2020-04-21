@@ -53,7 +53,8 @@
 			      , tup.superpose(origin, trig([90, 0]))
 			      , tup.superpose(origin, trig([0, 90]))
 			      , eq
-			      , scale, scale.rotate(120).shift([s,0]),
+			      , scale
+			      , scale.rotate(120).translate([s,0]),
 			      , scale.rotate(60).flip()
 			      , trig([60, 60])
 			      , samples

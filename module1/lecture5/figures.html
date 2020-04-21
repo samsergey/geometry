@@ -86,7 +86,7 @@
 	  let r2 = new Ray('B').atAngle(80)
 	  let an1 = new Angle('a').between(r0, r1)
 	  let an2 = new Angle('b').between(r1, r2)
-	  ch16.put(new Group([s1,A,B,C]).shift([0,-7])
+	  ch16.put(new Group([s1,A,B,C]).translate([0,-7])
 		   , new Group([r0,r1,r2,an1, an2, origin])).adjustSize()
       }
       ////////////////////////////////////////////////////////////	
@@ -102,7 +102,7 @@
 	  let r2 = new Ray('B').atAngle(80)
 	  let an1 = new Angle('a').between(r0, r1)
 	  let an2 = new Angle('a').between(r1, r2)
-	  ch17.put(new Group([s1,A,B,C]).shift([0,-7])
+	  ch17.put(new Group([s1,A,B,C]).translate([0,-7])
 		   , new Group([r0,r1,r2,an1, an2, origin])).adjustSize()
       }
       ////////////////////////////////////////////////////////////	

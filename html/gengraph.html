@@ -9,7 +9,7 @@
     <script src='../lib/matrix.js'></script>
     <script src='../lib/graphics.js'></script>
     <script src='../lib/geometry.js'></script>
-    <script src='../lib/geomtests.js'></script> 
+<!--    <script src='../lib/geomtests.js'></script> -->
     <style>
       body {
 	  background:#333;
@@ -26,15 +26,20 @@
       var c = new Circle(10)
       var A = new Point('A').on(c,pi/3)
       var r = new Ray()
-      var l = new Segment().through(A).tangentTo(c).extendToLine(r)
+      var l = new Segment().through(r.point(15)).tangentTo(c,1)
+      ch.put(r,c,A,l)
+      /*
+      var l = new Segment().through(A).tangentTo(c)//.extendToLine(r)
       var C = l.end.copy()
       var an = new Angle('value').within(A,C,origin).option('labelRadius',5)
       var B = new Point('B').azimuth(A, 60, C, 60)
-      var sc = circularScale(7).on(c).rotate(90).reflectAt(Oy)
+      var sc1 = circularScale(7).on(c).rotate(90).reflectAt(Oy)
+      var sc2 = new Scale().on(l)
+      var sc3= new Scale(10).on(r).range([-5,5])
 
-      g = new Group([c, l, r, A, an, origin, C, B, sc])
+      g = new Group([c, l, r, A, an, origin, C, B, sc1, sc2, sc3])
       ch.put(g)
-
+*/
     </script>
   </body>
 </html>	

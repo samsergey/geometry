@@ -39,7 +39,7 @@
 	  .rotate(30).translate([-11,-11]).points(false)
       var scp = new Scale(10).circular().on(p).tickLength(-0.75)
 
-      var p2 = parametricCurve(t => [t, sin(2*t-t*t/10)],range(0,15,0.1))
+      var p2 = new Polygon().parametricCurve(t => [t, sin(2*t-t*t/10)],range(0,15,0.1))
 	  .scaleAt(origin,3).rotate(10).translate([-11,11]).points(false)
 
       g = new Group([c, l, l2, r, A, an, origin, C, B, sc1, sc2, sc3

@@ -25,36 +25,36 @@
       var ch9 = new Chart('fig9')
       var a = new Segment().atAngle(30).extend(-8,10)
       var b = new Segment().perpendicularTo(a).extend(-10,8)
-      ch9.put(a,b,point([0,0]))
+      ch9.put(a,b,point([0,0])).adjustSize()
 
       ////////////////////////////////////////////////////////////	
       // fig21
       var ch21 = new Chart('fig21')
-      var pts = anyPoint(6).scale(1/2).shift([-10,10])
+      var pts = anyPoint(6).scale(1/2).translate([-10,10])
       var c = new Circle(5)
       var A = new Point().on(c,pi*1.1)
       var a = new Segment().through(A).tangentTo(c).extend(-20,8)
       var b = new Segment().through(A).atAngle(30).extend(-10,20)
-      ch21.put(pts,c,a,b,A)
+      ch21.put(pts,c,a,b,A).adjustSize()
 
       ////////////////////////////////////////////////////////////	
       // fig51
       var ch51 = new Chart('fig51')
       var s = new Segment('4').atAngle(60).extendToLength(20)
           .option('labelOffset',2.5)
-      var u = new Segment('1').extendToLength(5).shift([-10,10])
+      var u = new Segment('1').extendToLength(5).translate([-10,10])
       var pts = new Group(range(4).map(i => new Point().on(s,i/4)))
-      ch51.put(s,u,pts)
+      ch51.put(s,u,pts).adjustSize()
 
       ////////////////////////////////////////////////////////////	
       // fig51
       var ch62 = new Chart('fig62')
       var s = new Segment('4¾').atAngle(60).extendToLength(20)
       	  .option('labelOffset',2.5)
-      var u = new Segment('1').extendToLength(5).shift([-10,10])
+      var u = new Segment('1').extendToLength(5).translate([-10,10])
       var pts = new Group(range(5).map(i => new Point().on(s,i/4)))
       s.extendToLength(5*(4.75))
-      ch62.put(s,u,pts)
+      ch62.put(s,u,pts).adjustSize()
 
     </script>
   </body>

@@ -45,8 +45,8 @@
 	  let p12 = new Point().on(r0,20)
 	  let p21 = new Point().on(r1,10)
 	  let p22 = new Point().on(r1,20)
-	  let ar2 = seg(p12,p22).arrow('true').dashed().color('wheat')
-	  let ar1 = seg(p11,p21).arrow('true').dashed().color('wheat')
+	  let ar2 = segment(p12,p22).arrow('true').dashed().color('wheat')
+	  let ar1 = segment(p11,p21).arrow('true').dashed().color('wheat')
 	  ch12.put(g, ar1, ar2, p11, p12, p21, p22, origin.option('labelOffset',[1,-1.3]))
       }
 

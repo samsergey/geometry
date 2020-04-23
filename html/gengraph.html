@@ -34,26 +34,20 @@
       var sc1 = new Scale(7).circular().on(c.flip().rotate(90))
       var sc2 = new Scale(5).on(l).unit(10)
       var sc3= new Scale(5).on(r).range([0,5])
-
-      var p = Polygon.regular(10,4)
+      
+      var p = new Polygon('ellipse').regular(100,4)
 	  .scale(1,1.9)
 	  .rotate(30)
 	  .translate([-11,-11])
-
-      var pl = new Group(p.sides.map(
-	  s => new Segment()
-	      .midPerpendicular(s).flip()
-	      .thin(0.25)
-	      .color('wheat')))
-      
-      var p2 = Polygon.parametric(t => [t, sin(2*t-t*t/10)],range(0,7,0.1))
+     
+      var p2 = new Polygon('sin').parametric(t => [t, sin(2*t-t*t/10)],range(0,7,0.1))
 	  .scaleAt(origin,3)
 	  .rotate(10)
 	  .translate([0,11])
 
       var m = Group.column(range(3,6).map(
 	      n => Group.row(range(3,6).map(
-		  m => Polygon.regular(n+m-3)), 1, 0.5)), 1, 0.5)
+		  m => new Polygon().regular(n+m-3)), 1, 0.5)), 1, 0.5)
 	  .translate([-15,15])
       
       g = new Group([c, l, l2, r, A, an, origin, C, B
@@ -61,7 +55,6 @@
 		     , p2
 		     , p
 		     , m
-		     , pl
 		    ])
       ch.put(g)
 

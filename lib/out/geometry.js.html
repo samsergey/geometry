@@ -1,12 +1,32 @@
-/** A pair of numbers, representing a vector.
- * @typedef {XY} XY
- */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: geometry.js</title>
 
-/** A point or pure coordinates
- * @typedef {Point | XY} Position
- */
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
 
-const paperSize = 50
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: geometry.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const paperSize = 50
 const xRange = [-paperSize/2,paperSize/2]
 const yRange = [-paperSize/2,paperSize/2]
 
@@ -63,12 +83,40 @@ const style = {
 ////////////////////////////////////////////////////////////
 // math
 
+/** Predicate. Returns true if argument is a pair of numbers.
+* @param {*} obj
+ * @example
+ * // returns true
+ * isXY([5, 10]);
+ * @example
+ * // returns false
+ * isXY(point([5, 10]));
+ * @returns {bool} 
+ */
 function isXY (obj) {
     return (obj instanceof Array)
-	&& obj.length == 2
-	&& obj.every(Number.isFinite)
+	&amp;&amp; obj.length == 2
+	&amp;&amp; obj.every(Number.isFinite)
 }
 
+/** A pair of numbers, representing a vector.
+ * @typedef {XY} XY
+ */
+
+/** A point or pure coordinates
+ * @typedef {Point | XY} Position
+ */
+
+/** Returns an object containing point and it's coordinates.
+ * @param {Position}
+ * @example
+ * // returns {'point': Point, 'xy': [5,10]]}
+ * pointOrXY([5, 10]);
+ * @example
+ * // returns {'point': Point, 'xy': [5,10]]}
+ * pointOrXY(point([5, 10]));
+ * @returns {Object} 
+ */
 function pointOrXY (pos) {
     console.assert(pos instanceof Point || isXY(pos),
 		  "pointOrXY: position shoud be either Point or coordinates")
@@ -81,16 +129,16 @@ function pointOrXY (pos) {
 function angleV(vector) {
     // tested
     const x = vector[0], y = vector[1]
-    if (x == 0 && y == 0) return 0
-    if (x == 1 && y == 0) return 0
-    if (x == 0 && y == 1) return 90
-    if (x == -1 && y == 0) return 180
-    if (x == 0 && y == -1) return 270
+    if (x == 0 &amp;&amp; y == 0) return 0
+    if (x == 1 &amp;&amp; y == 0) return 0
+    if (x == 0 &amp;&amp; y == 1) return 90
+    if (x == -1 &amp;&amp; y == 0) return 180
+    if (x == 0 &amp;&amp; y == -1) return 270
     const a = rad2deg(Math.atan(y/x))
-    if (x >= 0 && y >= 0) return a
-    if (x <= 0 && y >= 0) return 180 + a
-    if (x <= 0 && y < 0) return 180 + a
-    if (x > 0 && y <= 0) return 360 + a
+    if (x >= 0 &amp;&amp; y >= 0) return a
+    if (x &lt;= 0 &amp;&amp; y >= 0) return 180 + a
+    if (x &lt;= 0 &amp;&amp; y &lt; 0) return 180 + a
+    if (x > 0 &amp;&amp; y &lt;= 0) return 360 + a
     return a
 }
 
@@ -172,7 +220,8 @@ const Box = {mappend: appendBox,
 ////////////////////////////////////////////////////////////
 // Figure and transformations
 /** Abstract class representing a geometric figure.
- * Provides basic linear transformations. */
+ * Provides basic linear transformations.
+ */
 class Figure {
     constructor (label) {
 	this.options = {
@@ -484,7 +533,7 @@ class Point extends BoxedFigure {
 
     isEqual (obj) {
 	// tested
-	return (obj instanceof Point) &&
+	return (obj instanceof Point) &amp;&amp;
 	    equal(this.xy, obj.xy)
     }
 
@@ -516,7 +565,7 @@ class Point extends BoxedFigure {
 
     intersection (curve1, curve2, n = 0) {
 	// tests on curves
-	console.assert(curve1 instanceof Curve && curve2 instanceof Curve,
+	console.assert(curve1 instanceof Curve &amp;&amp; curve2 instanceof Curve,
 		       'intersection of non vectors')
 
 	return this.at(curve1.intersections(curve2)[n].xy)
@@ -647,8 +696,8 @@ class Curve extends BoxedFigure {
 
     isIntersecting (obj) {
 	return obj instanceof Curve
-	    && this.intersections(obj)
-	    .some(p => this.isContaining(p) && obj.isContaining(p))
+	    &amp;&amp; this.intersections(obj)
+	    .some(p => this.isContaining(p) &amp;&amp; obj.isContaining(p))
     }
 
     get isClosed() { return this.type == 'closed' }
@@ -706,15 +755,15 @@ class Line extends Curve {
 
     isEqual (that) {
 	// tested
-	return (that instanceof Line) &&
-	    equal(this.pivot, that.pivot) &&
+	return (that instanceof Line) &amp;&amp;
+	    equal(this.pivot, that.pivot) &amp;&amp;
 	    equal(this.vector, that.vector)
     }
 
     isSimilar (obj) {
 	// tested
-	return (obj instanceof Line) &&
-	    this.isContaining(obj.point(0)) &&
+	return (obj instanceof Line) &amp;&amp;
+	    this.isContaining(obj.point(0)) &amp;&amp;
 	    this.isContaining(obj.point(1))
     }
 
@@ -763,7 +812,7 @@ class Line extends Curve {
 	    res = obj.intersectionL(this)
 	if (obj instanceof Polygon)
 	    res = obj.intersections(this)
-	return res.filter(p => obj.isContaining(p) && this.isContaining(p))
+	return res.filter(p => obj.isContaining(p) &amp;&amp; this.isContaining(p))
 	    .sorted((p1,p2) => this.location(p1) - this.location(p2))
     }
     
@@ -869,13 +918,13 @@ class Line extends Curve {
 
     get box () {
 	const ts = plane.intersections(this).map(p => this.location(p)).sorted()
-	if (ts.length < 2) return Box.mempty
+	if (ts.length &lt; 2) return Box.mempty
 	return Box.mappend(this.point(ts[0]).box, this.point(ts[1]).box)
     }
     
     show (paper) {
 	const ts = plane.intersections(this).map(p => this.location(p)).sorted()
-	if (ts.length < 2) return
+	if (ts.length &lt; 2) return
 	paper.line([this.point(ts[0]).xy, this.point(ts[1]).xy], this.options)
 	
 	if (this.isLabeled)
@@ -924,14 +973,14 @@ class Ray extends Line {
     isEqual (obj) {
 	// tested
 	return (obj instanceof Ray)
-	    && super.isEqual(obj)
+	    &amp;&amp; super.isEqual(obj)
     }
 
     isSimilar (obj) {
 	// tested
 	return (obj instanceof Ray)
-	    && this.start.isEqual(obj.start)
-	    && equal(this.tangentV(0), obj.tangentV(0))
+	    &amp;&amp; this.start.isEqual(obj.start)
+	    &amp;&amp; equal(this.tangentV(0), obj.tangentV(0))
     }
 
     // ------------------------------------------------------------
@@ -939,7 +988,7 @@ class Ray extends Line {
 
     isContaining (point) {
 	return super.isContaining(point)
-	    && this.location(point) >= 0
+	    &amp;&amp; this.location(point) >= 0
     }
     
     // ------------------------------------------------------------
@@ -1003,14 +1052,14 @@ class Segment extends Line {
     }
 
     isEqual (obj) {
-	return (obj instanceof Segment) &&
+	return (obj instanceof Segment) &amp;&amp;
 	    super.isEqual(obj)
     }
 
     isSimilar (segment) {
 	//tested
 	return (segment instanceof Segment)
-	    && equal(this.length, segment.length)
+	    &amp;&amp; equal(this.length, segment.length)
     }
 
     // ------------------------------------------------------------
@@ -1023,8 +1072,8 @@ class Segment extends Line {
     
     isContaining (point) {
 	return super.isContaining(point)
-	    && this.location(point) >= 0
-	    && this.location(point) <= 1
+	    &amp;&amp; this.location(point) >= 0
+	    &amp;&amp; this.location(point) &lt;= 1
     }
 
     // ------------------------------------------------------------
@@ -1086,7 +1135,7 @@ class Segment extends Line {
 	const t = new Ray().through(this.start).tangentTo(circle, direction)
 	if (equal(d, circle.R)) {
 	    return this.parallelTo(t)
-	} else if (d < circle.R) {
+	} else if (d &lt; circle.R) {
 	    console.log()
 	    return this
 	} else {
@@ -1123,7 +1172,7 @@ class Segment extends Line {
 
     get box () {
 	const ts = plane.intersections(this).map(p => this.location(p)).sorted()
-	if (ts.length < 2) return Box.mempty
+	if (ts.length &lt; 2) return Box.mempty
 	return Box.mappend(this.point(max(0,ts[0])).box, this.point(min(1,ts[1])).box)
     }
 
@@ -1154,7 +1203,7 @@ class Segment extends Line {
 	}
 	if (this.option('mark') > 0)
 	{
-	    for (let i = 0; i < this.option('mark'); i++) {
+	    for (let i = 0; i &lt; this.option('mark'); i++) {
 		const m = this.point(1/2).xy.vadd(this.tangentV(0).scale(0.2*i))
 		paper.line([m.vadd(this.normalV(0).scale(0.3)), 
 			    m.vadd(this.normalV(0).scale(-0.3))], 
@@ -1202,15 +1251,15 @@ class Angle extends BoxedFigure {
     isEqual (obj) {
 	//tested
 	return (obj instanceof Angle)
-	    && equalMod(360, this.start, obj.start)
-	    && equalMod(360, this.end, obj.end)
-	    && this.vertex.isEqual(obj.vertex)
+	    &amp;&amp; equalMod(360, this.start, obj.start)
+	    &amp;&amp; equalMod(360, this.end, obj.end)
+	    &amp;&amp; this.vertex.isEqual(obj.vertex)
     }
 
     isSimilar (obj) {
 	//tested
 	return (obj instanceof Angle)
-	    && equalMod(360, this.value, obj.value)
+	    &amp;&amp; equalMod(360, this.value, obj.value)
     }
 
     on (line) {
@@ -1248,7 +1297,7 @@ class Angle extends BoxedFigure {
 	return new Ray().through(this.vertex).atAngle(this.end)
     }
     get isRight () {
-	return equalMod(360, this.value, 90) || cos(deg2rad(this.value)) < 1e-14
+	return equalMod(360, this.value, 90) || cos(deg2rad(this.value)) &lt; 1e-14
     }
 
     setValue (angle) {
@@ -1307,7 +1356,7 @@ class Angle extends BoxedFigure {
 	    return
 	}
 
-	for(let i = 0; i < this.options['strokes']; i++)
+	for(let i = 0; i &lt; this.options['strokes']; i++)
 	    p.arc(this.vertex.xy, 2-i*0.3, this.start, this.end, this.options)
 
 	if (this.isLabeled)
@@ -1366,14 +1415,14 @@ class Polygon extends Curve {
 
     isEqual (obj) {
 	return (obj instanceof Polygon)
-	    && equal(this.vertices, obj.vertices)
+	    &amp;&amp; equal(this.vertices, obj.vertices)
     }
 
     //------------------------------------------------------------
     // Curve implementation
 
     resetEquations () {
-	if(this.vertices.length < 2) return this
+	if(this.vertices.length &lt; 2) return this
 	let pts = this.vertices.map(p => p.xy)
 	const par = naturalParametrization(pts, this.type)
 	this.point = s => point(par.eqn(s))
@@ -1388,7 +1437,7 @@ class Polygon extends Curve {
     }
 
     location (point) {
-	let i = this.sides.map(s => s.location(point)).findIndex(l => 0 <= l && l <= 1)
+	let i = this.sides.map(s => s.location(point)).findIndex(l => 0 &lt;= l &amp;&amp; l &lt;= 1)
 	console.assert(i != -1,
 		       `Point [${point.xy}] can't be located on a curve ${this.label()}.`)
 	let s = this.sides[i],
@@ -1406,7 +1455,7 @@ class Polygon extends Curve {
 
     intersections (obj) {
 	return this.sides.mapappend(s => s.intersections(obj)
-				    .filter(p => s.isContaining(p) && obj.isContaining(p)))
+				    .filter(p => s.isContaining(p) &amp;&amp; obj.isContaining(p)))
     }
     
     //------------------------------------------------------------
@@ -1432,7 +1481,7 @@ class Polygon extends Curve {
 	    vs = this.vertices.concat([this.vertices[0]])
 	else
 	    vs = this.vertices
-	for(let i = 0; i < vs.length-1; i++) {
+	for(let i = 0; i &lt; vs.length-1; i++) {
 	    const s = this.options.segmentLabels[i]
 	    res.push(new Segment(s).joining(vs[i], vs[i+1]))
 	}
@@ -1443,7 +1492,7 @@ class Polygon extends Curve {
 	if (this.isClosed)
 	    return this.vertices[(this.number + i - 1) % this.number]
 	else {
-	    console.assert(i > 0 && i <= this.number,
+	    console.assert(i > 0 &amp;&amp; i &lt;= this.number,
 			   `The polygon has ${this.number} vertices, requested ${i}.`)
 	    return this.vertices[i - 1]
 	}
@@ -1453,7 +1502,7 @@ class Polygon extends Curve {
 	if (this.isClosed)
 	    return this.verticesLocations[(this.number + i - 1) % this.number]
 	else {
-	    console.assert(i > 0 && i <= this.number,
+	    console.assert(i > 0 &amp;&amp; i &lt;= this.number,
 			   `The polygon has ${this.number} vertices, requested ${i}.`)
 	    return this.verticesLocations[i - 1]
 	}
@@ -1463,7 +1512,7 @@ class Polygon extends Curve {
 	if (this.isClosed)
 	    return this.sides[(this.number + i - 1) % this.number]
     	else {
-	    console.assert(i > 0 && i <= this.number-1,
+	    console.assert(i > 0 &amp;&amp; i &lt;= this.number-1,
 			   `The polygon has ${this.number-1} sides, requested ${i}.`)
 	    return this.sides[i - 1]
 	}
@@ -1471,7 +1520,7 @@ class Polygon extends Curve {
     
     vertexAngle (i) {
 	if (this.isClosed) 
-	    console.assert(i > 0 && i <= this.number-2,
+	    console.assert(i > 0 &amp;&amp; i &lt;= this.number-2,
 			   `The polygon has ${this.number-2} angles, requested ${i}.`)
 	let v1 = this.vertex(i-1),
 	    v2 = this.vertex(i),
@@ -1750,8 +1799,8 @@ class Circle extends Curve {
     }
 
     isEqual (obj) {
-	return (obj instanceof Circle) &&
-	    equal(this.center, obj.center) &&
+	return (obj instanceof Circle) &amp;&amp;
+	    equal(this.center, obj.center) &amp;&amp;
 	    equal(this.R, obj.R)
     }
 
@@ -1785,7 +1834,7 @@ class Circle extends Curve {
     }
     
     isEnclosing (point) {
-	return point.distance(this.center) <= this.R
+	return point.distance(this.center) &lt;= this.R
     }
 
     flip () {
@@ -1807,7 +1856,7 @@ class Circle extends Curve {
 	      R = r.length
 	if (R == 0)
 	    return []
-	if (R > r0 + r1 || R < abs(r0-r1))
+	if (R > r0 + r1 || R &lt; abs(r0-r1))
 	    return []
 	const a = (r0**2 - r1**2)/(2*R),
 	      b = 1/2*sqrt(2*(r0**2 + r1**2) - 4*a**2 - R**2),
@@ -1837,7 +1886,7 @@ class Circle extends Curve {
 	    res = this.intersectionC(obj)
 	if (obj instanceof Polygon)
 	    res = obj.intersections(this)
-	return res.filter(p => obj.isContaining(p) && this.isContaining(p))
+	return res.filter(p => obj.isContaining(p) &amp;&amp; this.isContaining(p))
 	    .sorted((p1,p2) => this.location(p1) - this.location(p2))
     }
     
@@ -1875,7 +1924,7 @@ class Circle extends Curve {
     }
 
     through (point1, point2, point3) {
-	if (!point2  && !point3)
+	if (!point2  &amp;&amp; !point3)
 	    return this.through1(point1)
 	else if (!point3)
 	    return this.through2(point1, point2) 
@@ -2133,3 +2182,26 @@ const Ox = new Line().through(origin).atAngle(0)
 const Oy = new Line().through(origin).atAngle(90)
 //gconst plane = new Square(paperSize)
 const plane = new Circle(paperSize/2)
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Figure.html">Figure</a></li></ul><h3>Global</h3><ul><li><a href="global.html#isXY">isXY</a></li><li><a href="global.html#pointOrXY">pointOrXY</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.4</a> on Fri Apr 24 2020 18:17:31 GMT+1200 (+12)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

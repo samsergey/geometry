@@ -2,22 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: geometry.js</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>geometry.js</title>
 
-    <script src="scripts/prettify/prettify.js"> </script>
-    <script src="scripts/prettify/lang-css.js"> </script>
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <script src="scripts/search.js"></script>
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.4.5/fuse.min.js"></script> -->
+    <script src="scripts/fuse.js"></script>
     <!--[if lt IE 9]>
       <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/ionicons.min.css">
     <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
     <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
-</head>
+    <link type="text/css" rel="stylesheet" href="styles/clean-jsdoc-theme.css">
+    
+    
+    
+<svg aria-hidden="true" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none">
+    <defs>
+        <symbol id="copy-icon" viewbox="0 0 488.3 488.3">
+            <g>
+                <path d="M314.25,85.4h-227c-21.3,0-38.6,17.3-38.6,38.6v325.7c0,21.3,17.3,38.6,38.6,38.6h227c21.3,0,38.6-17.3,38.6-38.6V124    C352.75,102.7,335.45,85.4,314.25,85.4z M325.75,449.6c0,6.4-5.2,11.6-11.6,11.6h-227c-6.4,0-11.6-5.2-11.6-11.6V124    c0-6.4,5.2-11.6,11.6-11.6h227c6.4,0,11.6,5.2,11.6,11.6V449.6z"/>
+                <path d="M401.05,0h-227c-21.3,0-38.6,17.3-38.6,38.6c0,7.5,6,13.5,13.5,13.5s13.5-6,13.5-13.5c0-6.4,5.2-11.6,11.6-11.6h227    c6.4,0,11.6,5.2,11.6,11.6v325.7c0,6.4-5.2,11.6-11.6,11.6c-7.5,0-13.5,6-13.5,13.5s6,13.5,13.5,13.5c21.3,0,38.6-17.3,38.6-38.6    V38.6C439.65,17.3,422.35,0,401.05,0z"/>
+            </g>
+        </symbol>
+    </defs>
+</svg>
 
+</head>
 <body>
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html"><div class="text">Home</div></a></h2><div class="search-box"><input type="text" placeholder="Search..." id="search-box" /><div class="search-item-container" id="search-item-container"><ul class="search-item-ul" id="search-item-ul"></ul></div></div><div class="sidebar-list-div"><h3>Classes</h3><ul><li><a href="BoxedFigure.html">BoxedFigure</a><ul class='methods'><li data-type='method'><a href="BoxedFigure.html#align">align</a></li><li data-type='method'><a href="BoxedFigure.html#at">at</a></li><li data-type='method'><a href="BoxedFigure.html#copy">copy</a></li><li data-type='method'><a href="BoxedFigure.html#isEqual">isEqual</a></li><li data-type='method'><a href="BoxedFigure.html#isSimilar">isSimilar</a></li><li data-type='method'><a href="BoxedFigure.html#reflect">reflect</a></li><li data-type='method'><a href="BoxedFigure.html#reflectAt">reflectAt</a></li><li data-type='method'><a href="BoxedFigure.html#rotate">rotate</a></li><li data-type='method'><a href="BoxedFigure.html#rotateAt">rotateAt</a></li><li data-type='method'><a href="BoxedFigure.html#scale">scale</a></li><li data-type='method'><a href="BoxedFigure.html#scaleAt">scaleAt</a></li><li data-type='method'><a href="BoxedFigure.html#stretch">stretch</a></li><li data-type='method'><a href="BoxedFigure.html#stretchAt">stretchAt</a></li><li data-type='method'><a href="BoxedFigure.html#superpose">superpose</a></li><li data-type='method'><a href="BoxedFigure.html#transform">transform</a></li><li data-type='method'><a href="BoxedFigure.html#translate">translate</a></li></ul></li><li><a href="Figure.html">Figure</a><ul class='methods'><li data-type='method'><a href="Figure.html#align">align</a></li><li data-type='method'><a href="Figure.html#at">at</a></li><li data-type='method'><a href="Figure.html#copy">copy</a></li><li data-type='method'><a href="Figure.html#isEqual">isEqual</a></li><li data-type='method'><a href="Figure.html#isSimilar">isSimilar</a></li><li data-type='method'><a href="Figure.html#reflect">reflect</a></li><li data-type='method'><a href="Figure.html#reflectAt">reflectAt</a></li><li data-type='method'><a href="Figure.html#rotate">rotate</a></li><li data-type='method'><a href="Figure.html#rotateAt">rotateAt</a></li><li data-type='method'><a href="Figure.html#scale">scale</a></li><li data-type='method'><a href="Figure.html#scaleAt">scaleAt</a></li><li data-type='method'><a href="Figure.html#stretch">stretch</a></li><li data-type='method'><a href="Figure.html#stretchAt">stretchAt</a></li><li data-type='method'><a href="Figure.html#superpose">superpose</a></li><li data-type='method'><a href="Figure.html#transform">transform</a></li><li data-type='method'><a href="Figure.html#translate">translate</a></li></ul></li><li><a href="Group.html">Group</a><ul class='methods'><li data-type='method'><a href="Group.html#align">align</a></li><li data-type='method'><a href="Group.html#at">at</a></li><li data-type='method'><a href="Group.html#copy">copy</a></li><li data-type='method'><a href="Group.html#isEqual">isEqual</a></li><li data-type='method'><a href="Group.html#isSimilar">isSimilar</a></li><li data-type='method'><a href="Group.html#reflect">reflect</a></li><li data-type='method'><a href="Group.html#reflectAt">reflectAt</a></li><li data-type='method'><a href="Group.html#rotate">rotate</a></li><li data-type='method'><a href="Group.html#rotateAt">rotateAt</a></li><li data-type='method'><a href="Group.html#scale">scale</a></li><li data-type='method'><a href="Group.html#scaleAt">scaleAt</a></li><li data-type='method'><a href="Group.html#stretch">stretch</a></li><li data-type='method'><a href="Group.html#stretchAt">stretchAt</a></li><li data-type='method'><a href="Group.html#superpose">superpose</a></li><li data-type='method'><a href="Group.html#transform">transform</a></li><li data-type='method'><a href="Group.html#translate">translate</a></li></ul></li></ul><h3><a href="global.html">Global</a></h3></div>
+</nav>
 
 <div id="main">
-
-    <h1 class="page-title">Source: geometry.js</h1>
+    
+    <h1 class="page-title">geometry.js</h1>
+    
 
     
 
@@ -26,7 +57,19 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>const paperSize = 50
+            <pre class="prettyprint source linenums"><code>/** A pair of numbers, representing a vector.
+ * @typedef {Array&lt;Number>} XY
+ * @example
+ * [2, 3]
+ */
+
+/** A 3×3 transformation matrix as a list of list
+ * @typedef {Array&lt;Array&lt;Number>>} Matrix
+ * @example
+ * [[2, 0, 0],[0, 3, 0],[0, 0, 1]
+ */
+
+const paperSize = 50
 const xRange = [-paperSize/2,paperSize/2]
 const yRange = [-paperSize/2,paperSize/2]
 
@@ -83,40 +126,12 @@ const style = {
 ////////////////////////////////////////////////////////////
 // math
 
-/** Predicate. Returns true if argument is a pair of numbers.
-* @param {*} obj
- * @example
- * // returns true
- * isXY([5, 10]);
- * @example
- * // returns false
- * isXY(point([5, 10]));
- * @returns {bool} 
- */
 function isXY (obj) {
     return (obj instanceof Array)
 	&amp;&amp; obj.length == 2
 	&amp;&amp; obj.every(Number.isFinite)
 }
 
-/** A pair of numbers, representing a vector.
- * @typedef {XY} XY
- */
-
-/** A point or pure coordinates
- * @typedef {Point | XY} Position
- */
-
-/** Returns an object containing point and it's coordinates.
- * @param {Position}
- * @example
- * // returns {'point': Point, 'xy': [5,10]]}
- * pointOrXY([5, 10]);
- * @example
- * // returns {'point': Point, 'xy': [5,10]]}
- * pointOrXY(point([5, 10]));
- * @returns {Object} 
- */
 function pointOrXY (pos) {
     console.assert(pos instanceof Point || isXY(pos),
 		  "pointOrXY: position shoud be either Point or coordinates")
@@ -229,6 +244,9 @@ class Figure {
 	}
     }
 
+    /** Makes functional copy of an object.
+     * @return {Figure}
+     */
     copy (obj = null) {
 	if (!obj) {
 	    let res = new Figure()
@@ -240,78 +258,139 @@ class Figure {
 	}
     }
 
+    /** Object fields equivalence.
+     * @abstract 
+     * @return {bool}
+     */
     isEqual (obj) { return this == obj }
 
+    /** Geometric equivalence.
+     * @abstract 
+     * @return {bool}
+     */
     isSimilar (obj) { return this.isEqual(obj) }
     
+    /** General linear transformation. Returns a copy of the figure.
+     * @abstract 
+     * @param {Matrix} T the 3×3 transformation matrix as a list of list
+     * @return {Figure}
+     */
     transform (T) {
 	console.error("transform is unimplemented")
     }
 
+    /** The refference point of a figure. Used for superposition of figures.
+     * @abstract 
+     * @return {Point}
+     */
     get refPoint () { return point([0,0]) }
     
-    at (point_or_xy) {
-	return this.superpose(this.refPoint, pointOrXY(point_or_xy).point)
+    /** Transformation. Locates refference point of a figure at given position.
+     * @return {Figure}
+     * @param {Point | XY} pos
+     */
+    at (pos) {
+	return this.superpose(this.refPoint, pointOrXY(pos).point)
     }
 
+    /** Transformation. Parallel translation along a given vector.
+     * @return {Figure}
+     * @param {XY} vector
+     */
     translate(vector) {
-	// tested Point
 	return this.transform(translateT(vector))
     }
     
+    /** Transformation. Scaling along the axis.
+     * @return {Figure}
+     * @param {Number} xscale
+     * @param {Number} [yscale = xscale]
+     */
     scale(xscale, yscale = xscale) {
-	// tested Point
 	return this.transform(scaleT(xscale, yscale))
     }
 
-    scaleAt(pnt, xscale, yscale = xscale) {
-	// tested Point
-	const pt = pnt.xy
+    /** Transformation. Scaling along the axis at a given point.
+     * @return {Figure}
+     * @param {Point|XY} pos
+     * @param {Number} xscale
+     * @param {Number} [yscale = xscale]
+     */
+    scaleAt(pos, xscale, yscale = xscale) {
+	const pt = pointOrXY(pos).xy
 	return this.translate(pt.flip()).scale(xscale, yscale).translate(pt)
     }
 
+    /** Transformation. Stretching along the given line, ray or segment.
+     * @return {Figure}
+     * @param {Line} line
+     * @param {Number} scale
+     */
     stretch(line, scale) {
-	// tested Point
 	return this.rotate(-line.angle(0)).scale(1,scale).rotate(line.angle(0))
     }
 
+    /** Transformation. Stretching along the given line, ray or segment at a given point.
+     * @return {Figure}
+     * @param {Point | XY} pos
+     * @param {Line|Ray|Segment} line
+     * @param {Number} scale
+     */
     stretchAt(point, line, scale) {
-	// tested Point
-	const pt = point.xy
+	const pt = pointOrXY(pos).xy
 	return this.translate(pt.flip()).stretch(line, scale).translate(pt)
     }
 
+    /** Transformation. Translation resulting in the superposition of two given points.
+     * @return {Figure}
+     * @param {Point | XY} pnt1 moving point
+     * @param {Point | XY} pnt2 fixed point
+     */
     superpose(pnt1, pnt2) {
-	// tested Point
 	return this.translate(line(pnt1, pnt2).vector)
     }
 
+    /** Transformation. Translation and rotation resulting in the superposition of two given lines, rays or segments.
+     * @return {Figure}
+     * @param {Line|Ray|Segment} line1 moving line
+     * @param {Line|Ray|Segment} line2 fixed line
+     */
     align(line1, line2) {
 	// tested Point
 	return this.rotateAt(line1.point(0), line2.angle(0) - line1.angle(0))
     }
 
+    /** Transformation. Rotation around the origin.
+     * @return {Figure}
+     * @param {angle} ang angle counting CCW
+     */
     rotate(ang) {
-	// tested Point
 	return this.transform(rotT(deg2rad(ang)))
     }
 
-    rotateAt(pnt, ang) {
-	// tested Point
-	console.assert(pnt instanceof Point,'rotation could be done against a Point')
-
-	const pt = pnt.xy
+    /** Transformation. Rotation around the given point.
+     * @return {Figure}
+     * @param {Point|XY} pos 
+     * @param {angle} ang angle counting CCW
+     */
+    rotateAt(pos, ang) {
+	const pt = pointOrXY(pos).xy
 	return this.translate(pt.flip()).rotate(ang).translate(pt)
-	return this
     }
 
+    /** Transformation. Reflection against the axis passing through the origin at given angle.
+     * @return {Figure}
+     * @param {angle} ang angle counting CCW
+     */
     reflect (ang) {
-	// tested Point
 	return this.transform(reflectT(deg2rad(ang)))
     }
     
+    /** Transformation. Reflection against the given point or line. If a point is given then central reflection is performed. If a line is given then axial reflection is done.
+     * @return {Figure}
+     * @param {Point|Line|Ray|Segment} point_or_line
+     */
     reflectAt(point_or_line) {
-	// tested Point
 	const that = point_or_line
 
 	console.assert(that instanceof Point || that instanceof Line,
@@ -370,6 +449,9 @@ class Figure {
 
 ///////////////////////////////////////////////////////////
 // Boxed
+/** Abstract class representing bounding box information.
+ * @extends Figure
+ */
 class BoxedFigure extends Figure {
     constructor (label) {
 	super(label)
@@ -413,17 +495,12 @@ class BoxedFigure extends Figure {
 
 }
 
-class EmptyFigure extends BoxedFigure {
-    constructor () { super() }
-    show (paper) { }
-    copy () { return this } 
-    get box () { return Box.mempty }
-    option () { return this }
-}
 
 ///////////////////////////////////////////////////////////
 // Group
-
+/** Representing a group of figures
+ * @extends BoxedFigure
+ */
 class Group extends BoxedFigure {
     constructor(figures) {
 	super()
@@ -539,9 +616,9 @@ class Point extends BoxedFigure {
 
     get refPoint () { return point(this.xy) }
 
-    at (point_or_xy) {
+    at (pos) {
 	const res = this.copy()	
-	res.xy = point_or_xy instanceof Point ? point_or_xy.xy : point_or_xy
+	res.xy = pos instanceof Point ? pos.xy : pos
 	return res
     }
     
@@ -1273,10 +1350,10 @@ class Angle extends BoxedFigure {
 
     get refPoint () { return this.vertex }
     
-    at (point_or_xy) {
+    at (pos) {
 	//tested
 	const res = this.copy()
-	res.vertex = pointOrXY(point_or_xy).point
+	res.vertex = pointOrXY(pos).point
 	return res
     }
     
@@ -1461,9 +1538,9 @@ class Polygon extends Curve {
     //------------------------------------------------------------
     // Polygon methods
 
-    addVertex (point_or_xy, n = this.number) {
+    addVertex (pos, n = this.number) {
 	var res = this.copy()
-	res.vertices.insert(n, pointOrXY(point_or_xy).point)
+	res.vertices.insert(n, pointOrXY(pos).point)
 	res.resetEquations()
 	return res
     }
@@ -1535,8 +1612,8 @@ class Polygon extends Curve {
     
     labelSegments (labels) { return this.option('segmentLabels',labels) }
    
-    at (point_or_xy, vertex_n = 1) {
-	return this.superpose(this.vertex(vertex_n), pointOrXY(point_or_xy).point)
+    at (pos, vertex_n = 1) {
+	return this.superpose(this.vertex(vertex_n), pointOrXY(pos).point)
     }
     
     through (points) {
@@ -1979,9 +2056,9 @@ class Text extends BoxedFigure {
 
     get refPoint () { return this.pivot }
     
-    at (point_or_xy) {
+    at (pos) {
 	const res = this.copy()
-	res.pivot = pointOrXY(point_or_xy).point
+	res.pivot = pointOrXY(pos).point
 	return res
     }
 
@@ -2191,17 +2268,20 @@ const plane = new Circle(paperSize/2)
 
 </div>
 
-<nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Figure.html">Figure</a></li></ul><h3>Global</h3><ul><li><a href="global.html#isXY">isXY</a></li><li><a href="global.html#pointOrXY">pointOrXY</a></li></ul>
-</nav>
-
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.4</a> on Fri Apr 24 2020 18:17:31 GMT+1200 (+12)
+  
 </footer>
 
-<script> prettyPrint(); </script>
-<script src="scripts/linenumber.js"> </script>
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+<script>
+var list = [{"title":"BoxedFigure","link":"<a href=\"BoxedFigure.html\">BoxedFigure</a>"},{"title":"BoxedFigure#align","link":"<a href=\"BoxedFigure.html#align\">BoxedFigure &rtrif; align</a>"},{"title":"BoxedFigure#at","link":"<a href=\"BoxedFigure.html#at\">BoxedFigure &rtrif; at</a>"},{"title":"BoxedFigure#copy","link":"<a href=\"BoxedFigure.html#copy\">BoxedFigure &rtrif; copy</a>"},{"title":"BoxedFigure#isEqual","link":"<a href=\"BoxedFigure.html#isEqual\">BoxedFigure &rtrif; isEqual</a>"},{"title":"BoxedFigure#isSimilar","link":"<a href=\"BoxedFigure.html#isSimilar\">BoxedFigure &rtrif; isSimilar</a>"},{"title":"BoxedFigure#reflect","link":"<a href=\"BoxedFigure.html#reflect\">BoxedFigure &rtrif; reflect</a>"},{"title":"BoxedFigure#reflectAt","link":"<a href=\"BoxedFigure.html#reflectAt\">BoxedFigure &rtrif; reflectAt</a>"},{"title":"BoxedFigure#rotate","link":"<a href=\"BoxedFigure.html#rotate\">BoxedFigure &rtrif; rotate</a>"},{"title":"BoxedFigure#rotateAt","link":"<a href=\"BoxedFigure.html#rotateAt\">BoxedFigure &rtrif; rotateAt</a>"},{"title":"BoxedFigure#scale","link":"<a href=\"BoxedFigure.html#scale\">BoxedFigure &rtrif; scale</a>"},{"title":"BoxedFigure#scaleAt","link":"<a href=\"BoxedFigure.html#scaleAt\">BoxedFigure &rtrif; scaleAt</a>"},{"title":"BoxedFigure#stretch","link":"<a href=\"BoxedFigure.html#stretch\">BoxedFigure &rtrif; stretch</a>"},{"title":"BoxedFigure#stretchAt","link":"<a href=\"BoxedFigure.html#stretchAt\">BoxedFigure &rtrif; stretchAt</a>"},{"title":"BoxedFigure#superpose","link":"<a href=\"BoxedFigure.html#superpose\">BoxedFigure &rtrif; superpose</a>"},{"title":"BoxedFigure#transform","link":"<a href=\"BoxedFigure.html#transform\">BoxedFigure &rtrif; transform</a>"},{"title":"BoxedFigure#translate","link":"<a href=\"BoxedFigure.html#translate\">BoxedFigure &rtrif; translate</a>"},{"title":"Figure","link":"<a href=\"Figure.html\">Figure</a>"},{"title":"Figure#align","link":"<a href=\"Figure.html#align\">Figure &rtrif; align</a>"},{"title":"Figure#at","link":"<a href=\"Figure.html#at\">Figure &rtrif; at</a>"},{"title":"Figure#copy","link":"<a href=\"Figure.html#copy\">Figure &rtrif; copy</a>"},{"title":"Figure#isEqual","link":"<a href=\"Figure.html#isEqual\">Figure &rtrif; isEqual</a>"},{"title":"Figure#isSimilar","link":"<a href=\"Figure.html#isSimilar\">Figure &rtrif; isSimilar</a>"},{"title":"Figure#reflect","link":"<a href=\"Figure.html#reflect\">Figure &rtrif; reflect</a>"},{"title":"Figure#reflectAt","link":"<a href=\"Figure.html#reflectAt\">Figure &rtrif; reflectAt</a>"},{"title":"Figure#rotate","link":"<a href=\"Figure.html#rotate\">Figure &rtrif; rotate</a>"},{"title":"Figure#rotateAt","link":"<a href=\"Figure.html#rotateAt\">Figure &rtrif; rotateAt</a>"},{"title":"Figure#scale","link":"<a href=\"Figure.html#scale\">Figure &rtrif; scale</a>"},{"title":"Figure#scaleAt","link":"<a href=\"Figure.html#scaleAt\">Figure &rtrif; scaleAt</a>"},{"title":"Figure#stretch","link":"<a href=\"Figure.html#stretch\">Figure &rtrif; stretch</a>"},{"title":"Figure#stretchAt","link":"<a href=\"Figure.html#stretchAt\">Figure &rtrif; stretchAt</a>"},{"title":"Figure#superpose","link":"<a href=\"Figure.html#superpose\">Figure &rtrif; superpose</a>"},{"title":"Figure#transform","link":"<a href=\"Figure.html#transform\">Figure &rtrif; transform</a>"},{"title":"Figure#translate","link":"<a href=\"Figure.html#translate\">Figure &rtrif; translate</a>"},{"title":"Group","link":"<a href=\"Group.html\">Group</a>"},{"title":"Group#align","link":"<a href=\"Group.html#align\">Group &rtrif; align</a>"},{"title":"Group#at","link":"<a href=\"Group.html#at\">Group &rtrif; at</a>"},{"title":"Group#copy","link":"<a href=\"Group.html#copy\">Group &rtrif; copy</a>"},{"title":"Group#isEqual","link":"<a href=\"Group.html#isEqual\">Group &rtrif; isEqual</a>"},{"title":"Group#isSimilar","link":"<a href=\"Group.html#isSimilar\">Group &rtrif; isSimilar</a>"},{"title":"Group#reflect","link":"<a href=\"Group.html#reflect\">Group &rtrif; reflect</a>"},{"title":"Group#reflectAt","link":"<a href=\"Group.html#reflectAt\">Group &rtrif; reflectAt</a>"},{"title":"Group#rotate","link":"<a href=\"Group.html#rotate\">Group &rtrif; rotate</a>"},{"title":"Group#rotateAt","link":"<a href=\"Group.html#rotateAt\">Group &rtrif; rotateAt</a>"},{"title":"Group#scale","link":"<a href=\"Group.html#scale\">Group &rtrif; scale</a>"},{"title":"Group#scaleAt","link":"<a href=\"Group.html#scaleAt\">Group &rtrif; scaleAt</a>"},{"title":"Group#stretch","link":"<a href=\"Group.html#stretch\">Group &rtrif; stretch</a>"},{"title":"Group#stretchAt","link":"<a href=\"Group.html#stretchAt\">Group &rtrif; stretchAt</a>"},{"title":"Group#superpose","link":"<a href=\"Group.html#superpose\">Group &rtrif; superpose</a>"},{"title":"Group#transform","link":"<a href=\"Group.html#transform\">Group &rtrif; transform</a>"},{"title":"Group#translate","link":"<a href=\"Group.html#translate\">Group &rtrif; translate</a>"}];
+setupSearch(list)
+</script>
+
+ 
+<script type="text/javascript" src="scripts/misc.js"></script>
 </body>
 </html>

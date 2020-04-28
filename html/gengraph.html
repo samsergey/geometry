@@ -10,7 +10,7 @@
     <script src='../lib/matrix.js'></script>
     <script src='../lib/graphics.js'></script>
     <script src='../lib/geometry.js'></script>
-<!--    <script src='../lib/geomtests.js'></script>  -->
+    <script src='../lib/geomtests.js'></script>
     <style>
       body {
 	  background:#333;
@@ -29,7 +29,7 @@
       var r = new Ray()
       var l2 = new Segment().at(point([15,0])).tangentTo(c,1)
       var l = new Segment().at(A).tangentTo(c).extendTo(r)
-/*      var C = l.end.copy()
+      var C = l.end.copy()
       var an = new Angle('value').within(A,C,origin).option('labelRadius',5)
       var B = new Point('B').azimuth(A, 60, C, 60)
       var sc1 = new Scale(7).circular().on(c.flip().rotate(90))
@@ -57,7 +57,9 @@
 		     , sc1, sc2, sc3, p2, p, m
 		    ])
       ch.put(g)
-*/
+
+//      ch.put(Ox,Oy, new Circle(5).at([-7,-7]))
+//      ch.put(failedParams["testing tests"][0])
       
     </script>
   </body>

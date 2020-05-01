@@ -6,9 +6,11 @@
     <script src='../../lib/analysis.js'></script>
     <script src='../../lib/functions.js'></script>
     <script src='../../lib/tools.js'></script>
+    <script src='../../lib/testing.js'></script> 
     <script src='../../lib/matrix.js'></script>
     <script src='../../lib/graphics.js'></script>
     <script src='../../lib/geometry.js'></script>
+    <script src='../../lib/geomtests.js'></script>
     <style>
       body {
 	  background:#333;
@@ -30,11 +32,11 @@
       ////////////////////////////////////////////////////////////	
       // fig21
       var ch21 = new Chart('fig21')
-      var pts = anyPoint(6).scale(1/2).translate([-10,10])
+      var pts = new Group(anyPoint().take(6).list).scale(1.5).translate([-10,10])
       var c = new Circle(5)
-      var A = new Point().on(c,pi*1.1)
-      var a = new Segment().through(A).tangentTo(c).extend(-20,8)
-      var b = new Segment().through(A).atAngle(30).extend(-10,20)
+      var A = new Point().on(c,0.51)
+      var a = new Segment().at(A).tangentTo(c).extend(-20,8)
+      var b = new Segment().at(A).atAngle(30).extend(-10,20)
       ch21.put(pts,c,a,b,A).adjustSize()
 
       ////////////////////////////////////////////////////////////	
@@ -43,7 +45,7 @@
       var s = new Segment('4').atAngle(60).extendToLength(20)
           .option('labelOffset',2.5)
       var u = new Segment('1').extendToLength(5).translate([-10,10])
-      var pts = new Group(range(4).map(i => new Point().on(s,i/4)))
+      var pts = new Group(range(5).map(i => new Point().on(s,i/4)))
       ch51.put(s,u,pts).adjustSize()
 
       ////////////////////////////////////////////////////////////	
@@ -53,8 +55,7 @@
       	  .option('labelOffset',2.5)
       var u = new Segment('1').extendToLength(5).translate([-10,10])
       var pts = new Group(range(5).map(i => new Point().on(s,i/4)))
-      s.extendToLength(5*(4.75))
-      ch62.put(s,u,pts).adjustSize()
+      ch62.put(s.extendToLength(5*(4.75)),u,pts).adjustSize()
 
     </script>
   </body>

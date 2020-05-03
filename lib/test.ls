@@ -171,20 +171,16 @@ testLines =
           anyLine()
           anyNum()
         assuming: [ (l) -> l.isNontrivial ]
-        hold: (l, s) ->
-          f = l.locus . l.point
-          equal f(s), s
+        hold: (l, s) -> equal l.locus(l.point(s)), s
 
       * name: "isomorphism 2"
-        skip: yes
         for:
           anyPoint()
           anyNum()
         where: (p, s) -> [ l, s ]
         hold: (p, s) ->
           l = line p, p
-          f = l.locus . l.point
-          l.isTrivial and equal f(s), 0
+          l.isTrivial and equal l.locus(l.point(s)), 0
     ...
 
     #     * name: "isomorphism 3",

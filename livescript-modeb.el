@@ -172,7 +172,7 @@
   :type 'list
   :group 'livescript)
 
-(defcustom livescript-args-compile '("-c")
+(defcustom livescript-args-compile '("-c --prelude")
   "The arguments to pass to `livescript-command' to compile a file."
   :type 'list
   :group 'livescript)
@@ -368,6 +368,9 @@ called `livescript-compiled-buffer-name'."
 (defvar livescript-namespace-regexp "\\b\\(class\\s +\\(\\S +\\)\\)\\b")
 
 ;; Booleans
+(defvar livescript-operator-regexp "`\\(\\w+\\)`")
+
+;; Booleans
 (defvar livescript-boolean-regexp "\\b\\(true\\|false\\|yes\\|no\\|on\\|off\\|null\\|undefined\\|void\\)\\b")
 
 ;; Regular Expressions
@@ -422,6 +425,7 @@ called `livescript-compiled-buffer-name'."
     (,livescript-local-assign-regexp 1 font-lock-variable-name-face)
     (,livescript-regexp-regexp . font-lock-constant-face)
     (,livescript-boolean-regexp . font-lock-constant-face)
+    (,livescript-operator-regexp . font-lock-variable-name-face)
     (,livescript-lambda-regexp . (2 font-lock-function-name-face))
     (,livescript-keywords-regexp 1 font-lock-keyword-face)
     (,livescript-string-interpolation-regexp 0 font-lock-constant-face t)))
@@ -907,7 +911,7 @@ it on by default."
 
 ;; Run livescript-mode for files ending in .livescript.
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.ls\\'" . livescript-mode))
+;(add-to-list 'auto-mode-alist '("\\.ls\\'" . livescript-mode))
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("Slakefile\\'" . livescript-mode))
 ;;; livescript-mode.el ends here

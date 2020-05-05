@@ -113,7 +113,7 @@ report-fail = (res, options) ->
 
 #------------------------------------------------------------
 
-checkProperty = (options) ->
+check-property = (options) ->
     ac = counter: 0
     c = counter: 0
     sc = counter: -2
@@ -153,4 +153,4 @@ checkProperty = (options) ->
     res <<< counts
 
 #------------------------------------------------------------
-window <<< { run-tests, ap }
+window <<< { run-tests, check-property }

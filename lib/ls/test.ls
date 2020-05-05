@@ -14,11 +14,20 @@ any-point = (l) ->
   args(any-XY!)
   .iso(labeled(l)(point), (p) -> [p.xy])
 
-any-angle-value = -> any-num!.range(0,360).precision(1)
+any-angle-value = ->
+    new ArbitraryNumber(0,360)
+    .precision(1)
+    .ascending!
+
+mkAngle = (v, s, e) ->
+    with new Angle()
+      ..vertex = v
+      ..start = s
+      ..end = e
 
 any-angle = ->
-  any-angle-value!
-  .iso(((a) -> new Angle a), (a) -> a.value)
+  args(any-point!, any-angle-value!, any-angle-value!)
+  .iso mkAngle, (a) -> [a.vertex, a.start, a.end]
 
 any-line = (l) ->
   args(any-point!, any-point!)
@@ -434,13 +443,13 @@ test-segments =
         assuming: [ (c) -> c.is-nontrivial  ]
 
 
-      * name : "tangent-to 1"
+      * name : "tangent-to 3"
         for : [any-point!, any-circle!]
         with : (p, c) -> [ p, c, new Segment! .at p .tangent-to c ]
         hold : (p, c, t) -> t .is-parallel-to (c.tangent c.locus t.end)
         assuming : [(p, c) -> c.is-nontrivial and ! c.is-enclosing p]
 
-      * name: "tangent-to 2"
+      * name: "tangent-to 4"
         for: [any-point!, any-circle!]
         with: (p, c) ->
           t = new Segment! .at p .tangent-to c
@@ -450,7 +459,7 @@ test-segments =
           new Line! .at t.end .perpendicular-to t .isContaining c.center
         assuming: [(p, c) -> c.is-nontrivial and !c .is-enclosing p]
 
-      * name: "tangent-to 3"
+      * name: "tangent-to 5"
         for: [any-circle!, any-param!]
         with: (c, x) -> [c, x, new Segment! .at (c.point x) .tangent-to c ]
         hold: (c, x, t) -> t .is-perpendicular-to (c.radius x)
@@ -507,8 +516,22 @@ test-angles =
 
     * name: "copy 1"
       for: [ any-angle! ]
-      hold: (a) ->
-        not (a.copy!) == a and (a.copy!).value == a.value
+      hold: (a) -> (a.copy! .is-equal a)
+
+    * name: "equal 1"
+      for: [ any-angle! ]
+      hold: (a) -> a .is-equal a
+
+    * name: "equal 2"
+      for: [ any-angle!, any-num! ]
+      assuming: [ (a, x) -> x > 0 ]
+      hold: (a, x) -> (a.scaleAt a.vertex, x) .is-equal a
+
+    * name: "equal 3"
+      for: [ any-angle!, any-num! ]
+      assuming: [ (a, x) -> x > 0 ]
+      hold: (a, x) -> (a.rotate a.vertex, x) .is-equal a
+        
 
     * name: "isContaining"
       suite: 

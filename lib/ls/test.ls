@@ -3,18 +3,22 @@ implies = (P, Q) -> if P then Q else true
 labeled = (l) -> (f) -> (...x) -> if l then f(...x).label(l) else f(...x)
 
 any-param = (a = 0, b = 1) ->
-  any-num!
-  .range(a, b)
-  .precision(0.01)
-  .ascending!
+    any-num!
+    .range(a, b)
+    .precision(0.01)
+    .ascending!
 
-anyXY = -> ArbitraryCoordinates!
+any-XY = -> ArbitraryCoordinates!
 
 any-point = (l) ->
-  args(anyXY!)
+  args(any-XY!)
   .iso(labeled(l)(point), (p) -> [p.xy])
 
-any-angle = -> any-num!.range(0,360).precision(1)
+any-angle-value = -> any-num!.range(0,360).precision(1)
+
+any-angle = ->
+  any-angle-value!
+  .iso(((a) -> new Angle a), (a) -> a.value)
 
 any-line = (l) ->
   args(any-point!, any-point!)
@@ -25,7 +29,7 @@ any-segment = (l) ->
   .iso(labeled(l)(segment), (l) -> [l.point(0), l.point(1)])
 
 any-ray = (l) ->
-  args(any-point!, any-angle!)
+  args(any-point!, any-angle-value!)
   .iso(labeled(l)(ray), (r) -> [r.start, r.angle(0)])
 
 any-radius = ->
@@ -39,10 +43,25 @@ any-circle = ->
   .iso(circle, (c) -> [c.center, c.R])
   .ascending!
 
-anyTriangle = ->
+any-triangle = ->
   args(any-point!, any-point!, any-point!)
   .iso(new Triangle, (c) -> c.vertices)
   .filter((t) -> t.isNontrivial)
+
+any =
+  num: any-num
+  param: any-param
+  point: any-point
+  XY: any-XY
+  angle: any-angle
+  angle-value: any-angle-value
+  line: any-line
+  ray: any-ray
+  segment: any-segment
+  circle: any-circle
+  triangle: any-triangle
+  
+window <<< {any}
 
 ############################################################
 
@@ -94,7 +113,7 @@ testPoints =
       hold: (p) -> Point.iso(Point.iso(p).xy).point .is-equal p
       
     * name: "isomorphism 2"
-      for: [ anyXY! ],
+      for: [ any-XY! ],
       hold: (xy) -> Point.iso(Point.iso(xy).point).xy `equal` xy
       
     * name: "copy 1"
@@ -204,7 +223,7 @@ test-lines =
         (p.locus (p .intersections l2).0) `gequal` 0
 
     * name: "parallelity 1"
-      for: [any-line!, anyXY!]
+      for: [any-line!, any-XY!]
       assuming: [(l) -> l.is-nontrivial]
       hold: (l, xy) -> new Line! .at xy .parallel-to l .is-parallel-to l
 	
@@ -246,11 +265,11 @@ test-lines =
       number: 10
       suite: 
         * name: \1
-          for: [anyXY!, anyXY!]
+          for: [any-XY!, any-XY!]
           hold: (p1,p2) -> line-equation(p1, p2) 0 .is-equal (point p1)
 
         * name: \2,
-          for: [anyXY(), anyXY()]
+          for: [any-XY(), any-XY()]
           hold: (p1,p2) -> line-equation(p1,p2) 1 .is-equal (point p2)
 
         * name: \4
@@ -416,13 +435,13 @@ test-segments =
 
 
       * name : "tangent-to 1"
-        for : [any-point!, anyCircle!]
+        for : [any-point!, any-circle!]
         with : (p, c) -> [ p, c, new Segment! .at p .tangent-to c ]
         hold : (p, c, t) -> t .is-parallel-to (c.tangent c.locus t.end)
         assuming : [(p, c) -> c.is-nontrivial and ! c.is-enclosing p]
 
       * name: "tangent-to 2"
-        for: [any-point!, anyCircle!]
+        for: [any-point!, any-circle!]
         with: (p, c) ->
           t = new Segment! .at p .tangent-to c
           [p, c, t]
@@ -432,7 +451,7 @@ test-segments =
         assuming: [(p, c) -> c.is-nontrivial and !c .is-enclosing p]
 
       * name: "tangent-to 3"
-        for: [anyCircle!, any-param!]
+        for: [any-circle!, any-param!]
         with: (c, x) -> [c, x, new Segment! .at (c.point x) .tangent-to c ]
         hold: (c, x, t) -> t .is-perpendicular-to (c.radius x)
         assuming: [ (c) -> c.is-nontrivial ]
@@ -475,16 +494,21 @@ test-angles =
   name: 'Angle'
   suite: 
     * name: "modulus"
-      for: [ anyAngle! ]
+      for: [ any-angle-value! ]
       hold: (a) -> mod(-a, 360) `equal`  mod(360-a, 360)
 
     * name: "isomorphism 1"
-      for: [ anyXY! ]
+      for: [ any-XY! ]
       hold: (v) -> (Angle.iso(Angle.iso(v).angle).vector `cross` v.normalize!) `equal` 0
       
     * name: "isomorphism 2"
-      for: [ anyAngle! ]
+      for: [ any-angle-value! ]
       hold: (a) -> equalMod 360, Angle.iso(Angle.iso(a).vector).angle, a
+
+    * name: "copy 1"
+      for: [ any-angle! ]
+      hold: (a) ->
+        not (a.copy!) == a and (a.copy!).value == a.value
 
     * name: "isContaining"
       suite: 
@@ -506,7 +530,7 @@ test-circle =
   name: 'Circle'
   suite:
     * name: 'IntersectionL 1'
-      for: [ anyCircle!, anyLine! ]
+      for: [ any-circle!, any-line! ]
       assuming: [ (c, l) -> c.isNontrivial and l.isNontrivial ]
       with: (c, l) -> [ c, l, c.intersectionL(l), (c.center .distance l) ]
       hold: (c, l, i, d) ->
@@ -516,12 +540,12 @@ test-circle =
         | \LT => i.length == 2
 
     * name: 'isomorphism 1'
-      for: [ anyCircle!, anyParam! ]
+      for: [ any-circle!, any-param! ]
       hold: (c, t) -> (c.locus c.point t) `equal` t
       assuming: [ (c) -> c.isNontrivial ]
 
     * name: 'isomorphism 2'
-      for: [ anyCircle!, anyParam! ]
+      for: [ any-circle!, any-param! ]
       with: (c, t) -> [ c, c.point(t), t ]
       hold: (c, p) -> (c.point c.locus p) `equal` p
       assuming: [ (c) -> c.isNontrivial ]
@@ -592,4 +616,3 @@ all-tests =
 console.log 'Running tests...'
 run-tests all-tests
 console.log 'Testing done'
-

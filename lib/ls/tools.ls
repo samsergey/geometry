@@ -1,3 +1,4 @@
+#------------------------------------------------------------
 equal = (a, b) ->
   | Number.isFinite(a) and Number.isFinite(b)
     => abs(a - b) < 1e-10 || abs(a - b) < 1e-10*abs(a + b)
@@ -13,4 +14,23 @@ gequal = (a, b) ->  a > b or (a `equal` b)
 lequal = (a, b) ->  a < b or (a `equal` b)
 equalMod = (m) -> (a,b) -> (a %% m) `equal` (b %% m)
 
-window <<<  { equal, nequal, gequal, lequal, equalMod }
+#------------------------------------------------------------
+count = (c) -> (f) -> (...x) ->
+    c.counter++
+    f(...x)
+
+compose = (f, g) -> (...x) -> apply f, g(...x)
+
+compare = (x,y) ->
+    | (x `equal` y) => 'EQ'
+    | x < y	=> 'LT'
+    | x > y => 'GT'
+
+implies = (P, Q) -> (...x) ->
+    if P(...x) then Q(...x) else true
+
+conjunction = (ps) -> (...xs) -> ps.every((p) -> p(...xs))
+
+#------------------------------------------------------------
+window <<<  { equal, nequal, gequal, lequal, equalMod, count }
+window <<<  { compose, compare, implies, conjunction }

@@ -8,28 +8,7 @@ failed-figures = {}
 failed-tests = {}
 
 #------------------------------------------------------------
-run-tests = (json) ->
-    go = (t) ->
-        | t.run     => run-test t
-        | t.for     => run-property t
-        | t.suite   =>
-          C.group("Testing " + t.name) if (t.log and t.name)
-          for entry in t.suite
-            go entry
-          C.groupEnd() if (t.log and t.name) 
-        | t.skip    => return
-        | otherwise => return
 
-    normalization = 
-        fold-JSON \name, (M.path ':'), ''
-        fold-JSON \log, M.or
-        fold-JSON \number, M.keep, json.number or 100
-
-    normalized = M.fold (M.composition), normalization
-
-    go normalized json
-
-#------------------------------------------------------------
 fold-JSON = (field, m, mempty) -> 
     empty = m.mempty || mempty
     go = (value) -> (json) -> 
@@ -41,9 +20,31 @@ fold-JSON = (field, m, mempty) ->
           else res.[field] = newvalue
         res <<< rec
     
-    (json) -> (go (json[field] || empty)) json
+    (json) -> json |> go (json[field] || empty)
 
 #------------------------------------------------------------
+
+run-tests = (json) ->
+    for t in json |> normalize-tests |> flatten-tests
+        switch
+        | t.skip    => continue
+        | t.run     => run-test t
+        | t.for     => run-property t
+
+normalize-tests = (json) ->
+    json |> M.fold do
+        M.composition
+        * fold-JSON \name, (M.path ':'), ''
+          fold-JSON \log, M.or
+          fold-JSON \skip, M.replace
+          fold-JSON \number, M.keep, json.number or 100
+
+flatten-tests = (json) ->
+    | json?.suite => concat-map flatten-tests, json.suite        
+    | otherwise => [json]
+    
+#------------------------------------------------------------
+
 run-test = (test) ->
     unless test.skip
         C.log "Testing #{test.name}..." if test.log
@@ -57,6 +58,7 @@ run-test = (test) ->
             C.log("%cPassed.", 'color:darkgreen') if test.log
 
 #------------------------------------------------------------
+
 run-property = (data) ->
     options = 
         skip: false
@@ -79,6 +81,7 @@ run-property = (data) ->
         | otherwise => report-fail(res, options)
 
 #------------------------------------------------------------
+
 report-success = (res, options) ->
     if options.log
 
@@ -96,6 +99,7 @@ report-success = (res, options) ->
           fmt.percent(passed))
 
 #------------------------------------------------------------
+
 report-fail = (res, options) ->
     augmented-args = options.with or ((...x) -> [...x])
     name = options.name
@@ -119,10 +123,10 @@ check-property = (options) ->
     sc = counter: -2
     augmented-args = options.with or ((...x) -> [...x])
     assertion = options.hold `compose` augmented-args
-    assumption = (count c) (x) -> apply (conjunction options.assuming), x
-    proposition = (count ac) (x) -> apply assertion, x
+    assumption = (x) -> apply (conjunction options.assuming), x |> count c
+    proposition = (x) -> apply assertion, x |> count ac
     test = assumption `implies` proposition
-    obligatory = S.list-product options.including
+    obligatory = options.including |> S.list-product
     samples = -> new Arbitrary! .tuple (options.for) .ascending!
     shrinker = samples! .shrink
     simplicity = (r) ->
@@ -144,8 +148,8 @@ check-property = (options) ->
             | sh.isEmpty              => {ok : ok, sample : h}
             | otherwise               => runc sh, false, depth + 1, h
 
-    runc = (count sc) run
-    res = runc (samples! .take number)
+    runc = run |> count sc
+    res = runc <| samples! .take number
     counts = 
         samples: c.counter
         applied: ac.counter
@@ -153,4 +157,38 @@ check-property = (options) ->
     res <<< counts
 
 #------------------------------------------------------------
-window <<< { run-tests, check-property }
+
+class Arbitrary  extends Sequence
+    (@tailGen, @shrink) ->
+        super ...
+        @shrink ?= (n) -> new Sequence([n])
+        @simplicity = -> Infinity
+        @simplest = undefined
+        
+    @copy = (obj) -> new Arbitrary() <<< obj
+
+    simper = (e, n) -> e .simplicity n
+    shrinker = (x, n) -> -> x .shrink n .generator!
+           
+    @tuple = (xs) ->        
+        with (res = S.tuple xs |> Arbitrary.copy)
+            ..elements = xs
+            ..simplicity = (ns) -> zipWith simper, xs, ns |> norm
+            ..simplest = map (.simplest), xs
+            ..shrink = (ns) ->
+                p = zipWith shrinker, xs, ns |> Gen.product
+                new Sequence p .ascendingBy(res.simplicity, res.simplest)
+            
+    iso: (constr, destr) ->              
+        with (res = @apply constr |> Arbitrary.copy)
+            ..elements = @elements
+            ..simplicity = destr >> @simplicity
+            ..simplest = apply constr, map (.simplest) @elements
+            ..shrink = destr >> @shrink >> (curry Gen.map) constr
+    
+    ascending: ->
+        @setGen <| Gen.ascendingBy @simplicity, @simplest, @generator!
+
+#------------------------------------------------------------
+
+window <<< { run-tests, Arbitrary }

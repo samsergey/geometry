@@ -1,3 +1,14 @@
+
+#------------------------------------------------------------
+
+dot = (a, b) -> sum zipWith (*), a, b
+norm = (v) -> sqrt (v `dot` v)
+vadd = (a, b) -> zipWith (+), a, b
+vsub = (a, b) -> zipWith (-), a, b
+flip = (v) -> map (0 -), v
+vscale = (v, a) -> map (* a), v
+cross = ([x1, y1], [x2, y2]) -> x1*y2 - x2*y1
+
 #------------------------------------------------------------
 equal = (a, b) ->
   | Number.isFinite(a) and Number.isFinite(b)
@@ -32,5 +43,6 @@ implies = (P, Q) -> (...x) ->
 conjunction = (ps) -> (...xs) -> ps.every((p) -> p(...xs))
 
 #------------------------------------------------------------
+window <<<  { norm, dot, cross, flip, vadd, vscale }
 window <<<  { equal, nequal, gequal, lequal, equalMod, count }
 window <<<  { compose, compare, implies, conjunction }

@@ -1,6 +1,7 @@
 M = Monoid
 C = console
 S = Sequence
+G = Gen
 
 #------------------------------------------------------------
 failed-params = {}
@@ -176,19 +177,73 @@ class Arbitrary  extends Sequence
             ..simplicity = (ns) -> zipWith simper, xs, ns |> norm
             ..simplest = map (.simplest), xs
             ..shrink = (ns) ->
-                p = zipWith shrinker, xs, ns |> Gen.product
-                new Sequence p .ascendingBy(res.simplicity, res.simplest)
+                p = zipWith shrinker, xs, ns |> G.product
+                new Sequence p
+                    ..ascendingBy(res.simplicity, res.simplest)
             
     iso: (constr, destr) ->              
-        with (res = @apply constr |> Arbitrary.copy)
+        with Arbitrary.copy(@apply constr)
             ..elements = @elements
             ..simplicity = destr >> @simplicity
             ..simplest = apply constr, map (.simplest) @elements
-            ..shrink = destr >> @shrink >> (curry Gen.map) constr
+            ..shrink = destr >> @shrink >> (.apply constr)
     
-    ascending: ->
-        @setGen <| Gen.ascendingBy @simplicity, @simplest, @generator!
+    ascending: -> @ascendingBy @simplicity, @simplest
 
 #------------------------------------------------------------
 
-window <<< { run-tests, Arbitrary }
+args = (...x) -> Arbitrary.tuple([...x])
+
+#------------------------------------------------------------
+
+class ArbitraryNumber extends Arbitrary
+    (@min, @max) -> 
+        super <| G.rnd min, max, roundUp 0.1
+        @prec = 0.1
+        @shrink = numShrink @prec
+        @simplicity = abs
+        @simplest = 0
+
+    numShrink = (tol, b) -->
+        with S.iterate ((x) -> (roundUp tol) (x + b)/2), 0
+            ..takeWhile((x) -> abs(x - b) >= tol)
+
+    roundUp = (p, x) --> p * round(x/p)
+
+    precision: (prec) ->
+        with new ArbitraryNumber(@min, @max)
+            ..prec = prec
+            ..tailGen = -> G.rnd @min, @max, roundUp prec
+            ..shrink = numShrink prec
+
+    range: (min, max) ->
+        with new ArbitraryNumber(min, max)
+            ..prec = @prec
+            ..tailGen = -> G.rnd min, max, roundUp @prec
+            ..shrink = numShrink @prec
+
+anyNum = -> new ArbitraryNumber(0, 10) .ascending!
+
+anyPos = (min = -15, max = 15) ->
+    x = new ArbitraryNumber(min, max) .precision 0.25
+    y = new ArbitraryNumber(min, max) .precision 0.25
+    with (xy = Arbitrary.tuple [x, y])
+        ..simplicity = norm
+        ..simplest = [0 0]
+        ..shrink = (p) ->
+            new Sequence
+            <| sortBy ((-) `over` norm)
+            <| xy.shrink p .take 500 .list
+        ..ascending!
+
+#------------------------------------------------------------
+exports = {
+    run-tests
+    Arbitrary
+    args
+    ArbitraryNumber
+    anyNum
+    anyPos
+    }
+
+window <<< exports

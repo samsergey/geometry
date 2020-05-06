@@ -43,15 +43,15 @@ Gen = class
             break if any (.done), res
             yield map (.value), res
     
-    @apply = (f, g) !->*
+    @apply = (f, g) !-->*
         until (x = g.next!).done
             yield apply f, x.value
 
-    @map = (f, g) !->*
+    @map = (f, g) !-->*
         until (x = g.next!).done
             yield f(x.value)
 
-    @take = (n, g) !->*
+    @take = (n, g) !-->*
         i = n
         until (i-- <= 0) or ((x = g.next!).done)
             yield x.value
@@ -60,21 +60,21 @@ Gen = class
         for x in lst
             yield x
     
-    @cons = (x,g) !->*
+    @cons = (x, g) !->*
         yield x
         yield from g
     
-    @dropWhile = (p, g) !->*
+    @dropWhile = (p, g) !-->*
         until (x = g.next!).done or !(p x.value)
             void
         yield x.value
         yield from g
     
-    @takeWhile = (p, g) !->*
+    @takeWhile = (p, g) !-->*
         while !(x = g.next!).done and p(x.value)
             yield x.value if p x.value
         
-    @filter = (p, g) !->*
+    @filter = (p, g) !-->*
         until (x = g.next!).done
             yield x if p x
     
@@ -87,7 +87,7 @@ Gen = class
         | f(lst.0) >= f(x) => [x] ++ lst
         | otherwise        => [lst.0] ++ insert (tail lst), x, f
 
-    @ascendingBy = (f, x0, g) !->*
+    @ascendingBy = (f, x0) -> (g) !->*
         buffer = [x0]
         for from 0 to 32
             x = g.next!
@@ -132,6 +132,8 @@ Sequence = class
             ..head = step.value
             ..isEmpty = step.done
             ..tailGen = -> g
+
+    modGen: (f) -> @setGen <| f @generator!
            
     next: -> 
         step = @tailGen!.next!
@@ -139,39 +141,37 @@ Sequence = class
             ..head = step.value
             ..isEmpty = step.done
 
-    take: (n) ->
-        with @
-            ..setGen (@head `Gen.cons` Gen.take(n-1, @tailGen!))
+    take: (n) -> @setGen <| Gen.take n <| @head `Gen.cons` @tailGen!
 
     @tuple = (seqs) ->
         empty = any (.isEmpty), seqs
         with new Sequence()
             ..isEmpty = empty
             ..head = if empty then undefined else map (.head), seqs
-            ..tailGen = -> Gen.zip(map (.tailGen()), seqs)
+            ..tailGen = -> Gen.zip <| map (.tailGen!), seqs
             ..elements = seqs
 
     @sum = (seqs) ->
         | seqs.length == 0 =>  new Sequence([])
         | otherwize =>
-            s = map (.generator()) seqs
-            with new Sequence Gen.sum s
+            s = map (.generator!) seqs
+            with new Sequence <| Gen.sum s
                 ..elements = seqs.0.elements
   
     @list-product = (ls) ->
-        new Sequence Gen.product(map ((l) -> -> Gen.list l), ls)
+        new Sequence <| Gen.product <| map ((l) -> -> Gen.list l), ls
 
-    apply: (f) -> @setGen Gen.apply(f, @generator!)
+    apply: (f) -> @modGen <| Gen.apply f
 
-    map: (f) -> @setGen Gen.map(f, @generator!)
+    map: (f) -> @modGen <| Gen.map f
 
-    dropWhile: (f) -> @setGen Gen.dropWhile(f, @generator!)
+    dropWhile: (f) -> @modGen <| Gen.dropWhile f
 
-    takeWhile: (f) -> @setGen Gen.takeWhile(f, @generator!)
+    takeWhile: (f) -> @modGen <| Gen.takeWhile f
 
-    filter: (p) -> @setGen Gen.filter(p, @generator!)
+    filter: (p) -> @modGen <| Gen.filter p
 
-    ascendingBy: (f, x0) -> @setGen Gen.ascendingBy(f, x0, @generator!)
+    ascendingBy: (f, x0) -> @modGen <| Gen.ascendingBy f, x0
                         
 window <<< {Gen, Sequence}
                         

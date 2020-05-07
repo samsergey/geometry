@@ -159,7 +159,7 @@ Sequence = class
                 ..elements = seqs.0.elements
   
     @list-product = (ls) ->
-        new Sequence <| Gen.product <| map ((l) -> -> Gen.list l), ls
+        new Sequence ( Gen.product ( map ((l) -> -> Gen.list l), ls))
 
     apply: (f) -> @modGen <| Gen.apply f
 
@@ -172,6 +172,11 @@ Sequence = class
     filter: (p) -> @modGen <| Gen.filter p
 
     ascendingBy: (f, x0) -> @modGen <| Gen.ascendingBy f, x0
-                        
+
+    toString: ->
+        if @isEmpty
+            then "<empty>"
+            else "<#{@head.toString()} ...>"
+                                                                        
 window <<< {Gen, Sequence}
                         

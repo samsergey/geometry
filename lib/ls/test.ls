@@ -24,83 +24,79 @@ mkAngle = (v, s, e) ->
       ..end = e
 
 any-angle = ->
-  args any-point!, any-angle-value!, any-angle-value!
-  .iso mkAngle, (a) -> [a.vertex, a.start, a.end]
+    args any-point!, any-angle-value!, any-angle-value!
+    .iso mkAngle, (a) -> [a.vertex, a.start, a.end]
 
 any-segment = (l) ->
-  args any-point!, any-point!
-  .iso (segment `labeled` l), (s) -> [s.point(0), s.point(1)]
+    args any-point!, any-point!
+    .iso (segment `labeled` l), (s) -> [s.point(0), s.point(1)]
 
 any-line = (l) ->
-  args any-point!, any-point!
-  .iso (line `labeled` l), (l) -> [l.point(0), l.point(1)]
+    args any-point!, any-point!
+    .iso (line `labeled` l), (l) -> [l.point(0), l.point(1)]
 
 any-ray = (l) ->
-  args any-point!, any-angle-value!
-  .iso (ray `labeled` l), (r) -> [r.start, r.angle(0)]
+    args any-point!, any-angle-value!
+    .iso (ray `labeled` l), (r) -> [r.start, r.angle(0)]
 
 any-radius = ->
-  any-num!
-  .range 1, paper-size/4
-  .precision 0.25
-  .ascending!
+    any-num!
+    .range 1, paper-size/4
+    .precision 0.25
+    .ascending!
 
 any-circle = ->
-  args any-point!, any-radius!
-  .iso circle, (c) -> [c.center, c.R]
-#  .ascending!
+    args any-radius!, any-point!
+    .iso circle, (c) -> [c.R, c.center]
+    .ascending!
 
 any-triangle = ->
-  args any-point!, any-point!, any-point!
-  .iso new Triangle, (.vertices)
-  .filter (.isNontrivial)
+    args any-point!, any-point!, any-point!
+    .iso new Triangle, (.vertices)
+    .filter (.isNontrivial)
 
-window <<< { any-param, any-point, any-angle-value }
-window <<< { any-angle, any-line, any-ray, any-segment  }
-window <<< { any-radius, any-circle, any-triangle }
-
-# arb =
-#   num: any-num
-#   param: any-param
-#   point: any-point
-#   XY: any-pos
-#   angle: any-angle
-#   angle-value: any-angle-value
-#   line: any-line
-#   ray: any-ray
-#   segment: any-segment
-#   circle: any-circle
-#   triangle: any-triangle
+Any =
+    num: any-num
+    param: any-param
+    point: any-point
+    xy: any-pos
+    angle: any-angle
+    angle-value: any-angle-value
+    line: any-line
+    ray: any-ray
+    segment: any-segment
+    circle: any-circle
+    triangle: any-triangle
   
-# window <<< {arb}
+window <<< { Any }
 
-# ############################################################
+############################################################
 
-# test-tests =
-#   name: \Tests
-#   skip: yes
-#   log: on
-#   suite: 
-#     * name: "1"
-#       for: [ any-num!.range(0,100).precision(0.1) ]
-#       hold: (n) -> n == 4
-#       number: 10
-      
-#     * name: "2"
-#       for:
-#         any-num!
-#         any-num!
-#       hold: (n, m) -> n >= m
-#       log: off
-      
-#     * name: "3"
-#       for:
-#         any-circle!
-#         any-point!
-#       assuming:
-#         (c, p) -> c.R > 1 and (c.center .is-Not-equal p)
-#       hold: (c, p) -> ! (c .is-enclosing  p)
+test-tests =
+    name: \Tests
+    skip: no
+    log: on
+    suite: 
+        * name: "1"
+          for: [ any-num!.range(0,100).precision(0.1) ]
+          hold: (n) -> n == 4
+          number: 10
+    
+        * name: "2"
+          for:
+            any-num!
+            any-num!
+          hold: (n, m) -> n >= m
+          log: off
+        
+        * name: "3"
+          for:
+            any-circle!
+            any-point!
+          assuming: [ (c, p) -> c.R > 1 and (c.center .is-Not-equal p) ]
+          hold: (c, p) -> ! (c .is-enclosing  p)
 
+window <<< {test-tests}
 # ############################################################
 
 # testPoints = 

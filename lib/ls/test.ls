@@ -42,13 +42,13 @@ any-ray = (l) ->
 any-radius = ->
   any-num!
   .range 1, paper-size/4
-  .precision 1
+  .precision 0.25
   .ascending!
 
 any-circle = ->
   args any-point!, any-radius!
   .iso circle, (c) -> [c.center, c.R]
-  .ascending!
+#  .ascending!
 
 any-triangle = ->
   args any-point!, any-point!, any-point!

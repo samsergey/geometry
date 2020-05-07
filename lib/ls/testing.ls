@@ -196,12 +196,11 @@ class Arbitrary  extends Sequence
             
     iso: (constr, destr) ->
         shf = Arbitrary.tuple(@elements).shrink
-        with Arbitrary.copy(@)
+        with Arbitrary.copy(@apply(constr))
             ..elements = @elements
             ..simplicity = destr >> @simplicity
             ..simplest = apply constr, map (.simplest) @elements
             ..shrink = destr >> shf >> (.apply constr)
-            ..apply(constr)
     
     ascending: -> @ascendingBy @simplicity, @simplest
 

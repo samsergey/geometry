@@ -8,6 +8,8 @@ vsub = (a, b) -> zipWith (-), a, b
 flip = (v) -> map (0 -), v
 vscale = (v, a) -> map (* a), v
 cross = ([x1, y1], [x2, y2]) -> x1*y2 - x2*y1
+normalize = (v) -> if n == 0 then v else vscale v (1/(norm v))
+
 
 #------------------------------------------------------------
 equal = (a, b) ->

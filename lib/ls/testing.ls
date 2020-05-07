@@ -139,14 +139,14 @@ check-property = (options) ->
     run = (seq, ok = true, depth = 0, last) ->
         res = seq .dropWhile test
         switch
-        | res.isEmpty                 => {ok : ok, sample : last}
-        | !ok and res.tail.isEmpty    => {ok : ok, sample : res.head}
+        | res.isEmpty                 => {ok: ok, sample: last}
+        | !ok and res.tail.isEmpty    => {ok: ok, sample: res.head}
         | otherwise =>
             h = res.head
             sh = shrinker(h).take(options.shrinks)
             switch
-            | depth > options.shrinks => {ok : ok, sample : h}
-            | sh.isEmpty              => {ok : ok, sample : h}
+            | depth > options.shrinks => {ok: ok, sample: h}
+            | sh.isEmpty              => {ok: ok, sample: h}
             | otherwise               => runc sh, false, depth + 1, h
 
     runc = run |> count sc
@@ -161,6 +161,7 @@ check-property = (options) ->
 
 class Arbitrary  extends Sequence
     (@tailGen, @shrink) ->
+        #new super(@tailGen)
         super ...
         @shrink ?= (n) -> new Sequence([n])
         @simplicity = -> Infinity
@@ -180,13 +181,16 @@ class Arbitrary  extends Sequence
                 p = zipWith shrinker, xs, ns |> G.product
                 new Sequence p
                     ..ascendingBy(res.simplicity, res.simplest)
+                    ..tail
             
-    iso: (constr, destr) ->              
-        with Arbitrary.copy(@apply constr)
+    iso: (constr, destr) ~>
+        shf = Arbitrary.tuple(@elements).shrink
+        with Arbitrary.copy(@)
             ..elements = @elements
             ..simplicity = destr >> @simplicity
             ..simplest = apply constr, map (.simplest) @elements
-            ..shrink = destr >> @shrink >> (.apply constr)
+            ..shrink = destr >> shf >> (.apply constr)
+            ..apply(constr)
     
     ascending: -> @ascendingBy @simplicity, @simplest
 
@@ -204,7 +208,7 @@ class ArbitraryNumber extends Arbitrary
         @simplicity = abs
         @simplest = 0
 
-    numShrink = (tol, b) -->
+    numShrink = (tol, b) --> 
         with S.iterate ((x) -> (roundUp tol) (x + b)/2), 0
             ..takeWhile((x) -> abs(x - b) >= tol)
 
@@ -222,21 +226,22 @@ class ArbitraryNumber extends Arbitrary
             ..tailGen = -> G.rnd min, max, roundUp @prec
             ..shrink = numShrink @prec
 
-anyNum = -> new ArbitraryNumber(0, 10) .ascending!
+any-num = -> new ArbitraryNumber(0, 10) .ascending!
 
-anyPos = (min = -15, max = 15) ->
+any-pos = (min = -15, max = 15) ->
     x = new ArbitraryNumber(min, max) .precision 0.25
     y = new ArbitraryNumber(min, max) .precision 0.25
-    with (xy = Arbitrary.tuple [x, y])
+    xy = Arbitrary.tuple [x, y]
+    with (Arbitrary.tuple [x, y])
         ..simplicity = norm
         ..simplest = [0 0]
         ..shrink = (p) ->
-            new Sequence
-            <| sortBy ((-) `over` norm)
-            <| xy.shrink p .take 500 .list
+            srinks = xy.shrink p .take 500 .list
+            new Sequence (sortBy norm, srinks)
         ..ascending!
 
 #------------------------------------------------------------
+
 exports = {
     run-tests
     Arbitrary

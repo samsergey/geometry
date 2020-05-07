@@ -167,7 +167,18 @@ class Arbitrary  extends Sequence
         @simplicity = -> Infinity
         @simplest = undefined
         
-    @copy = (obj) -> new Arbitrary() <<< obj
+    @copy = (obj) ->
+        with (res = new Arbitrary!)
+            ..isEmpty = obj.isEmpty
+            ..head = obj.head
+            ..tailGen = obj.tailGen
+        if (obj instanceof Arbitrary)
+            with res
+                ..elements = obj.elements and obj.elements.copy()
+                ..simplicity = obj.simplicity
+                ..simplest = obj.simplest
+                ..shrink = obj.shrink
+        res
 
     simper = (e, n) -> e .simplicity n
     shrinker = (x, n) -> -> x .shrink n .generator!
@@ -183,7 +194,7 @@ class Arbitrary  extends Sequence
                     ..ascendingBy(res.simplicity, res.simplest)
                     ..tail
             
-    iso: (constr, destr) ~>
+    iso: (constr, destr) ->
         shf = Arbitrary.tuple(@elements).shrink
         with Arbitrary.copy(@)
             ..elements = @elements

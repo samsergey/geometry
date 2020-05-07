@@ -147,7 +147,7 @@
   "A LiveScript major mode."
   :group 'languages)
 
-(defcustom livescript-tab-width 2
+(defcustom livescript-tab-width 4
   "The tab width to use when indenting."
   :type 'integer
   :group 'livescript)
@@ -359,7 +359,7 @@ called `livescript-compiled-buffer-name'."
 (defvar livescript-assign-regexp "\\(\\(\\w\\|\\.\\|_\\|$\\|-\\)+?\s*\\):")
 
 ;; Local Assignment
-(defvar livescript-local-assign-regexp "\\(\\(_\\|\\w\\|\\$\\)+\\)\s+=")
+(defvar livescript-local-assign-regexp "\\(\\(-\\|_\\|\\w\\|\\$\\)+\\)\s+=")
 
 ;; Lambda
 (defvar livescript-lambda-regexp "\\((.+)\\)?\\s *\\(->\\|=>\\)")
@@ -371,7 +371,7 @@ called `livescript-compiled-buffer-name'."
 (defvar livescript-operator-regexp "`\\(\\w+\\)`")
 
 ;; Booleans
-(defvar livescript-boolean-regexp "\\b\\(true\\|false\\|yes\\|no\\|on\\|off\\|null\\|undefined\\|void\\)\\b")
+(defvar livescript-boolean-regexp "\\b\\(true\\|false\\|yes\\|no\\|on\\|off\\|null\\|undefined\\|void\\|Infinity\\|NaN\\)\\b")
 
 ;; Regular Expressions
 (defvar livescript-regexp-regexp "\\/\\(\\\\.\\|\\[\\(\\\\.\\|.\\)+?\\]\\|[^/
@@ -382,7 +382,7 @@ called `livescript-compiled-buffer-name'."
       '("if" "else" "new" "return" "try" "catch"
         "finally" "throw" "break" "continue" "for" "in" "while"
         "delete" "instanceof" "typeof" "switch" "super" "extends"
-        "class" "until" "loop"))
+        "class" "until" "loop" "yield"))
 
 ;; Reserved keywords either by JS or CS.
 (defvar livescript-js-reserved
@@ -393,7 +393,7 @@ called `livescript-compiled-buffer-name'."
 ;; LiveScript keywords.
 (defvar livescript-cs-keywords
   '("then" "unless" "and" "or" "is" "own"
-    "isnt" "not" "of" "by" "when"))
+    "isnt" "not" "of" "by" "when" "from" "to" "till"))
 
 ;; Iced LiveScript keywords
 (defvar iced-livescript-cs-keywords
@@ -417,6 +417,7 @@ called `livescript-compiled-buffer-name'."
   ;; because otherwise the keyword "state" in the function
   ;; "state_entry" would be highlighted.
   `((,livescript-word-regexp . font-lock-string-face)
+    (,livescript-keywords-regexp 1 font-lock-keyword-face)
     (,livescript-word-list-regexp . font-lock-string-face)
     (,livescript-string-regexp . font-lock-string-face)
     (,livescript-this-regexp . font-lock-variable-name-face)
@@ -427,7 +428,6 @@ called `livescript-compiled-buffer-name'."
     (,livescript-boolean-regexp . font-lock-constant-face)
     (,livescript-operator-regexp . font-lock-variable-name-face)
     (,livescript-lambda-regexp . (2 font-lock-function-name-face))
-    (,livescript-keywords-regexp 1 font-lock-keyword-face)
     (,livescript-string-interpolation-regexp 0 font-lock-constant-face t)))
 
 ;;
@@ -915,3 +915,73 @@ it on by default."
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("Slakefile\\'" . livescript-mode))
 ;;; livescript-mode.el ends here
+
+(defun unicode-symbol (name)
+    "Translate a symbolic name for a Unicode character -- e.g., LEFT-ARROW
+  or GREATER-THAN into an actual Unicode character code. "
+    (decode-char 'ucs (case name
+                        ;; arrows
+                        ('left-arrow 8592)
+                        ('up-arrow 8593)
+                        ('right-arrow 8594)
+                        ('down-arrow 8595)
+                        ;; boxes
+                        ('double-vertical-bar #X2551)
+                        ;; relational operators
+                        ('equal #X003d)
+                        ('not-equal #X2260)
+                        ('identical #X2261)
+                        ('not-identical #X2262)
+                        ('less-than #X003c)
+                        ('greater-than #X003e)
+                        ('less-than-or-equal-to #X2264)
+                        ('greater-than-or-equal-to #X2265)
+                        ;; logical operators
+                        ('logical-and #X2227)
+                        ('logical-or #X2228)
+                        ('logical-neg #X00AC)
+                        ;; misc
+                        ('nil #X2205)
+                        ('horizontal-ellipsis #X2026)
+                        ('double-exclamation #X203C)
+                        ('prime #X2032)
+                        ('double-prime #X2033)
+                        ('for-all #X2200)
+                        ('there-exists #X2203)
+                        ('element-of #X2208)
+                        ;; mathematical operators
+                        ('square-root #X221A)
+                        ('squared #X00B2)
+                        ('cubed #X00B3)
+                        ;; letters
+                        ('lambda #X03BB)
+                        ('alpha #X03B1)
+                        ('beta #X03B2)
+                        ('gamma #X03B3)
+                        ('delta #X03B4))))
+                        
+  (defun substitute-pattern-with-unicode (pattern symbol)
+    "Add a font lock hook to replace the matched part of PATTERN with the 
+  Unicode symbol SYMBOL looked up with UNICODE-SYMBOL."
+    (interactive)
+    (font-lock-add-keywords
+     nil `((,pattern (0 (progn (compose-region (match-beginning 1) (match-end 1)
+                                              ,(unicode-symbol symbol))
+                              nil))))))
+  
+  (defun substitute-patterns-with-unicode (patterns)
+    "Call SUBSTITUTE-PATTERN-WITH-UNICODE repeatedly."
+    (mapcar #'(lambda (x)
+                (substitute-pattern-with-unicode (car x)
+                                                 (cdr x)))
+            patterns))
+
+(defun livescript-unicode ()
+    (interactive)
+    (substitute-patterns-with-unicode
+     (list (cons "\\<\\(not\\)\\>" 'logical-neg)
+           (cons "\\(>=\\)" 'greater-than-or-equal-to)
+           (cons "\\(<=\\)" 'less-than-or-equal-to)
+           (cons "\\(!!\\)" 'double-exclamation)
+           (cons " \\(\\.\\.\\)\\w" 'horizontal-ellipsis))))
+  

@@ -145,7 +145,7 @@ Sequence = class
 
     @tuple = (seqs) ->
         empty = any (.isEmpty), seqs
-        with new Sequence()
+        with new Sequence!
             ..isEmpty = empty
             ..head = if empty then undefined else map (.head), seqs
             ..tailGen = -> Gen.zip <| map (.tailGen!), seqs
@@ -155,11 +155,13 @@ Sequence = class
         | seqs.length == 0 =>  new Sequence([])
         | otherwize =>
             s = map (.generator!) seqs
-            with new Sequence <| Gen.sum s
+            with new Sequence _ <| Gen.sum s
                 ..elements = seqs.0.elements
   
     @list-product = (ls) ->
-        new Sequence ( Gen.product ( map ((l) -> -> Gen.list l), ls))
+        | ls.length == 0 => new Sequence([])
+        | ls.length >  0 => 
+            new Sequence _ <| Gen.product <| map ((l) -> -> Gen.list l), ls
 
     apply: (f) -> @modGen <| Gen.apply f
 

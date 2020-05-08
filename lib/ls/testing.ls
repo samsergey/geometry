@@ -49,9 +49,10 @@ Test = class
         unless test.skip
             C.log "Testing #{test.name}..." if test.log
             result = test.run!
-            unless result `equal` test.result
+            expected = test.result or true
+            unless result `equal` expected
                 C.groupCollapsed '%cTest %s failed', 'color:red', test.name
-                C.log '  expected: %c%s', 'color:blue', test.result.toString!
+                C.log '  expected: %c%s', 'color:blue', expected.toString!
                 C.log '  got:      %c%s', 'color:blue', result.toString!
                 C.groupEnd()
             else
@@ -112,7 +113,7 @@ Test = class
         @@failed.params[name] = params
         @@failed.tests[name] = options
         @@failed.figures[name] =
-            new Group(params .filter((x) -> x instanceof Figure))
+            new Group _ <| params.filter (instanceof Figure)
 
 
     check-property = (options) ->

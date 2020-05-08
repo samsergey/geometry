@@ -72,31 +72,72 @@ window <<< { Any }
 
 ############################################################
 
+test-sequence =
+    name: \Sequences
+    log: on
+    suite:
+        *   name: \head
+            run: -> new Sequence([1 to 5]).head
+            result: 1 
+        *   name: \tail1
+            run: -> new Sequence([1 to 5]).tail.head
+            result: 2 
+        *   name: \tail2
+            run: -> new Sequence([1 to 5]).tail.tail.head
+            result: 3 
+        *   name: \list1
+            run: -> new Sequence([1 to 5]).list
+            result: [1 to 5]
+        *   name: \take1
+            run: -> new Sequence([1 to 5]).take(3).list
+            result: [1,2,3]
+        *   name: \take2
+            run: -> new Sequence([1 to 5]).take(30).list
+            result: [1 to 5]
+        *   name: \emptyness1
+            run: -> new Sequence([]).isEmpty
+        *   name: \emptyness2
+            run: -> ! new Sequence([1,2]).isEmpty
+        *   name: \emptyness3
+            run: -> new Sequence([1]).tail.isEmpty
+        *   name: \product1
+            run: -> Sequence.list-product([]).isEmpty
+        *   name: \product2
+            run: -> Sequence.list-product([[1,2]]).list
+            result: [[1], [2]]
+
+
+############################################################
 test-tests =
     name: \Tests
     skip: no
     log: on
     suite: 
-        * name: "1"
+        *   name: "1"
+            run: -> 5
+            result: 5
+            number: 10
+
+        * name: "2"
           for: [ any-num!.range(0,100).precision(0.1) ]
-          hold: (n) -> n == 4
+          hold: (n) -> n < 4
           number: 10
     
-        * name: "2"
+        * name: "3"
           for:
             any-num!
             any-num!
           hold: (n, m) -> n >= m
           log: off
         
-        * name: "3"
+        * name: "4"
           for:
             any-circle!
             any-point!
           assuming: [ (c, p) -> c.R > 1 and (c.center .is-Not-equal p) ]
           hold: (c, p) -> ! (c .is-enclosing  p)
 
-window <<< {test-tests}
+window <<< {test-sequence, test-tests}
 # ############################################################
 
 # testPoints = 

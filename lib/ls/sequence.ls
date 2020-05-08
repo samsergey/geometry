@@ -67,8 +67,9 @@ Gen = class
     @dropWhile = (p, g) !-->*
         until (x = g.next!).done or !(p x.value)
             void
-        yield x.value
-        yield from g
+        unless x.done
+            yield x.value
+            yield from g
     
     @takeWhile = (p, g) !-->*
         while !(x = g.next!).done and p(x.value)

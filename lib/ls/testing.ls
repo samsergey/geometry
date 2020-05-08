@@ -2,6 +2,7 @@ M = Monoid
 C = console
 S = Sequence
 G = Gen
+var xxx
 
 Test = class
 
@@ -24,14 +25,14 @@ Test = class
         (json) -> json |> go (json[field] || empty)
 
     @run = (json) !->
-        for t in json |> @@normalize |> @@flatten
+        for t in json |> normalize |> flatten
             switch
             | t.skip    => continue
             | t.run     => run-test t
             | t.for     => run-property t
 
 
-    @normalize = (json) ->
+    normalize = (json) ->
         json |> M.fold do
             M.composition
             * fold-JSON \name, (M.path ':'), ''
@@ -40,8 +41,8 @@ Test = class
               fold-JSON \number, M.keep, (json.number or 100)
 
 
-    @flatten = (json) ->
-        | json?.suite => concat-map @@flatten, json.suite        
+    flatten = (json) ->
+        | json?.suite => concat-map flatten, json.suite        
         | otherwise => [json]
 
 
@@ -59,7 +60,7 @@ Test = class
                 C.log("%cPassed.", 'color:darkgreen') if test.log
 
 
-    run-property = (data) ->
+    run-property = (data) !->
         options = 
             skip: false
             assuming: []
@@ -82,6 +83,38 @@ Test = class
                     options['name']
             | res.ok => report-success res, options
             | otherwise => report-fail res, options 
+
+    check-property = (options) ->
+        ac = counter: 0
+        c = counter: 0
+        sc = counter: -2
+        augmented-args = options.with or ((...x) -> [...x])
+        proposition = count ac <| (x) -> apply options.hold, (apply augmented-args, x)
+        assumption = count ac <| (x) -> apply (conjunction options.assuming), x
+        test = assumption `implies` proposition
+        samples = -> Arbitrary.tuple (options.for)
+
+        run = (seq, ok = true, depth = 0, last) ->
+            res = seq.dropWhile(test)
+            switch
+            | res.isEmpty              => {ok: ok, sample: last}
+            | !ok and res.tail.isEmpty => {ok: ok, sample: res.head}
+            | otherwise =>
+                h = res.head
+                sh = samples! .shrink h .take options.shrinks
+                switch
+                | depth > options.shrinks => {ok: ok, sample: h}
+                | sh.isEmpty              => {ok: ok, sample: h}
+                | otherwise               => runc sh, false, depth + 1, h
+
+        runc = count sc <| run
+        res = runc <| samples! .take options.number
+        counts = 
+            samples: c.counter
+            applied: ac.counter
+            shrinks: sc.counter
+        res <<< counts
+
 
     report-success = (res, options) ->
         if options.log
@@ -116,47 +149,6 @@ Test = class
             new Group _ <| params.filter (instanceof Figure)
 
 
-    check-property = (options) ->
-        ac = counter: 0
-        c = counter: 0
-        sc = counter: -2
-        augmented-args = options.with or ((...x) -> [...x])
-        assertion = options.hold `compose` augmented-args
-        assumption = (x) -> (apply (conjunction options.assuming), x) |> count c
-        proposition = (x) -> (apply assertion, x) |> count ac
-        test = (x) -> if assumption x then proposition x else true
-        #obligatory = options.including |> S.list-product
-        samples = -> Arbitrary.tuple (options.for)# .ascending!
-        shrinker = samples! .shrink
-        simplicity = (r) ->
-            if r.sample
-              then samples! .simplicity r.sample
-              else Infinity
-        number = options.number
-
-        run = (seq, ok = true, depth = 0, last) ->
-            xxx = test
-            res = seq .dropWhile test
-            switch
-            | res.isEmpty                 => {ok: ok, sample: last}
-            | !ok and res.tail.isEmpty    => {ok: ok, sample: res.head}
-            | otherwise =>
-                h = res.head
-                sh = shrinker(h).take(options.shrinks)
-                switch
-                | depth > options.shrinks => {ok: ok, sample: h}
-                | sh.isEmpty              => {ok: ok, sample: h}
-                | otherwise               => runc sh, false, depth + 1, h
-
-        runc = run |> count sc
-        res = runc <| samples! .take number
-        counts = 
-            samples: c.counter
-            applied: ac.counter
-            shrinks: sc.counter
-        res <<< counts
-
-var xxx
 window <<< {Test, xxx}            
 #------------------------------------------------------------
 

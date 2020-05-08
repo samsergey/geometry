@@ -111,33 +111,34 @@ test-sequence =
 
 
 ############################################################
+
 test-tests =
     name: \Tests
     skip: no
     log: on
     suite: 
-        *   name: "1"
-            run: -> 5
-            result: 5
-            number: 10
+        * name: "1"
+          run: -> 5
+          result: 5
+          number: 10
 
-        *   name: "2"
-            for: [ any-num!.range(0,100).precision(0.1) ]
-            hold: (n) -> n < 4
-            number: 10
-    
+        * name: "2"
+          for: [ any-num! .range(0, 10) ]
+          with: (n) -> [n, n*n]
+          hold: (n, x) -> x < 16
+          assuming: [ (x) -> x % 2 == 0 ]
+            
         * name: "3"
           for:
             any-num!
             any-num!
           hold: (n, m) -> n >= m
-          log: off
         
         * name: "4"
           for:
             any-circle!
             any-point!
-          assuming: [ (c, p) -> c.R > 1 and (c.center .is-Not-equal p) ]
+          assuming: [ (c, p) -> c.R > 1 and !(c.center .is-equal p) ]
           hold: (c, p) -> ! (c .is-enclosing  p)
 
 window <<< {test-sequence, test-tests}

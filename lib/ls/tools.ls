@@ -28,11 +28,9 @@ lequal = (a, b) ->  a < b or (a `equal` b)
 equalMod = (m) -> (a,b) -> (a %% m) `equal` (b %% m)
 
 #------------------------------------------------------------
-count = (c) -> (f) -> (...x) ->
+count = (c, f) --> (...x) ->
     c.counter++
     f(...x)
-
-compose = (f, g) -> (...x) -> apply f, g(...x)
 
 compare = (x,y) ->
     | (x `equal` y) => 'EQ'
@@ -47,4 +45,4 @@ conjunction = (ps) -> (...xs) -> ps.every((p) -> p(...xs))
 #------------------------------------------------------------
 window <<<  { norm, dot, cross, flip, vadd, vscale }
 window <<<  { equal, nequal, gequal, lequal, equalMod, count }
-window <<<  { compose, compare, implies, conjunction }
+window <<<  { compare, implies, conjunction }

@@ -105,6 +105,9 @@ test-sequence =
         *   name: \product2
             run: -> Sequence.list-product([[1,2]]).list
             result: [[1], [2]]
+        *   name: \dropWhile2
+            run: -> (Sequence.iterate (* 2), 1 ) .dropWhile (< 1000) .head
+            result: 1024
 
 
 ############################################################
@@ -118,10 +121,10 @@ test-tests =
             result: 5
             number: 10
 
-        * name: "2"
-          for: [ any-num!.range(0,100).precision(0.1) ]
-          hold: (n) -> n < 4
-          number: 10
+        *   name: "2"
+            for: [ any-num!.range(0,100).precision(0.1) ]
+            hold: (n) -> n < 4
+            number: 10
     
         * name: "3"
           for:

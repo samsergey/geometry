@@ -122,9 +122,9 @@ Test = class
         sc = counter: -2
         augmented-args = options.with or ((...x) -> [...x])
         assertion = options.hold `compose` augmented-args
-        assumption = (x) -> apply (conjunction options.assuming), x |> count c
-        proposition = (x) -> apply assertion, x |> count ac
-        test = assumption `implies` proposition
+        assumption = (x) -> (apply (conjunction options.assuming), x) |> count c
+        proposition = (x) -> (apply assertion, x) |> count ac
+        test = (x) -> if assumption x then proposition x else true
         #obligatory = options.including |> S.list-product
         samples = -> Arbitrary.tuple (options.for)# .ascending!
         shrinker = samples! .shrink
@@ -135,6 +135,7 @@ Test = class
         number = options.number
 
         run = (seq, ok = true, depth = 0, last) ->
+            xxx = test
             res = seq .dropWhile test
             switch
             | res.isEmpty                 => {ok: ok, sample: last}
@@ -155,8 +156,8 @@ Test = class
             shrinks: sc.counter
         res <<< counts
 
-
-window <<< {Test}            
+var xxx
+window <<< {Test, xxx}            
 #------------------------------------------------------------
 
 class Arbitrary  extends Sequence

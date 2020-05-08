@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='UTF-8'/>
+    <script src='../../lib/d3.js'></script>
+    <script src='../../lib/analysis.js'></script>
+    <script src='../../lib/functions.js'></script>
+    <script src='../../lib/tools.js'></script>
+    <script src='../../lib/testing.js'></script> 
+    <script src='../../lib/matrix.js'></script>
+    <script src='../../lib/graphics.js'></script>
+    <script src='../../lib/geometry.js'></script>
+    <style>
+      body {
+	  background:#333;
+      }
+      svg {
+	  border: 1px dotted gray;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      ////////////////////////////////////////////////////////////	
+      // fig9
+      var ch22 = new Chart('fig22')
+      var a = new Ray().at([-20,1]).through([-18,1])
+      var sca = new Scale(23).on(a).range([0,23])
+      var b = new Ray().at([-20,-1]).through([-18,-1])
+      var scb = new Scale(23).on(b).range([0,23]).tickLength(-0.5)
+      ch22.put(a,sca, b, scb).adjustSize()
+
+
+    </script>
+  </body>
+</html>	

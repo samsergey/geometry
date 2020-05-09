@@ -45,7 +45,7 @@ Test = class
         | json?.suite => concat-map flatten, json.suite        
         | otherwise => [json]
 
-
+    #------------------------------------------------------------
     run-test = (test) ->
         unless test.skip
             C.log "Testing #{test.name}..." if test.log
@@ -59,7 +59,7 @@ Test = class
             else
                 C.log("%cPassed.", 'color:darkgreen') if test.log
 
-
+    #------------------------------------------------------------
     run-property = (data) !->
         options = 
             skip: false
@@ -74,7 +74,6 @@ Test = class
         unless options.skip
             C.log("Testing #{options.name} ...") if options.log
             res = check-property options
-    
             switch
             | (res.applied == 0) =>
                 C.log do
@@ -84,13 +83,14 @@ Test = class
             | res.ok => report-success res, options
             | otherwise => report-fail res, options 
 
+    #------------------------------------------------------------
     check-property = (options) ->
         ac = counter: 0
         c = counter: 0
         sc = counter: -2
         augmented-args = options.with or ((...x) -> [...x])
-        proposition = count ac <| (x) -> apply options.hold, (apply augmented-args, x)
-        assumption = count ac <| (x) -> apply (conjunction options.assuming), x
+        proposition = count ac <| (x) -> options.hold `apply` (augmented-args `apply` x)
+        assumption = count ac <| (x) -> (conjunction options.assuming) `apply` x
         test = assumption `implies` proposition
         samples = -> Arbitrary.tuple (options.for)
 
@@ -115,7 +115,7 @@ Test = class
             shrinks: sc.counter
         res <<< counts
 
-
+    #------------------------------------------------------------
     report-success = (res, options) ->
         if options.log
 
@@ -133,6 +133,7 @@ Test = class
                 'color:'+color
                 fmt.percent(passed)
 
+    #------------------------------------------------------------
     report-fail = (res, options) ->
         augmented-args = options.with or ((...x) -> [...x])
         name = options.name

@@ -10,8 +10,6 @@ type Line = Line (Curve { pivot : XY
                         , vector : XY
                         , unit : Float})
 
-isTrivial (Line {vector}) = isNullVector vector
-
 refPos (Line {pivot}) = pivot
                             
 parameterize l =
@@ -39,9 +37,14 @@ show chart (Line l) =
       pts = String.concat <| List.map chart.xy [p1, p2]
   in [ polyline [ points pts ] [] ]
 
+trivial = { pivot = (0, 0)
+          , vector = (0, 0)
+          , unit = 1
+          , curve = trivialCurve }
+    
+isTrivial (Line {vector}) = isNullVector vector
 
-constructor p1 p2 =
-  parameterize { pivot = p1
-               , vector = normalize (sub p2 p1)
-               , unit = norm (sub p2 p1)
-               , curve = trivialCurve }
+constructor p1 p2 = parameterize { trivial
+                                   | pivot = p1
+                                   , vector = normalize (sub p2 p1)
+                                   , unit = norm (sub p2 p1) }

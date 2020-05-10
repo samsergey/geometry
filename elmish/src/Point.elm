@@ -11,7 +11,7 @@ type Point = Point { xy : XY }
 refPos (Point {xy}) = xy
   
 transform t (Point this) = Point {this | xy = transformV t this.xy }
-
+                        
 show chart (Point {xy}) =
   let (x, y) = xy
       gx = String.fromFloat <| chart.scale.x x

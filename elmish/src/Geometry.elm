@@ -18,8 +18,11 @@ type Figure = P Point
 
 ------------------------------------------------------------
 
-point p    = P <| Point.constructor p
+point p = P <| Point.constructor p
+pointOn c t = point <| getPoint c t
+
 circle c x = C <| Circle.constructor c x
+
 line p1 p2 = L <| Line.constructor p1 p2
 
 ------------------------------------------------------------
@@ -34,6 +37,8 @@ getPoint = iso (.point)
 getLocus = iso (.locus)
 getTangent = iso (.tangent)
 
+
+             
 refPos fig =
   case fig of
     P p -> Point.refPos p

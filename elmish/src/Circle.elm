@@ -11,7 +11,7 @@ type Circle = Circle (Curve { center : XY
                             , orientation : Float
                             , phase : Float })
 
-radius (Circle this) = (this.center, this.curve.point 0)
+radius (Circle this) t = (this.center, this.curve.point t)
 refPos (Circle {center}) = center
                         
 parameterize this =
@@ -45,9 +45,15 @@ show chart (Circle c) =
       gr = String.fromFloat (scale.x c.r - scale.x 0)
   in [ circle [cx gx, cy gy, r gr] [] ]
 
+trivial = { center = (0,0)
+          , r = 0
+          , orientation = 1
+          , phase = 0
+          , curve = trivialCurve }
 
-constructor c x = parameterize  { center = c
-                                , r = x
-                                , orientation = 1
-                                , phase = 0
-                                , curve = trivialCurve }
+isTrivial (Circle c) = c.r == 0
+  
+constructor c x = parameterize { trivial
+                                 | center = c
+                                 , r = x }
+

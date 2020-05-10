@@ -74,7 +74,7 @@ window <<< { Any }
 
 test-sequence =
     name: \Sequences
-    log: on
+    log: off
     suite:
         *   name: \head
             run: -> new Sequence([1 to 5]).head
@@ -117,258 +117,259 @@ test-tests =
     skip: no
     log: on
     suite: 
+        * name: "isomorphism 1"
+          for: [ any-point \a ]
+          hold: (p) ->
+            console.log p
+            true or Point.iso(Point.iso(p).xy).point .is-equal p
+
         * name: "1"
           run: -> 5
           result: 5
           number: 10
 
         * name: "2"
+          skip: on
           for: [ any-num! .range(0, 10) ]
           with: (n) -> [n, n*n]
           hold: (n, x) -> x < 16
           assuming: [ (x) -> x % 2 == 0 ]
             
         * name: "3"
+          skip: on
           for:
             any-num!
             any-num!
           hold: (n, m) -> n >= m
         
-        * name: "4"
-          for:
-            any-circle!
-            any-point!
-          assuming: [ (c, p) -> c.R > 1 and !(c.center .is-equal p) ]
-          hold: (c, p) -> ! (c .is-enclosing  p)
-
-window <<< {test-sequence, test-tests}
+window <<< { test-tests}
 # ############################################################
 
-# testPoints = 
-#   name: \Points
-#   number: 10
-#   suite:
-#     * name: "isomorphism 1"
-#       for: [ any-point(\A) ]
-#       holds: (p) -> Point.iso(Point.iso(p).xy).point .is-equal p
+testPoints = 
+  name: \Points
+  number: 10
+  suite:
+    * name: "isomorphism 1"
+      for: [ any-point \A ]
+      holds: (p) -> Point.iso(Point.iso(p).xy).point .is-equal p
       
-#     * name: "copy 1"
-#       run: -> point [3 4] .copy!
-#       result: point [3,4]
+    * name: "copy 1"
+      run: -> point [3 4] .copy!
+      result: point [3,4]
       
-#     * name: "superpose"
-#       for: [ any-point!, any-point! ]
-#       holds: (p1,p2) -> p1.superpose(p1,p2) .is-equal p2
+    * name: "superpose"
+      for: [ any-point!, any-point! ]
+      holds: (p1,p2) -> p1.superpose(p1,p2) .is-equal p2
       
-#     * name: "isomorphism 1"
-#       for: [ any-point! ],
-#       hold: (p) -> Point.iso(Point.iso(p).xy).point .is-equal p
+    * name: "isomorphism 1"
+      for: [ any-point! ]
+      hold: (p) -> Point.iso(Point.iso(p).xy).point .is-equal p
       
-#     * name: "isomorphism 2"
-#       for: [ any-pos! ],
-#       hold: (xy) -> Point.iso(Point.iso(xy).point).xy `equal` xy
+    * name: "isomorphism 2"
+      for: [ any-pos! ],
+      hold: (xy) -> Point.iso(Point.iso(xy).point).xy `equal` xy
       
-#     * name: "copy 1"
-#       for: [ any-point! ]
-#       hold: (p) -> p.copy! .is-equal p
+    * name: "copy 1"
+      for: [ any-point! ]
+      hold: (p) -> p.copy! .is-equal p
       
-#     * name: "coordinates 1"
-#       for: [ any-point! ]
-#       hold: (p) -> origin .at p .is-equal (point p)
+    * name: "coordinates 1"
+      for: [ any-point! ]
+      hold: (p) -> origin .at p .is-equal (point p)
       
-#     * name: "equality 1"
-#       for: [ any-point! ]
-#       hold: (p) -> p .is-equal p
+    * name: "equality 1"
+      for: [ any-point! ]
+      hold: (p) -> p .is-equal p
       
-#     * name: "equality 2"
-#       for: [ any-point! ]
-#       hold: (p) -> point(p.xy) .is-equal p
+    * name: "equality 2"
+      for: [ any-point! ]
+      hold: (p) -> point(p.xy) .is-equal p
       
-#     * name: "equality 3"
-#       for: [ any-point! ],  
-#       hold: (p) -> ! p .copy! .translate [1 1] .is-equal p
+    * name: "equality 3"
+      for: [ any-point! ],  
+      hold: (p) -> ! p .copy! .translate [1 1] .is-equal p
       
-#     * name: "translate 1" 
-#       run: -> new Point! .translate [1 2] .xy
-#       result: [1,2]
+    * name: "translate 1" 
+      run: -> new Point! .translate [1 2] .xy
+      result: [1,2]
 
 
-# ############################################################
+############################################################
 
-# test-transformations = 
-#   name: \Transformations
-#   suite: [ ]
+test-transformations = 
+  name: \Transformations
+  suite: [ ]
 
-# ############################################################
+############################################################
 
-# test-lines =
-#   name: 'Lines'
-#   suite:
-#     number: 10
-#     suite: 
-#       * name: "isomorphism 1"
-#         for:
-#           any-line!
-#           any-num!
-#         assuming: [ (l) -> l .is-nontrivial ]
-#         hold: (l, s) -> (l.locus l.point s) `equal` s
+test-lines =
+  name: 'Lines'
+  suite:
+    number: 10
+    suite: 
+      * name: "isomorphism 1"
+        for:
+          any-line!
+          any-num!
+        assuming: [ (l) -> l .is-nontrivial ]
+        hold: (l, s) -> (l.locus l.point s) `equal` s
 
-#       * name: "isomorphism 2"
-#         for:
-#           any-point!
-#           any-num!
-#         where: (p, s) -> [ l, s ]
-#         hold: (p, s) ->
-#           l = line p, p
-#           l .is-trivial and (l.locus l.point s) `equal` 0
+      * name: "isomorphism 2"
+        for:
+          any-point!
+          any-num!
+        where: (p, s) -> [ l, s ]
+        hold: (p, s) ->
+          l = line p, p
+          l .is-trivial and (l.locus l.point s) `equal` 0
 
-#       * name: "isomorphism 3",
-#         for: [any-line!, any-num!]
-#         assuming: [(l) -> l.is-nontrivial]
-#         hold: (l, s) ->
-#           p = l.point s
-#           (l.point l.locus p) `equal` p
+      * name: "isomorphism 3",
+        for: [any-line!, any-num!]
+        assuming: [(l) -> l.is-nontrivial]
+        hold: (l, s) ->
+          p = l.point s
+          (l.point l.locus p) `equal` p
 
-#       * name: "equation 1"
-#         for: [ any-line!, any-num! ]
-#         hold: (l, s) -> l.equation l.point s
+      * name: "equation 1"
+        for: [ any-line!, any-num! ]
+        hold: (l, s) -> l.equation l.point s
 
-#       * name: "equation 2"
-#         for: [any-line!, any-num!]
-#         assuming: [ (l) -> l.is-nontrivial ]
-#         hold: (l, s) -> ! l.equation l.point(s).translate l.normalV 0
-#     ...
+      * name: "equation 2"
+        for: [any-line!, any-num!]
+        assuming: [ (l) -> l.is-nontrivial ]
+        hold: (l, s) -> ! l.equation l.point(s).translate l.normalV 0
+    ...
 
-#     * name: "line intersections 1"
-#       for: [any-line!, any-line!]
-#       assuming: [ (a, b) -> !(a .is-trivial or b .is-trivial) ]
-#       hold: (a, b) ->
-#         (a .intersections b).length == if (a .is-parallel-to b) then 0 else 1
+    * name: "line intersections 1"
+      for: [any-line!, any-line!]
+      assuming: [ (a, b) -> !(a .is-trivial or b .is-trivial) ]
+      hold: (a, b) ->
+        (a .intersections b).length == if (a .is-parallel-to b) then 0 else 1
 
-#     * name: "plane intersections 1"
-#       for: [any-line!]
-#       assuming: [ (l) -> plane .is-enclosing l.ref-point ]
-#       hold: (l) ->
-#         pts = plane .intersections l
-#         pts.every((p) -> plane .is-containing p)
+    * name: "plane intersections 1"
+      for: [any-line!]
+      assuming: [ (l) -> plane .is-enclosing l.ref-point ]
+      hold: (l) ->
+        pts = plane .intersections l
+        pts.every((p) -> plane .is-containing p)
 
-#     * name: "perpendicularity 1"
-#       for:
-#         any-line \a
-#         any-point \A
-#       with: (l, p) -> [l, p, new Line \b .at p .perpendicular-to l ]
-#       assuming: [(l) -> l.is-nontrivial]
-#       hold: (l, p, nl) -> nl .is-perpendicular-to l
+    * name: "perpendicularity 1"
+      for:
+        any-line \a
+        any-point \A
+      with: (l, p) -> [l, p, new Line \b .at p .perpendicular-to l ]
+      assuming: [(l) -> l.is-nontrivial]
+      hold: (l, p, nl) -> nl .is-perpendicular-to l
 	
-#     * name: "perpendicularity 2"
-#       for: [any-line!]
-#       hold: (l) -> ! l .is-perpendicular-to (line origin, origin)
+    * name: "perpendicularity 2"
+      for: [any-line!]
+      hold: (l) -> ! l .is-perpendicular-to (line origin, origin)
 	
-#     * name: "perpendicularity 3"
-#       for:
-#         any-line \1
-#         any-line \2
-#       with: (l1, l2) -> [ l1, l2, l1 .perpendicular-to l2 .label \p ]
-#       assuming: [ (l1, l2, p) -> l1.is-nontrivial and l2.is-nontrivial ]
-#       hold: (l1, l2, p) ->
-#         p.ref-point .is-equal l1.ref-point and
-#         (p.locus (p .intersections l2).0) `gequal` 0
+    * name: "perpendicularity 3"
+      for:
+        any-line \1
+        any-line \2
+      with: (l1, l2) -> [ l1, l2, l1 .perpendicular-to l2 .label \p ]
+      assuming: [ (l1, l2, p) -> l1.is-nontrivial and l2.is-nontrivial ]
+      hold: (l1, l2, p) ->
+        p.ref-point .is-equal l1.ref-point and
+        (p.locus (p .intersections l2).0) `gequal` 0
 
-#     * name: "parallelity 1"
-#       for: [any-line!, any-pos!]
-#       assuming: [(l) -> l.is-nontrivial]
-#       hold: (l, xy) -> new Line! .at xy .parallel-to l .is-parallel-to l
+    * name: "parallelity 1"
+      for: [any-line!, any-pos!]
+      assuming: [(l) -> l.is-nontrivial]
+      hold: (l, xy) -> new Line! .at xy .parallel-to l .is-parallel-to l
 	
-#     * name: "parallelity 2"
-#       for: [any-line!]
-#       hold: (l) -> ! l .is-parallel-to (line origin, origin)
+    * name: "parallelity 2"
+      for: [any-line!]
+      hold: (l) -> ! l .is-parallel-to (line origin, origin)
 	
-#     * name: "tangentTo 1"
-#       for: [any-point!, any-circle!]
-#       with: (p, c) ->
-#         t = new Line! .at p .tangentTo c
-#         i = c .intersections t
-#         [p, c, t, i]
-#       hold: (p, c, t, i) ->
-#         i.length == 1 and
-#         new Line! .at (i.0) .perpendicular-to t .is-containing c.center
-#       assuming: [ (p, c) -> c.is-nontrivial and ! c .is-enclosing p ]
+    * name: "tangentTo 1"
+      for: [any-point!, any-circle!]
+      with: (p, c) ->
+        t = new Line! .at p .tangentTo c
+        i = c .intersections t
+        [p, c, t, i]
+      hold: (p, c, t, i) ->
+        i.length == 1 and
+        new Line! .at (i.0) .perpendicular-to t .is-containing c.center
+      assuming: [ (p, c) -> c.is-nontrivial and ! c .is-enclosing p ]
 	
-#     * name: "tangentTo 2"
-#       for: [any-circle!, any-param!]
-#       with: (c, x) -> [ c, x, new Line! .at (c.point x) .tangentTo c ]
-#       hold: (c, x, t) -> t .is-perpendicular-to (c.radius x)
-#       assuming: [ (c) -> c.is-nontrivial ]
+    * name: "tangentTo 2"
+      for: [any-circle!, any-param!]
+      with: (c, x) -> [ c, x, new Line! .at (c.point x) .tangentTo c ]
+      hold: (c, x, t) -> t .is-perpendicular-to (c.radius x)
+      assuming: [ (c) -> c.is-nontrivial ]
 
-#     * name: 'tangentTo 3'
-#       for: [any-point!, any-circle!],
-#       with: (p, c) ->
-#         t1 = new Line! .at p .tangent-to c, 1
-#         t2 = new Line! .at p .tangent-to c, -1
-#         i1 = c .locus (c .intersections t1).0
-#         i2 = c .locus (c .intersections t2).0
-#         [p, c, t1, t2, i1, i2]
-#       hold: (p, c, t1, t2, i1, i2) ->
-#         (t1.vector.dot(c.tangent-v(i1)) > 0) and
-#         (t2.vector.dot(c.tangent-v(i2)) < 0)
-#       assuming: [(p, c) -> c.is-nontrivial and ! c .is-enclosing p]
+    * name: 'tangentTo 3'
+      for: [any-point!, any-circle!],
+      with: (p, c) ->
+        t1 = new Line! .at p .tangent-to c, 1
+        t2 = new Line! .at p .tangent-to c, -1
+        i1 = c .locus (c .intersections t1).0
+        i2 = c .locus (c .intersections t2).0
+        [p, c, t1, t2, i1, i2]
+      hold: (p, c, t1, t2, i1, i2) ->
+        (t1.vector.dot(c.tangent-v(i1)) > 0) and
+        (t2.vector.dot(c.tangent-v(i2)) < 0)
+      assuming: [(p, c) -> c.is-nontrivial and ! c .is-enclosing p]
 
-#     * name: \LineEquation
-#       number: 10
-#       suite: 
-#         * name: \1
-#           for: [any-pos!, any-pos!]
-#           hold: (p1,p2) -> line-equation(p1, p2) 0 .is-equal (point p1)
+    * name: \LineEquation
+      number: 10
+      suite: 
+        * name: \1
+          for: [any-pos!, any-pos!]
+          hold: (p1,p2) -> line-equation(p1, p2) 0 .is-equal (point p1)
 
-#         * name: \2,
-#           for: [any-pos(), any-pos()]
-#           hold: (p1,p2) -> line-equation(p1,p2) 1 .is-equal (point p2)
+        * name: \2,
+          for: [any-pos(), any-pos()]
+          hold: (p1,p2) -> line-equation(p1,p2) 1 .is-equal (point p2)
 
-#         * name: \4
-#           run: -> line-equation([0 0], [1 2], 2) 1
-#           result: point [2 4]
-#         * name: \5
-#           run: -> line-equation([0 0], [1 2], 2) -1
-#           result: point [-2 -4]
-#         * name: \6
-#           run: -> line-equation([0 0], [0 1]) 0
-#           result: point [0 0]
-#         * name: \7
-#           run: -> line-equation([0 0], [0,1]) 2
-#           result: point [0 2]
-#         * name: \8
-#           run: -> line-equation([1 2], [1 2]) 0
-#           result: point [1 2]
-#         * name: \9
-#           run: -> line-equation([1 2], [1 2]) 1
-#           result: point [1 2]
-#         * name: \10
-#           run: -> line-equation([1 2], [0 0],-1) 0
-#           result: point [1 2]
-#         * name: \11
-#           run: -> line-equation([1 2], [0 0],-1) 1
-#           result: point [2 4]
+        * name: \4
+          run: -> line-equation([0 0], [1 2], 2) 1
+          result: point [2 4]
+        * name: \5
+          run: -> line-equation([0 0], [1 2], 2) -1
+          result: point [-2 -4]
+        * name: \6
+          run: -> line-equation([0 0], [0 1]) 0
+          result: point [0 0]
+        * name: \7
+          run: -> line-equation([0 0], [0,1]) 2
+          result: point [0 2]
+        * name: \8
+          run: -> line-equation([1 2], [1 2]) 0
+          result: point [1 2]
+        * name: \9
+          run: -> line-equation([1 2], [1 2]) 1
+          result: point [1 2]
+        * name: \10
+          run: -> line-equation([1 2], [0 0],-1) 0
+          result: point [1 2]
+        * name: \11
+          run: -> line-equation([1 2], [0 0],-1) 1
+          result: point [2 4]
 
-#     * name:"intersectionV"
-#       suit:
-#         * name: \1
-#           run : -> intersection-v([0 0], [1 2], [0 0], [2 1])
-#           result : [0 0]
-#         * name: \2
-#           run : -> intersection-v([1 2], [1 1], [2 1], [-1 1])
-#           result : [1 2]
-#         * name: \3
-#           run : -> intersection-v([1 0], [0 1], [0 1], [1 0])
-#           result : [1 1]
-#         * name: \5
-#           run : -> intersection-v([1 2], [-1 -2], [3 4], [-3 -4])
-#           result : [0 0]
-#         * name: \6
-#           run : -> intersection-v([1 2], [1 2], [3 4], [2 4])
-#           result : [Infinity, Infinity]
-#         * name: \7
-#           run : -> intersection-v([1 2], [1 2], [1 2], [-2 -4])
-#           result : [Infinity, Infinity]
+    * name:"intersectionV"
+      suit:
+        * name: \1
+          run : -> intersection-v([0 0], [1 2], [0 0], [2 1])
+          result : [0 0]
+        * name: \2
+          run : -> intersection-v([1 2], [1 1], [2 1], [-1 1])
+          result : [1 2]
+        * name: \3
+          run : -> intersection-v([1 0], [0 1], [0 1], [1 0])
+          result : [1 1]
+        * name: \5
+          run : -> intersection-v([1 2], [-1 -2], [3 4], [-3 -4])
+          result : [0 0]
+        * name: \6
+          run : -> intersection-v([1 2], [1 2], [3 4], [2 4])
+          result : [Infinity, Infinity]
+        * name: \7
+          run : -> intersection-v([1 2], [1 2], [1 2], [-2 -4])
+          result : [Infinity, Infinity]
       
 # ############################################################
 
@@ -664,13 +665,15 @@ window <<< {test-sequence, test-tests}
 # ############################################################
 
 
-# all-tests =
-#   number: 25
-#   log: true
-#   suite: 
-#     test-tests
-#     test-points
-#     test-lines
+all-tests =
+    number: 100
+    log: true
+    suite:
+        test-sequence
+        test-tests
+#        test-sequence
+#        test-points
+#       test-lines
 #     test-rays
 #     test-segments
 #     test-intersections
@@ -679,6 +682,6 @@ window <<< {test-sequence, test-tests}
 #     test-square
 #     test-circle
 
-# console.log 'Running tests...'
-# #run-tests all-tests
-# console.log 'Testing done'
+console.log 'Running tests...'
+Test.run all-tests
+console.log 'Testing done'

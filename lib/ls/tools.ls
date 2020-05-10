@@ -40,7 +40,7 @@ compare = (x,y) ->
 implies = (P, Q) -> (...x) ->
     if P(...x) then Q(...x) else true
 
-conjunction = (ps) -> (...xs) -> ps.every((p) -> p(...xs))
+conjunction = (ps) -> (...xs) -> all ((p) -> p(...xs)), ps
 
 #------------------------------------------------------------
 window <<<  { norm, dot, cross, flip, vadd, vscale }

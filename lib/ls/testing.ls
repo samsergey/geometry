@@ -90,7 +90,7 @@ Test = class
         sc = counter: -2
         augmented-args = options.with or ((...x) -> [...x])
         proposition = count ac <| (x) -> options.hold `apply` (augmented-args `apply` x)
-        assumption = count ac <| (x) -> (conjunction options.assuming) `apply` x
+        assumption = count c <| (x) -> (conjunction options.assuming) `apply` x
         test = assumption `implies` proposition
         samples = -> Arbitrary.tuple (options.for)
 

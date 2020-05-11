@@ -3,17 +3,17 @@ module Curve where
 import Generals
 
 class Curve a where
-  point :: a -> Float -> XY
-  locus :: a -> XY -> Float
+  point :: a -> Number -> XY
+  locus :: a -> XY -> Number
   closed :: a -> Bool
-  length :: a -> Float
-  tangent :: a -> Float -> Directed
+  length :: a -> Number
+  tangent :: a -> Number -> Directed
   
-  normal :: a -> Float -> Directed
+  normal :: a -> Number -> Directed
   normal f t = 90 + tangent f t
 
 class Curve a => Linear a where
   start :: a -> XY
   vector :: a -> XY
   angle :: a -> Directed
-  unit :: a -> Float
+  unit :: a -> Number

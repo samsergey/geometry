@@ -28,6 +28,11 @@ instance SVGable Figure where
     P p -> toSVG p
     C c -> toSVG c
 
+instance Curve Figure where
+  point (C c) = point c
+  point x = error $ show x ++ " is not a curve."
+  tangent (C c) = tangent c
+  tangent x = error $ show x ++ " is not a curve."
 ------------------------------------------------------------
 
 data Point = Point XY deriving Show
@@ -65,7 +70,11 @@ instance Trans Circle where
           p = transformXY t (cir `point` 0)
 
 instance Curve Circle where
-  point cir t = 0
+  point cir t = center cir + mkPolar (radius cir) (2*pi*t)
+  locus cir xy = phase (xy - center cir) / (2*pi)
+  closed = const True
+  length cir = radius cir * 2* pi
+  tangent cir t = 90 + Vec (point cir t - center cir)
 
 instance SVGable Circle where
   toSVG c = circle_ [ Cx_ <<- toPrecision 8 x

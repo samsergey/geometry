@@ -10,7 +10,7 @@ class Curve a where
   tangent :: a -> Float -> Directed
   
   normal :: a -> Float -> Directed
-  normal f t = rot90 $ tangent f t
+  normal f t = 90 + tangent f t
 
 class Curve a => Linear a where
   start :: a -> XY

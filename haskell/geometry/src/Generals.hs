@@ -1,9 +1,12 @@
 module Generals where
 
-type Number = Float
-type XY = (Number, Number)
+import Data.Fixed (mod')
+import Data.Complex
 
-tolerance = 1e-5
+type Number = Double
+type XY = Complex Number
+
+tolerance = 1e-10
 
 data Directed = Ang Number | Vec XY
   deriving Show
@@ -15,20 +18,18 @@ instance Ord Directed where
   a <= b = a == b || toRad a < toRad b
 
 toAng (Ang a) = Ang a
-toAng (Vec (x, y)) = let a = 180/pi * atan2 y x
-                     in Ang $ if a < 0 then 360+a else a
+toAng (Vec v) = Ang $ (180/pi * phase v) `mod'` 360
 
 toVec (Vec x) = Vec x
-toVec d = let phi = toRad d in Vec (cos phi, sin phi)
+toVec (Ang a) = Vec $ mkPolar 1 (a/180*pi)
 
-toRad d = let Ang a = toAng d in a*pi/180
+toRad (Vec v) = phase v `mod'` (2*pi)
+toRad (Ang a) = (a*pi/180) `mod'` (2*pi)
 
 toTurns = (/ (2*pi)) . toRad
 
-rot90 d = let Vec (x, y) = toVec d in Vec (-y, x)
-
 instance Num Directed where
-  fromInteger n = Ang $ fromIntegral $ n `mod` 360
+  fromInteger n = Ang $ fromIntegral n `mod'` 360
   (+) = withAng2 (+)
   (*) = withAng2 (*)
   negate = withAng negate
@@ -36,8 +37,8 @@ instance Num Directed where
   signum = withAng signum
 
 withAng op a = let Ang a' = toAng a
-               in toAng $ toVec $ Ang $ op a'
+               in Ang $ op a' `mod'` 360 
                   
 withAng2 op a b = let Ang a' = toAng a
                       Ang b' = toAng b
-                  in toAng $ toVec $Ang $ (a' `op` b')
+                  in Ang $ (a' `op` b') `mod'` 360 

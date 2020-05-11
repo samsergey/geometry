@@ -7,33 +7,40 @@ import Data.Double.Conversion.Text (toPrecision)
 import Data.Complex
 
 import Generals
-import Curve 
 import Transform
 import SVG
 
 data Circle = Circle { radius :: Number
-                     , center :: XY
+                     , center :: CXY
                      , orientation :: Number
                      , phaseShift :: Number }
 
 
 instance Show Circle where
-  show cir = concat ["<Circle ", show r, ",", show (x,y), ">"]
+  show cir = concat ["<Circle ", show r, ",", show (coord c), ">"]
     where r = radius cir
-          (x :+ y) = center cir
+          c = center cir
 
 
 instance Trans Circle where
   transform t cir = mkCircle c p
-    where c = transformXY t (center cir)
-          p = transformXY t (cir `param` 0)
+    where c = transformCXY t (center cir)
+          p = transformCXY t (cir `param` 0)
 
 
 instance Curve Circle where
   param cir t = center cir + mkPolar (radius cir) (2*pi*t)
-  locus cir xy = phase (xy - center cir) / (2*pi)
-  closed = const True
+
+  locus cir p = let xy  = pos p in phase (xy - center cir) / (2*pi)
+
+  isClosed = const True
+
+  cir `isContaining` p = magnitude (pos p - center cir) ~= radius cir
+
+  cir `isEnclosing` p = magnitude (pos p - center cir) < radius cir
+
   length cir = radius cir * 2* pi
+
   tangent cir t = 90 + Vec (cir `param` t - center cir)
   
 

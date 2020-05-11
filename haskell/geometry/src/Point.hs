@@ -7,19 +7,23 @@ import Data.Double.Conversion.Text (toPrecision)
 import Data.Complex
 
 import Generals
-import Curve 
 import Transform
 import SVG
 
-data Point = Point XY
+
+data Point = Point CXY
 
 
 instance Show Point where
-  show (Point (x :+ y)) = "<Point " ++ show (x,y) ++ ">"
+  show p = "<Point " ++ show (coord p) ++ ">"
 
 
 instance Trans Point where
-  transform t (Point xy) = Point (transformXY t xy)
+  transform t (Point p) = Point $ transformCXY t p
+
+
+instance Pos Point where
+  pos (Point p) = p
 
 
 instance SVGable Point where

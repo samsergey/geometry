@@ -25,8 +25,13 @@ class SVGable a where
 instance SVGable Number where
   fmtSVG = toShortest
 
-instance SVGable (Complex Number) where
-  fmtSVG (x :+ y) = fmtSVG x <> "," <> fmtSVG y
+instance SVGable CXY where
+  fmtSVG p = fmtSVG x <> "," <> fmtSVG y
+    where (x, y) = T.coord p
+
+instance SVGable XY where
+  fmtSVG p = fmtSVG x <> "," <> fmtSVG y
+    where (x, y) = T.coord p
 
 ------------------------------------------------------------
 

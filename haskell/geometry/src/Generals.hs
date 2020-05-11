@@ -4,17 +4,18 @@ import Data.Fixed (mod')
 import Data.Complex
 
 type Number = Double
-type XY = Complex Number
+type CXY = Complex Number
+type XY = (Number, Number)
 
 tolerance = 1e-10
 
-data Directed = Ang Number | Vec XY
+data Dir = Ang Number | Vec CXY
   deriving Show
 
-instance Eq Directed where
+instance Eq Dir where
   a == b = abs (toRad a - toRad b) < tolerance
 
-instance Ord Directed where
+instance Ord Dir where
   a <= b = a == b || toRad a < toRad b
 
 toAng (Ang a) = Ang a
@@ -28,7 +29,7 @@ toRad (Ang a) = (a*pi/180) `mod'` (2*pi)
 
 toTurns = (/ (2*pi)) . toRad
 
-instance Num Directed where
+instance Num Dir where
   fromInteger n = Ang $ fromIntegral n `mod'` 360
   (+) = withAng2 (+)
   (*) = withAng2 (*)
@@ -43,6 +44,10 @@ withAng2 op a b = let Ang a' = toAng a
                       Ang b' = toAng b
                   in Ang $ (a' `op` b') `mod'` 360 
 
-normalize v
-  | v == 0 = 0
-  | otherwise = v / (magnitude v :+ 0)
+a ~= b = a == b || abs (a - b) < tolerance
+
+------------------------------------------------------------
+
+class Figure a where
+  isTrivial :: a -> Bool
+  isSimilar :: a -> a -> Bool

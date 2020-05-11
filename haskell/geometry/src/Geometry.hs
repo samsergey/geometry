@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE GADTs #-} 
+{-# LANGUAGE GADTs, TypeApplications #-} 
 module Geometry where
 
 import Graphics.Svg ((<<-))
@@ -8,7 +8,6 @@ import Data.Double.Conversion.Text (toPrecision)
 import Data.Complex
 
 import Generals
-import Curve
 import Point
 import Circle
 import Line
@@ -44,16 +43,22 @@ instance Show Group where
     show (Append x xs) = show x <> show xs
 
 ------------------------------------------------------------
+point :: Pos a => a -> Point
+point p = Point (pos p)
 
-point (x, y) = Point (x :+ y)
-
+pointOn :: Curve a => a -> Number -> Point
 pointOn c t = Point (c `param` t)
 
 ------------------------------------------------------------
-
-circle r (x,y) = mkCircle c (c + (r :+ 0))
-  where c = x :+ y
+circle :: Pos a => Number -> a -> Circle
+circle r p = mkCircle c $ c + (r :+ 0)
+  where c = pos p
 
 ------------------------------------------------------------
+line :: (Pos a1, Pos a2) => a1 -> a2 -> Line
+line p1 p2 = Line (pos p1) (pos p2)
 
-line (x1, y1) (x2, y2) = Line (x1:+y1) (x2:+y2)
+ch = let p = point @XY (2, 3)
+         c = circle @XY 3 (1, 2)
+         l = line p (center c)
+     in p <+> c <+> l

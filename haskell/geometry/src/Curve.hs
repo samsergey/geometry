@@ -1,9 +1,11 @@
 module Curve where
 
+import Data.Complex
+
 import Generals
 
 class Curve a where
-  point :: a -> Number -> XY
+  param :: a -> Number -> XY
   locus :: a -> XY -> Number
   closed :: a -> Bool
   length :: a -> Number
@@ -14,6 +16,12 @@ class Curve a where
 
 class Curve a => Linear a where
   start :: a -> XY
+  end :: a -> XY
   vector :: a -> XY
-  angle :: a -> Directed
+
   unit :: a -> Number
+  unit = magnitude . vector
+
+  angle :: a -> Directed
+  angle = Vec . vector
+  

@@ -1,9 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances #-}
 module SVG where
 
 import Graphics.Svg
 import Data.Complex
+import qualified Data.Text.Internal as Internal
+import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy.IO as Txt
+import Data.Double.Conversion.Text (toShortest)
+
+import Generals
 import qualified Transform as T
 
 paperSize = 50
@@ -11,6 +17,18 @@ svgSize = 500
 
 class SVGable a where
   toSVG :: a -> Element
+  toSVG x = mempty
+
+  fmtSVG :: a -> Internal.Text
+  fmtSVG = mempty
+
+instance SVGable Number where
+  fmtSVG = toShortest
+
+instance SVGable (Complex Number) where
+  fmtSVG (x :+ y) = fmtSVG x <> "," <> fmtSVG y
+
+------------------------------------------------------------
 
 svg content =
      doctype <> with (svg11_ content) [ Version_ <<- "1.1"

@@ -42,3 +42,7 @@ withAng op a = let Ang a' = toAng a
 withAng2 op a b = let Ang a' = toAng a
                       Ang b' = toAng b
                   in Ang $ (a' `op` b') `mod'` 360 
+
+normalize v
+  | v == 0 = 0
+  | otherwise = v / (magnitude v :+ 0)

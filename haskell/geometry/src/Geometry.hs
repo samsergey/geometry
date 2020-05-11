@@ -1,89 +1,59 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE GADTs #-} 
 module Geometry where
 
-import Graphics.Svg
+import Graphics.Svg ((<<-))
+import qualified Graphics.Svg as Svg
 import Data.Double.Conversion.Text (toPrecision)
 import Data.Complex
 
 import Generals
 import Curve
+import Point
+import Circle
+import Line
 import Transform
 import SVG
 
 ------------------------------------------------------------
-data Figure = P Point
-            | C Circle
-            | Group [Figure]
-  deriving Show
 
-instance Trans Figure where
-  transform t fig = case fig of
-    Group fs -> Group $ transform t <$> fs
-    P p -> P $ transform t p
-    C c -> C $ transform t c
+data Group where 
+    Nil :: Group
+    Cons :: (Show a, SVGable a, Trans a) => a -> Group -> Group
+    Append :: Group -> Group -> Group
 
-instance SVGable Figure where
-  toSVG fig = case fig of
-    Group fs -> foldMap toSVG fs
-    P p -> toSVG p
-    C c -> toSVG c
+infixr 5 <+>
+a <+> b = Append (Cons a Nil) (Cons b Nil)
 
-instance Curve Figure where
-  point (C c) = point c
-  point x = error $ show x ++ " is not a curve."
-  tangent (C c) = tangent c
-  tangent x = error $ show x ++ " is not a curve."
-------------------------------------------------------------
 
-data Point = Point XY deriving Show
+instance Trans Group where
+    transform t Nil = Nil
+    transform t (Cons x xs) = Cons (transform t x) (transform t xs)
+    transform t (Append x xs) = Append (transform t x) (transform t xs)
 
-pt (x, y) = P $ Point (x :+ y)
 
-instance Trans Point where
-  transform t (Point xy) = Point (transformXY t xy)
+instance SVGable Group where
+    toSVG Nil = mempty
+    toSVG (Cons x xs) = toSVG x <> toSVG xs
+    toSVG (Append x xs) = toSVG x <> toSVG xs
 
-instance SVGable Point where
-  toSVG (Point (x :+ y)) = circle_ [ Cx_ <<- toPrecision 8 x
-                                   , Cy_ <<- toPrecision 8 y
-                                   , R_ <<- "3"
-                                   , Fill_ <<- "red"
-                                   , Stroke_ <<- "#444"
-                                   , Stroke_width_ <<- "1" ]
+
+instance Show Group where
+    show Nil = mempty
+    show (Cons x xs) = show x <> show xs
+    show (Append x xs) = show x <> show xs
 
 ------------------------------------------------------------
 
-data Circle = Circle { radius :: Number
-                     , center :: XY
-                     , orientation :: Number
-                     , phaseShift :: Number }
-            deriving Show
+point (x, y) = Point (x :+ y)
 
-circle r (x,y) = C $ mkCircle c (c + (r :+ 0))
+pointOn c t = Point (c `param` t)
+
+------------------------------------------------------------
+
+circle r (x,y) = mkCircle c (c + (r :+ 0))
   where c = x :+ y
 
-mkCircle c p = Circle (magnitude r) c 1 (phase r)
-  where r = p - c
-
-instance Trans Circle where
-  transform t cir = mkCircle c p
-    where c = transformXY t (center cir)
-          p = transformXY t (cir `point` 0)
-
-instance Curve Circle where
-  point cir t = center cir + mkPolar (radius cir) (2*pi*t)
-  locus cir xy = phase (xy - center cir) / (2*pi)
-  closed = const True
-  length cir = radius cir * 2* pi
-  tangent cir t = 90 + Vec (point cir t - center cir)
-
-instance SVGable Circle where
-  toSVG c = circle_ [ Cx_ <<- toPrecision 8 x
-                    , Cy_ <<- toPrecision 8 y
-                    , R_ <<- toPrecision 8 (radius c)
-                    , Fill_ <<- "none"
-                    , Stroke_ <<- "orange"
-                    , Stroke_width_ <<- "2" ]
-    where (x :+ y) = center c
-
 ------------------------------------------------------------
 
+line (x1, y1) (x2, y2) = Line (x1:+y1) (x2:+y2)

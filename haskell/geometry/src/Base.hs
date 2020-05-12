@@ -6,6 +6,8 @@ import Data.Fixed (mod')
 import Data.Complex
 import Data.AEq
 
+import Test.QuickCheck
+
 ------------------------------------------------------------
 
 type Number = Double
@@ -57,3 +59,6 @@ class Figure a where
 ------------------------------------------------------------
 
 roundUp p x = p * fromIntegral (round (x / p))
+
+instance Arbitrary Number where
+  arbitrary = arbitrary :: Double

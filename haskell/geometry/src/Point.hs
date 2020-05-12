@@ -42,3 +42,4 @@ instance SVGable Point where
 
 instance Arbitrary Point where
   arbitrary = Point <$> arbitrary
+  shrink (Point p) = Point <$> shrink p

@@ -3,7 +3,7 @@ module Transform where
 
 import Data.Complex
 
-import Generals
+import Base
 
 ------------------------------------------------------------
 
@@ -13,7 +13,7 @@ class Trans a where
   transform :: TMatrix -> a -> a
 
   transformAt :: Pos p => p -> (a -> a) -> a -> a
-  transformAt p t = translate xy . t . translate (-xy)
+  transformAt p t = translate (xy) . t . translate (-xy)
     where xy = pos p
   
   translate :: Pos p => p -> a -> a
@@ -100,23 +100,32 @@ instance Pos XY where
 
 ------------------------------------------------------------
 
+data Location = Inside | Outside | OnCurve deriving (Show, Eq)
+
 class Curve a where
   param :: a -> Number -> CXY
   locus :: Pos p => a -> p -> Number
   length :: a -> Number
+
   tangent :: a -> Number -> Dir
+  tangent f t = normal f t + 90
 
   isClosed :: a -> Bool
   isClosed _ = False
   
-  isContaining :: Pos p => a -> p -> Bool
-  isContaining _ _ = False
-  
-  isEnclosing :: Pos p => a -> p -> Bool
-  isEnclosing _ _ = False
+  location :: Pos p => p -> a -> Location
+  location _ _ = Outside
   
   normal :: a -> Number -> Dir
   normal f t = 90 + tangent f t
+
+
+isContaining :: (Curve c, Pos p) => c -> p -> Bool
+isContaining c p = location p c == OnCurve
+  
+isEnclosing :: (Curve c, Pos p) => c -> p -> Bool
+isEnclosing c p = location p c == Inside
+
 
 class Curve a => Linear a where
   start :: a -> CXY

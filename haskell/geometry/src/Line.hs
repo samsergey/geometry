@@ -6,7 +6,7 @@ import qualified Graphics.Svg as Svg
 import Data.Double.Conversion.Text (toPrecision)
 import Data.Complex
 
-import Generals
+import Base
 import Transform
 import SVG
 

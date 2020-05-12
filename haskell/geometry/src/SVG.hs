@@ -4,12 +4,13 @@ module SVG where
 
 import Graphics.Svg
 import Data.Complex
+import Data.AEq
 import qualified Data.Text.Internal as Internal
 import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy.IO as Txt
-import Data.Double.Conversion.Text (toShortest)
+import Data.Double.Conversion.Text (toShortest, toPrecision)
 
-import Generals
+import Base
 import qualified Transform as T
 
 paperSize = 50
@@ -23,7 +24,7 @@ class SVGable a where
   fmtSVG = mempty
 
 instance SVGable Number where
-  fmtSVG = toShortest
+  fmtSVG n = if n ~== 0 then "0" else toShortest n
 
 instance SVGable CXY where
   fmtSVG p = fmtSVG x <> "," <> fmtSVG y

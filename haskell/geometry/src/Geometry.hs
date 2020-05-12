@@ -7,7 +7,7 @@ import qualified Graphics.Svg as Svg
 import Data.Double.Conversion.Text (toPrecision)
 import Data.Complex
 
-import Generals
+import Base
 import Point
 import Circle
 import Line
@@ -45,6 +45,8 @@ instance Show Group where
 ------------------------------------------------------------
 point :: Pos a => a -> Point
 point p = Point (pos p)
+
+origin = Point 0
 
 pointOn :: Curve a => a -> Number -> Point
 pointOn c t = Point (c `param` t)

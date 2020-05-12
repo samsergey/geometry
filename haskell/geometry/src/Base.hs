@@ -1,19 +1,22 @@
-module Generals where
+{-# Language FlexibleInstances, UndecidableInstances #-}
+{-# Language GeneralizedNewtypeDeriving #-}
+module Base where
 
 import Data.Fixed (mod')
 import Data.Complex
+import Data.AEq
+
+------------------------------------------------------------
 
 type Number = Double
 type CXY = Complex Number
 type XY = (Number, Number)
 
-tolerance = 1e-10
-
 data Dir = Ang Number | Vec CXY
   deriving Show
 
 instance Eq Dir where
-  a == b = abs (toRad a - toRad b) < tolerance
+  a == b = toRad a ~== toRad b
 
 instance Ord Dir where
   a <= b = a == b || toRad a < toRad b
@@ -44,7 +47,6 @@ withAng2 op a b = let Ang a' = toAng a
                       Ang b' = toAng b
                   in Ang $ (a' `op` b') `mod'` 360 
 
-a ~= b = a == b || abs (a - b) < tolerance
 
 ------------------------------------------------------------
 

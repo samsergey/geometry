@@ -53,3 +53,7 @@ withAng2 op a b = let Ang a' = toAng a
 class Figure a where
   isTrivial :: a -> Bool
   isSimilar :: a -> a -> Bool
+
+------------------------------------------------------------
+
+roundUp p x = p * fromIntegral (round (x / p))

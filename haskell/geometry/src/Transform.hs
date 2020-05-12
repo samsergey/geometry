@@ -119,12 +119,11 @@ class Curve a where
   normal :: a -> Number -> Dir
   normal f t = 90 + tangent f t
 
-
-isContaining :: (Curve c, Pos p) => c -> p -> Bool
-isContaining c p = location p c == OnCurve
+  isContaining :: Pos p => a -> p -> Bool
+  isContaining c p = location p c == OnCurve
   
-isEnclosing :: (Curve c, Pos p) => c -> p -> Bool
-isEnclosing c p = location p c == Inside
+  isEnclosing :: Pos p => a -> p -> Bool
+  isEnclosing c p = location p c == Inside
 
 
 class Curve a => Linear a where

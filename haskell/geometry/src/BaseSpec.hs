@@ -8,6 +8,8 @@ import Base
 
 instance Arbitrary Dir where
   arbitrary = oneof [Vec <$> arbitrary, Ang <$> arbitrary]
+  shrink (Ang a) = [Ang (roundUp 1 a) ]
+  shrink (Vec (a:+b)) = [Vec (roundUp 0.1 a :+ roundUp 0.1 b) ]
 
 main :: IO ()
 main = hspec $ do

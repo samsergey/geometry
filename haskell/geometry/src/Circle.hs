@@ -1,4 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
+
 module Circle where
 
 import Graphics.Svg ((<<-))
@@ -16,7 +18,6 @@ data Circle = Circle { radius :: Number
                      , center :: CXY
                      , orientation :: Number
                      , phaseShift :: Number }
-
 
 instance Show Circle where
   show cir = concat ["<Circle ", show r, ",", show c, ">"]
@@ -65,7 +66,7 @@ instance SVGable Circle where
 
 trivial = Circle 0 0 1 0
 
-mkCircle r c = Circle r c 1 0
+mkCircle r c = Circle (abs r) c 1 0
 
 mkCircle2 c p = Circle (magnitude r) c 1 (phase r / (2*pi))
   where r = p - c

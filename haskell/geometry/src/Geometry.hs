@@ -53,7 +53,7 @@ pointOn c t = Point (c `param` t)
 
 ------------------------------------------------------------
 circle :: Pos a => Number -> a -> Circle
-circle r p = mkCircle c $ c + (r :+ 0)
+circle r p = mkCircle2 c $ c + (r :+ 0)
   where c = pos p
 
 ------------------------------------------------------------

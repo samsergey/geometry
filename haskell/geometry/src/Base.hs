@@ -76,3 +76,10 @@ withAngular2 op a b = let Deg a' = deg a
 class Figure a where
   isTrivial :: a -> Bool
   isSimilar :: a -> a -> Bool
+
+  isNontrivial :: a -> Bool
+  isNontrivial x = not (isTrivial x)
+
+------------------------------------------------------------
+
+both f (a,b) = (f a, f b)

@@ -5,15 +5,20 @@ import Data.Complex
 import Base
 import Affine
 
-
-data Line = Line { start :: CN, end :: CN }
+data Line = Line { start :: CN, through :: CN }
+          | Segment { start :: CN, through :: CN }
+          | Ray { start :: CN, through :: CN }
 
 instance Show Line where
-  show (Line p1 p2) = concat ["<Line ("
-                             , show x1, ",", show y1, "), ("
-                             , show x2, ",", show y2, ")>"]
-    where (x1, y1) = coord p1
-          (x2, y2) = coord p2
+  show l = concat ["<", name, "("
+                  , show x1, ",", show y1, "), ("
+                  , show x2, ",", show y2, ")>"]
+    where (x1, y1) = coord (start l)
+          (x2, y2) = coord (through l)
+          name = case l of
+            Line _ _ -> "Line"
+            Segment _ _ -> "Segment"
+            Ray _ _ -> "Ray"
 
  
 instance Eq Line where
@@ -30,7 +35,7 @@ instance Figure Line where
 
 instance Affine Line where
   cmp (Line p1 p2) = cmp p2 - cmp p1
-  fromCN v = Line 0 v
+  fromCN = Line 0
 
 
 instance Linear Line where

@@ -119,7 +119,7 @@ class Trans a => Affine a where
 
   roundUp :: Double -> a -> a
   roundUp d = fromCoord . (\(x,y) -> (rounding x, rounding y)) . coord
-    where rounding x = fromIntegral (floor (x /d)) * d
+    where rounding x = fromIntegral (ceiling (x /d)) * d
 
   isZero :: a -> Bool
   isZero a = cmp a ~== 0
@@ -150,7 +150,7 @@ class Affine a => Linear a where
   pivot :: a -> CN
 
   vector :: a -> CN
-  vector = cmp
+  vector = normalize . cmp
 
 ------------------------------------------------------------
 

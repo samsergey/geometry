@@ -14,7 +14,7 @@ import Geometry
 import Testing
 
 main :: IO ()
-main = hspec $ do
+main = hspec $
   describe "Circle" $ do
     describe "parametrization" $ do
       it "1" $ 

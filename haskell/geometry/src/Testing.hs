@@ -5,7 +5,8 @@ import Test.QuickCheck.Modifiers
 
 import Base
 import Affine
-import Geometry
+import Point
+import Circle
 
 newtype Position a = Position {getPosition :: a}
   deriving Show
@@ -25,9 +26,12 @@ instance (Trans a, Affine a, Arbitrary a) => Arbitrary (Position a) where
 shrinkPos :: Affine a => Double -> a -> [a]
 shrinkPos d x = map (roundUp d) $
                 takeWhile (\p -> distance x p >= d/2) $
-                map (* cmp x) $
-                map (1 -) $
+                map (\s -> fromCN $ (1 - s) * cmp x) $
                 iterate (/2) 1
+
+instance Arbitrary Angular where
+  arbitrary = oneof [Deg <$> arbitrary, Cmp <$> arbitrary]
+  shrink = shrinkPos 1
 
 
 instance Arbitrary Point where

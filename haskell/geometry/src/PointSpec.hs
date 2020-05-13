@@ -1,4 +1,3 @@
-{-# Language TypeApplications #-}
 import Test.Hspec
 import Test.QuickCheck
 import Test.Invariant
@@ -7,23 +6,22 @@ import Data.Complex
 import Data.AEq
 
 import Base
-import Transform
+import Affine
 import Point
 import Circle
 import Geometry
-
+import Testing
 
 main :: IO ()
 main = hspec $ do
   describe "Point" $ do
     describe "Pos instance" $ do
-      it "1" $ do property $ pos `inverts` Point 
-      it "2" $ do property $ Point `inverts` pos 
-      it "3" $ do property $ coord `inverts` (Point . pos)
-      it "4" $ do property $ (Point . pos) `inverts` coord
+      it "1" $ property $ coord `inverts` Point 
+      it "2" $ property $ Point `inverts` coord 
+      it "3" $ property $ coord `inverts` (Point . coord)
+      it "4" $ property $ (Point . coord) `inverts` coord
 
     describe "pointOn" $ do
-      it "1" $ do pointOn (circle 2 origin) 0 == point ((2, 0) :: XY)
-      it "2" $
-        do property $ \c t -> (c :: Circle) `isContaining` pointOn c t
+      it "1" $ pointOn (circle 2 origin) 0 == point ((2, 0) :: XY)
+      it "2" $ property $ \c t -> (c :: Circle) `isContaining` pointOn c t
                     

@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE GADTs, TypeApplications #-} 
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleInstances #-}
 module SVG where
 
@@ -99,7 +99,7 @@ svg content =
                                    , Svg.Height_ <<- "500" ]
 
 chart :: String -> Group -> IO ()
-chart name figs = Txt.writeFile name $ (prettyText contents)
+chart name figs = Txt.writeFile name $ prettyText contents
   where
     contents = svg $ toSVG $ scaler figs
     scaler = translate ((svgSize/2) :+ (svgSize/2))

@@ -3,7 +3,7 @@ module Geometry where
 import Data.Double.Conversion.Text (toShortest)
 import Data.Complex
 
-gimport Base
+import Base
 import Affine
 import Point
 import Circle

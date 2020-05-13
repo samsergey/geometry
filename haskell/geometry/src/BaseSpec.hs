@@ -1,32 +1,33 @@
 import Test.Hspec
-import Test.Hspec.SmallCheck
+import Test.QuickCheck
 import Test.Invariant
 
 import Data.Complex
 
 import Base
+import Testing
 
 
 main :: IO ()
-main = hspec $ do
-  describe "Dir" $ do
+main = hspec $
+  describe "Angular" $ do
     describe "equality" $ do
-      it "1" $ do Ang 0 == Ang 360
-      it "2" $ do Ang 10 == Ang 370
-      it "3" $ do 45 == Vec (1 :+ 1)
-      it "4" $ do 90 == Vec (0 :+ 1)
-      it "5" $ do 90 == Ang (90 + 1e-12)
-      it "6" $ do Vec (2 :+ 3) == Vec (4 :+ 6)
+      it "1" $ Deg 0 == Deg 360
+      it "2" $ Deg 10 == Deg 370
+      it "3" $ 45 == Cmp (1 :+ 1)
+      it "4" $ 90 == Cmp (0 :+ 1)
+      it "5" $ 90 == Deg (90 + 1e-12)
+      it "6" $ Cmp (2 :+ 3) == Cmp (4 :+ 6)
 
     describe "inequality" $ do
-      it "1" $ do Ang 0 <= Ang 360
-      it "2" $ do Ang 0 < Ang 360.0001
-      it "3" $ do property $ \a -> 0 <= toTurns a && toTurns a <= 0.91
+      it "1" $ Deg 0 <= Deg 360
+      it "2" $ Deg 0 < Deg 360.0001
+      it "3" $ property $ \a -> 0 <= toTurns a && toTurns a <= 1
       
     describe "isomorphism" $ do
-      it "1" $ do property $ toAng `inverts` toVec
-      it "2" $ do property $ toVec `inverts` toAng
+      it "1" $ property $ deg `inverts` toCmp
+      it "2" $ property $ toCmp `inverts` deg
 
     describe "radians" $ do
-      it "1" $ do toRad 10 == toRad 370
-      it "2" $ do toRad (-10) == toRad 350
+      it "1" $ rad 10 == rad 370
+      it "2" $ rad (-10) == rad 350

@@ -1,4 +1,5 @@
-{-# Language TypeSynonymInstances, FlexibleInstances #-}
+{-# Language FlexibleInstances #-}
+
 module Affine where
 
 import Data.Complex
@@ -14,7 +15,7 @@ class Trans a where
   transform :: TMatrix -> a -> a
 
   transformAt :: Affine p => p -> (a -> a) -> a -> a
-  transformAt p t = translate (xy) . t . translate (-xy)
+  transformAt p t = translate xy . t . translate (-xy)
     where xy = cmp p
   
   translate :: Affine p => p -> a -> a
@@ -177,4 +178,4 @@ class Curve a where
   isContaining c p = location p c == OnCurve
   
   isEnclosing :: Affine p => a -> p -> Bool
-  isEnclosing c p = location p c == Inside
+  isEnclosing c p = location p c == Inside 

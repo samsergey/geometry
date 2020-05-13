@@ -5,7 +5,7 @@ import Data.Complex
 import Base
 import Affine
 
-data Point = Point XY
+newtype Point = Point XY
 
 
 instance Eq Point where

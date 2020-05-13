@@ -1,4 +1,5 @@
-{-# Language FlexibleInstances, UndecidableInstances #-}
+{-# Language UndecidableInstances #-}
+{-# Language FlexibleInstances #-}
 {-# Language MultiParamTypeClasses #-}
 module Base where
 

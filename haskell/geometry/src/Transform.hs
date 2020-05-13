@@ -14,26 +14,26 @@ class Trans a where
   {-# MINIMAL transform #-}
   transform :: TMatrix -> a -> a
 
-  transformAt :: Pos p => p -> (a -> a) -> a -> a
+  transformAt :: Directed p => p -> (a -> a) -> a -> a
   transformAt p t = translate (xy) . t . translate (-xy)
     where xy = pos p
   
-  translate :: Pos p => p -> a -> a
+  translate :: Directed p => p -> a -> a
   translate = transform . translateT . pos
 
   scale :: Number -> a -> a
   scale = transform . scaleT
 
-  scaleAt :: Pos p => p -> Number -> a -> a
+  scaleAt :: Directed p => p -> Number -> a -> a
   scaleAt p s = transformAt p (scale s)
 
-  rotate :: Dir -> a -> a
+  rotate :: Angular -> a -> a
   rotate = transform . rotateT . toRad
 
-  rotateAt :: Pos p => p -> Dir -> a -> a
+  rotateAt :: Directed p => p -> Angular -> a -> a
   rotateAt p a = transformAt p (rotate a)
          
-  reflect :: Dir -> a -> a
+  reflect :: Angular -> a -> a
   reflect d = transform $ reflectT $ toRad d
 
   reflectAt :: Linear l => l -> a -> a
@@ -58,7 +58,7 @@ scaleT  a = ((a, 0, 0), (0, a, 0))
 
 ------------------------------------------------------------
 
-class Trans a => Pos a where
+class Trans a => Directed a where
   {-# MINIMAL (fromPos | fromCoord), (pos | coord) #-}
 
   fromPos :: CXY -> a
@@ -84,7 +84,7 @@ class Trans a => Pos a where
   collinear :: a -> a -> Bool
   collinear a b = a `cross` b ~== 0
 
-  dir :: a -> a -> Dir
+  dir :: a -> a -> Angular
   dir p1 p2 = Vec (pos p2 - pos p1)
 
   cross :: a -> a -> Number
@@ -114,21 +114,21 @@ class Trans a => Pos a where
 instance Trans CXY where
   transform  = transformCXY
 
-instance Pos CXY where
+instance Directed CXY where
   pos = id
   fromPos = id
 
 instance Trans XY where
   transform t  = coord . transformCXY t . pos
 
-instance Pos XY where
+instance Directed XY where
   coord = id
   fromCoord = id
 
-instance Trans Dir where
+instance Trans Angular where
   transform t  = Vec . transformCXY t . pos
 
-instance Pos Dir where
+instance Directed Angular where
   pos d = let Vec v = toVec d in v
   fromPos = Vec
 
@@ -141,15 +141,15 @@ newtype Position a = Position {getPosition :: a}
 instance Trans a => Trans (Position a) where
   transform t (Position p) = Position (transform t p)
   
-instance Pos a => Pos (Position a) where
+instance Directed a => Directed (Position a) where
   pos = pos . getPosition
   fromPos = Position . fromPos
 
-instance (Trans a, Pos a, Arbitrary a) => Arbitrary (Position a) where
+instance (Trans a, Directed a, Arbitrary a) => Arbitrary (Position a) where
   arbitrary = Position <$> arbitrary
   shrink = shrinkPos 1
 
-shrinkPos :: (Trans a, Pos a) => Number -> a -> [a]
+shrinkPos :: (Trans a, Directed a) => Number -> a -> [a]
 shrinkPos d x = map (roundUp d) $
                 takeWhile (\p -> distance x p >= d/2) $
                 map (`Transform.scale` x) $
@@ -163,25 +163,25 @@ data Location = Inside | Outside | OnCurve deriving (Show, Eq)
 class Curve a where
   {-# MINIMAL param, locus, length, (normal | tangent)  #-}
   param :: a -> Number -> CXY
-  locus :: Pos p => a -> p -> Number
+  locus :: Directed p => a -> p -> Number
   length :: a -> Number
 
-  tangent :: a -> Number -> Dir
+  tangent :: a -> Number -> Angular
   tangent f t = normal f t + 90
 
   isClosed :: a -> Bool
   isClosed _ = False
   
-  location :: Pos p => p -> a -> Location
+  location :: Directed p => p -> a -> Location
   location _ _ = Outside
   
-  normal :: a -> Number -> Dir
+  normal :: a -> Number -> Angular
   normal f t = 90 + tangent f t
 
-  isContaining :: Pos p => a -> p -> Bool
+  isContaining :: Directed p => a -> p -> Bool
   isContaining c p = location p c == OnCurve
   
-  isEnclosing :: Pos p => a -> p -> Bool
+  isEnclosing :: Directed p => a -> p -> Bool
   isEnclosing c p = location p c == Inside
 
 
@@ -194,12 +194,12 @@ class Curve a => Linear a where
   unit :: a -> Number
   unit = magnitude . vector
 
-  angle :: a -> Dir
+  angle :: a -> Angular
   angle = Vec . vector
 
 ------------------------------------------------------------
 
--- class Directed a where
+-- class Angularected a where
 --   isCollinear :: a -> a -> Bool
 --   isPerpendicular :: a -> a -> Bool
 --   polar

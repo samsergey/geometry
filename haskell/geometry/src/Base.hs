@@ -5,6 +5,8 @@ module Base where
 import Data.Fixed (mod')
 import Data.Complex
 import Data.List
+import Test.QuickCheck
+import Test.QuickCheck.Modifiers
 
 ------------------------------------------------------------
 
@@ -32,27 +34,26 @@ instance (AlmostEq a, AlmostEq b) => AlmostEq (a, b) where
 
 ------------------------------------------------------------
 
-data Angular = Deg Double | Vec CN 
+data Angular = Deg Double | Cmp CN 
   deriving Show
 
-instance AlmostEq Angular where  a ~== b = toRad a ~== toRad b
+instance AlmostEq Angular where  a ~== b = rad a ~== rad b
 
 instance Eq Angular  where  a == b = a ~== b
 
-instance Ord Angular where  a <= b = a == b || toRad a < toRad b
+instance Ord Angular where  a <= b = a == b || rad a < rad b
 
-
-toDeg (Deg a) = Deg a
-toDeg (Vec v) | v ~== 0 = Deg 0
+deg (Deg a) = Deg a
+deg (Cmp v) | v ~== 0 = Deg 0
               | otherwise = Deg $ (180/pi * phase v) `mod'` 360
 
-toVec (Vec x) = Vec x
-toVec (Deg a) = Vec $ mkPolar 1 (a/180*pi)
+toCmp (Cmp x) = Cmp x
+toCmp d = Cmp $ mkPolar 1 (rad d)
 
-toRad (Vec v) = if v ~== 0 then 0 else phase v `mod'` (2*pi)
-toRad (Deg a) = (a*pi/180) `mod'` (2*pi)
+rad (Cmp v) = if v ~== 0 then 0 else phase v `mod'` (2*pi)
+rad (Deg a) = (a*pi/180) `mod'` (2*pi)
 
-toTurns = (/ (2*pi)) . toRad
+toTurns = (/ (2*pi)) . rad
 
 instance Num Angular where
   fromInteger n = Deg $ fromIntegral n `mod'` 360
@@ -62,17 +63,15 @@ instance Num Angular where
   abs = withAngular abs
   signum = withAngular signum
 
-withAngular op a = let Deg a' = toDeg a
-               in Deg $ op a' `mod'` 360 
+withAngular op a = let Deg a' = deg a
+                   in Deg $ op a' `mod'` 360 
                   
-withAngular2 op a b = let Deg a' = toDeg a
-                      Deg b' = toDeg b
-                  in Deg $ (a' `op` b') `mod'` 360 
-
+withAngular2 op a b = let Deg a' = deg a
+                          Deg b' = deg b
+                      in Deg $ (a' `op` b') `mod'` 360 
 
 ------------------------------------------------------------
 
 class Figure a where
   isTrivial :: a -> Bool
   isSimilar :: a -> a -> Bool
-

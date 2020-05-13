@@ -1,21 +1,21 @@
-{-# LANGUAGE OverloadedStrings #-}
 module Line where
 
-import Graphics.Svg ((<<-))
-import qualified Graphics.Svg as Svg
-import Data.Double.Conversion.Text (toPrecision)
 import Data.Complex
 
 import Base
-import Transform
-import SVG
+import Affine
 
-data Line = Line CXY CXY
+
+data Line = Line { start :: CN, end :: CN }
 
 instance Show Line where
-  show (Line p1 p2) = concat ["<Line ", show (coord p1), ",", show (coord p2), ">"]
+  show (Line p1 p2) = concat ["<Line ("
+                             , show x1, ",", show y1, "), ("
+                             , show x2, ",", show y2, ")>"]
+    where (x1, y1) = coord p1
+          (x2, y2) = coord p2
 
-
+ 
 instance Eq Line where
   l1 == l2
     | isTrivial l1 = isTrivial l2 && l2 `isContaining` (l1 `param` 0)
@@ -28,32 +28,28 @@ instance Figure Line where
   isSimilar _ _ = True
 
 
+instance Affine Line where
+  cmp (Line p1 p2) = cmp p2 - cmp p1
+  fromCN v = Line 0 v
+
+
+instance Linear Line where
+  pivot (Line p _) = p
+
+
 instance Trans Line where
-  transform t (Line p1 p2) = Line (transformCXY t p1) (transformCXY t p2)
+  transform t (Line p1 p2) = Line (transformCN t p1) (transformCN t p2)
 
 
 instance Curve Line where
   param l t = start l + ((unit l * t) :+ 0) * vector l
-  locus l p = let v = pos p - start l 
+  locus l p = let v = cmp p - start l
                in if isTrivial l then 0 else (v `dot` vector l) / unit l
   isClosed = const False
-  isContaining l p = vector l `cross` (pos p - start l) == 0
-  length _ = 1/0
-  tangent l _ = Vec $ vector l
+  isContaining l p = vector l `collinear` (cmp p - start l)
+  tangent l _ = Cmp $ vector l
+  unit (Line p1 p2) = distance p1 p2
 
 
-instance Linear Line where
-  start (Line p _) = pos p
-  end (Line _ p) = pos p
-  vector (Line p1 p2) = normalize (p2 - p1)
-  unit _ = 1
 
-
-instance SVGable Line where
-  toSVG c = Svg.polyline_ [ Svg.Points_ <<- pts
-                          , Svg.Fill_ <<- "none"
-                          , Svg.Stroke_ <<- "orange"
-                          , Svg.Stroke_width_ <<- "2" ]
-    where
-      pts = fmtSVG (start c) <> " " <> fmtSVG (end c)
 

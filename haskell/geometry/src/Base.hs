@@ -1,12 +1,10 @@
 {-# Language FlexibleInstances, UndecidableInstances #-}
-{-# Language GeneralizedNewtypeDeriving #-}
+{-# Language MultiParamTypeClasses #-}
 module Base where
 
 import Data.Fixed (mod')
 import Data.Complex
-import Data.AEq
-
-import Test.QuickCheck
+import Data.List
 
 ------------------------------------------------------------
 
@@ -14,22 +12,45 @@ type Number = Double
 type CXY = Complex Number
 type XY = (Number, Number)
 
+------------------------------------------------------------
+
+infix 4 ~==
+
+class AEq a where
+  (~==) :: a -> a -> Bool
+
+instance AEq Int where a ~== b = a == b
+instance AEq Integer where  a ~== b = a == b
+
+instance AEq Double where
+  a ~== b = abs (a - b) < 1e-10 || abs (a-b) < 1e-10 * abs(a+b)
+
+instance (RealFloat a, Ord a, Fractional a, Num a, AEq a) => AEq (Complex a) where
+  a ~== b = magnitude (a - b) < 1e-10 || magnitude (a-b) < 1e-10 * magnitude(a+b)
+
+instance (AEq a, AEq b) => AEq (a, b) where
+  (a1,b1) ~== (a2,b2) = a1 ~== a2 && b1 ~== b2
+
+------------------------------------------------------------
+
 data Dir = Ang Number | Vec CXY
   deriving Show
 
-instance Eq Dir where
-  a == b = toRad a ~== toRad b
+instance AEq Dir where  a ~== b = toRad a ~== toRad b
 
-instance Ord Dir where
-  a <= b = a == b || toRad a < toRad b
+instance Eq Dir  where  a == b = a ~== b
+
+instance Ord Dir where  a <= b = a == b || toRad a < toRad b
+
 
 toAng (Ang a) = Ang a
-toAng (Vec v) = Ang $ (180/pi * phase v) `mod'` 360
+toAng (Vec v) | v ~== 0 = Ang 0
+              | otherwise = Ang $ (180/pi * phase v) `mod'` 360
 
 toVec (Vec x) = Vec x
 toVec (Ang a) = Vec $ mkPolar 1 (a/180*pi)
 
-toRad (Vec v) = phase v `mod'` (2*pi)
+toRad (Vec v) = if v ~== 0 then 0 else phase v `mod'` (2*pi)
 toRad (Ang a) = (a*pi/180) `mod'` (2*pi)
 
 toTurns = (/ (2*pi)) . toRad
@@ -56,9 +77,3 @@ class Figure a where
   isTrivial :: a -> Bool
   isSimilar :: a -> a -> Bool
 
-------------------------------------------------------------
-
-roundUp p x = p * fromIntegral (round (x / p))
-
-instance Arbitrary Number where
-  arbitrary = arbitrary :: Double

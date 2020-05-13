@@ -1,11 +1,10 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings,FlexibleInstances, MultiParamTypeClasses #-}
 module Point where
 
 import Graphics.Svg ((<<-))
 import qualified Graphics.Svg as Svg
 import Data.Double.Conversion.Text (toPrecision)
 import Data.Complex
-import Data.AEq
 import Test.QuickCheck
 
 import Base
@@ -18,6 +17,7 @@ data Point = Point CXY
 instance Eq Point where
   p1 == p2 = pos p1 ~== pos p2
 
+
 instance Show Point where
   show p = "<Point " ++ show (fmtSVG (coord p)) ++ ">"
 
@@ -28,6 +28,7 @@ instance Trans Point where
 
 instance Pos Point where
   pos (Point p) = p
+  fromPos = Point
 
 
 instance SVGable Point where
@@ -39,7 +40,16 @@ instance SVGable Point where
                            , Svg.Stroke_ <<- "#444"
                            , Svg.Stroke_width_ <<- "1" ]
 
-
 instance Arbitrary Point where
   arbitrary = Point <$> arbitrary
-  shrink (Point p) = Point <$> shrink p
+  shrink = shrinkPos 1
+        
+--instance (Monad m) => Serial m Point where
+--  series = cons1 Point
+  
+--suchThat :: Series m a -> (a -> Bool) -> Series m a
+--suchThat s p = s >>= \x -> if p x then pure x else empty
+
+--instance (Monad m, Pos a, Serial m a) => Serial m (Position a) where
+--  series = Position <$> limit 1000 series `suchThat` (\p -> magnitude (pos p) < 10)
+

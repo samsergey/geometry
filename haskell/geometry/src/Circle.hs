@@ -1,5 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings, FlexibleInstances, MultiParamTypeClasses #-}
 
 module Circle where
 
@@ -7,10 +6,11 @@ import Graphics.Svg ((<<-))
 import qualified Graphics.Svg as Svg
 import Data.Double.Conversion.Text (toPrecision)
 import Data.Complex
-import Data.AEq
 import Test.QuickCheck
+import Test.QuickCheck.Modifiers
 
 import Base
+import Point
 import Transform
 import SVG
 
@@ -18,6 +18,7 @@ data Circle = Circle { radius :: Number
                      , center :: CXY
                      , orientation :: Number
                      , phaseShift :: Number }
+
 
 instance Show Circle where
   show cir = concat ["<Circle ", show r, ",", show c, ">"]
@@ -65,6 +66,7 @@ instance SVGable Circle where
     where (x :+ y) = center c
 
 trivial = Circle 0 0 1 0
+isTrivial (Circle r _ _ _) = r <= 0
 
 mkCircle r c = Circle (abs r) c 1 0
 
@@ -73,6 +75,13 @@ mkCircle2 c p = Circle (magnitude r) c 1 (phase r / (2*pi))
 
 mkCircle3 p1 p2 p3 = undefined
 
+-- instance Monad m => Serial m Circle where
+--   series = do Positive r <- limit 10 series
+--               Position c <- limit 10 series 
+--               return (mkCircle r c)
 
 instance Arbitrary Circle where
-  arbitrary = mkCircle <$> arbitrary <*> arbitrary
+  arbitrary = mkCircle <$> (abs <$> arbitrary) <*> arbitrary
+  shrink (Circle r c _ _) = do r' <- shrink r
+                               Position c' <- shrink (Position c)
+                               return $ mkCircle r' c'

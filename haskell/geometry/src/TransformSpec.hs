@@ -1,6 +1,6 @@
 {-# Language TypeApplications #-}
 import Test.Hspec
-import Test.QuickCheck (property, Arbitrary (..), oneof)
+import Test.Hspec.SmallCheck
 import Test.Invariant
 
 import Data.Complex
@@ -8,9 +8,6 @@ import Data.AEq
 
 import Base
 import Transform
-
-instance Arbitrary Dir where
-  arbitrary = oneof [Vec <$> arbitrary, Ang <$> arbitrary]
 
 main :: IO ()
 main = hspec $ do

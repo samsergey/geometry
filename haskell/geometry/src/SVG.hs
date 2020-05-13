@@ -4,7 +4,6 @@ module SVG where
 
 import Graphics.Svg
 import Data.Complex
-import Data.AEq
 import qualified Data.Text.Internal as Internal
 import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy.IO as Txt

@@ -1,15 +1,11 @@
 import Test.Hspec
-import Test.QuickCheck
+import Test.Hspec.SmallCheck
 import Test.Invariant
 
 import Data.Complex
 
 import Base
 
-instance Arbitrary Dir where
-  arbitrary = oneof [Vec <$> arbitrary, Ang <$> arbitrary]
-  shrink (Ang a) = [Ang (roundUp 1 a) ]
-  shrink (Vec (a:+b)) = [Vec (roundUp 0.1 a :+ roundUp 0.1 b) ]
 
 main :: IO ()
 main = hspec $ do
@@ -25,7 +21,8 @@ main = hspec $ do
     describe "inequality" $ do
       it "1" $ do Ang 0 <= Ang 360
       it "2" $ do Ang 0 < Ang 360.0001
-
+      it "3" $ do property $ \a -> 0 <= toTurns a && toTurns a <= 0.91
+      
     describe "isomorphism" $ do
       it "1" $ do property $ toAng `inverts` toVec
       it "2" $ do property $ toVec `inverts` toAng

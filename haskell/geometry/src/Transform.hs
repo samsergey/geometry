@@ -2,6 +2,7 @@
 module Transform where
 
 import Data.Complex
+import Test.QuickCheck (Arbitrary(..))
 
 import Base
 
@@ -10,6 +11,7 @@ import Base
 type TMatrix = ((Number, Number, Number),(Number, Number, Number))
 
 class Trans a where
+  {-# MINIMAL transform #-}
   transform :: TMatrix -> a -> a
 
   transformAt :: Pos p => p -> (a -> a) -> a -> a
@@ -57,7 +59,14 @@ scaleT  a = ((a, 0, 0), (0, a, 0))
 ------------------------------------------------------------
 
 class Trans a => Pos a where
+  {-# MINIMAL (fromPos | fromCoord), (pos | coord) #-}
 
+  fromPos :: CXY -> a
+  fromPos = fromCoord . coord
+
+  fromCoord :: XY -> a
+  fromCoord = fromPos . pos
+    
   pos :: a -> CXY
   pos p = let (x, y) = coord p in x :+ y
   
@@ -68,6 +77,12 @@ class Trans a => Pos a where
   dot a b = let (xa, ya) = coord a
                 (xb, yb) = coord b
                 in xa*xb + ya*yb
+
+  perp :: a -> a -> Bool
+  perp  a b = a `dot` b ~== 0
+
+  collinear :: a -> a -> Bool
+  collinear a b = a `cross` b ~== 0
 
   dir :: a -> a -> Dir
   dir p1 p2 = Vec (pos p2 - pos p1)
@@ -80,29 +95,73 @@ class Trans a => Pos a where
   norm :: a -> Number
   norm = magnitude . pos
 
+  distance :: a -> a -> Number
+  distance a b = magnitude (pos a - pos b)
+
   normalize :: a -> a
   normalize v
     | pos v == 0 = v
     | otherwise = scale (1/norm v) v
 
+  roundUp :: Number -> a -> a
+  roundUp d = fromCoord . (\(x,y) -> (rounding x, rounding y)) . coord
+    where rounding x = fromIntegral (floor (x /d)) * d
+
+  isZero :: a -> Bool
+  isZero a = pos a ~== 0
+
 
 instance Trans CXY where
-  transform t a  = transformCXY t a
+  transform  = transformCXY
 
 instance Pos CXY where
   pos = id
+  fromPos = id
 
 instance Trans XY where
-  transform t a  = coord $ transformCXY t $ pos a
+  transform t  = coord . transformCXY t . pos
 
 instance Pos XY where
   coord = id
+  fromCoord = id
+
+instance Trans Dir where
+  transform t  = Vec . transformCXY t . pos
+
+instance Pos Dir where
+  pos d = let Vec v = toVec d in v
+  fromPos = Vec
+
+
+------------------------------------------------------------
+
+newtype Position a = Position {getPosition :: a}
+  deriving Show
+
+instance Trans a => Trans (Position a) where
+  transform t (Position p) = Position (transform t p)
+  
+instance Pos a => Pos (Position a) where
+  pos = pos . getPosition
+  fromPos = Position . fromPos
+
+instance (Trans a, Pos a, Arbitrary a) => Arbitrary (Position a) where
+  arbitrary = Position <$> arbitrary
+  shrink = shrinkPos 1
+
+shrinkPos :: (Trans a, Pos a) => Number -> a -> [a]
+shrinkPos d x = map (roundUp d) $
+                takeWhile (\p -> distance x p >= d/2) $
+                map (`Transform.scale` x) $
+                map (1 -) $
+                iterate (/2) 1
 
 ------------------------------------------------------------
 
 data Location = Inside | Outside | OnCurve deriving (Show, Eq)
 
 class Curve a where
+  {-# MINIMAL param, locus, length, (normal | tangent)  #-}
   param :: a -> Number -> CXY
   locus :: Pos p => a -> p -> Number
   length :: a -> Number
@@ -127,6 +186,7 @@ class Curve a where
 
 
 class Curve a => Linear a where
+  {-# MINIMAL start, end, vector #-}
   start :: a -> CXY
   end :: a -> CXY
   vector :: a -> CXY
@@ -136,3 +196,19 @@ class Curve a => Linear a where
 
   angle :: a -> Dir
   angle = Vec . vector
+
+------------------------------------------------------------
+
+-- class Directed a where
+--   isCollinear :: a -> a -> Bool
+--   isPerpendicular :: a -> a -> Bool
+--   polar
+--   cartesian
+--   dot
+--   cross
+--   norm
+--   normalized
+--   angle
+  
+  
+  

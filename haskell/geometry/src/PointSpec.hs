@@ -1,6 +1,6 @@
 {-# Language TypeApplications #-}
 import Test.Hspec
-import Test.QuickCheck -- (property, Arbitrary (..), oneof, sample)
+import Test.QuickCheck
 import Test.Invariant
 
 import Data.Complex
@@ -19,7 +19,7 @@ main = hspec $ do
     describe "Pos instance" $ do
       it "1" $ do property $ pos `inverts` Point 
       it "2" $ do property $ Point `inverts` pos 
-      it "1" $ do property $ coord `inverts` (Point . pos)
+      it "3" $ do property $ coord `inverts` (Point . pos)
       it "4" $ do property $ (Point . pos) `inverts` coord
 
     describe "pointOn" $ do

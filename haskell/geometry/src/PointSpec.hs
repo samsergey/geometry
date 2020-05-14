@@ -23,5 +23,7 @@ main = hspec $ do
 
     describe "pointOn" $ do
       it "1" $ pointOn (circle 2 origin) 0 == point ((2, 0) :: XY)
-      it "2" $ property $ \c t -> (c :: Circle) `isContaining` pointOn c t
+      it "2" $
+        property $ \c t -> let types = c :: Circle
+                           in c `isContaining` pointOn c t
                     

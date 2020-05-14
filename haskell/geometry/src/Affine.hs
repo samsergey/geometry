@@ -90,11 +90,14 @@ class Trans a => Affine a where
                 (xb, yb) = coord b
                 in xa*xb + ya*yb
 
-  orthogonal :: a -> a -> Bool
-  orthogonal  a b = a `dot` b ~== 0
+  isOrthogonal :: a -> a -> Bool
+  isOrthogonal  a b = a `dot` b ~== 0
 
-  collinear :: a -> a -> Bool
-  collinear a b = a `cross` b ~== 0
+  isOpposite :: a -> a -> Bool
+  isOpposite a b = cmp a + cmp b ~== 0
+
+  isCollinear :: a -> a -> Bool
+  isCollinear a b = a `cross` b ~== 0
 
   azimuth :: a -> a -> Angular
   azimuth p1 p2 = Cmp (cmp p2 - cmp p1)
@@ -124,6 +127,14 @@ class Trans a => Affine a where
 
   angle :: a -> Angular
   angle = deg . Cmp . cmp
+
+infix 8 <@
+(<@) :: Curve a => a -> Double -> CN
+c <@ x = param c x
+
+infix 8 @>
+(@>) :: (Curve a, Affine p) => p -> a -> Double
+p @> c  = locus c p
 
 ------------------------------------------------------------
 

@@ -15,13 +15,13 @@ lineConstructor (Segment _) = Segment
 
 instance Show Line where
   show l = case l of
-    Segment _ -> unwords ["<Segment"
+    Segment _ -> unwords [ "<Segment"
                          , "(" <> show x1 <> "," <> show y1 <> "),"
                          , "(" <> show x2 <> "," <> show y2 <> ")>"]
-    Line _ -> unwords ["<Line"
+    Line _ -> unwords [ "<Line"
                       , "(" <> show x1 <> "," <> show y1 <> "),"
                       , show a <> ">"]
-    Ray _ -> unwords ["<Ray"
+    Ray _ -> unwords [ "<Ray"
                      , "(" <> show x1 <> "," <> show y1 <> "),"
                      , show a <> ">"]
     where (x1, y1) = coord (l `param` 0)
@@ -38,12 +38,14 @@ instance Eq Line where
 
 instance Figure Line where
   isTrivial l = cmp l == 0
-  isSimilar s1@(Segment _) s2@(Segment _) = unit s1 == unit s2
+  isSimilar s1@(Segment _) s2@(Segment _) = unit s1 ~== unit s2
   isSimilar l1 l2 = True
+
 
 instance Affine Line where
   cmp l =  let (p1, p2) = refPoints l in normalize $ cmp p2 - cmp p1
   fromCN p = Line (0, p)
+
 
 instance Trans Line where
   transform t l = lineConstructor l (transformCN t p1, transformCN t p2)
@@ -63,8 +65,13 @@ instance Curve Line where
 
   isClosed = const False
 
-  isContaining l p = let (p1, _) = refPoints l
-                     in angle l `collinear` azimuth p1 (cmp p)
+  isContaining l p = case l of
+    Line _    -> res
+    Ray _     -> 0 <= x && res
+    Segment _ -> 0 <= x && x <= 1 && res
+    where (p1, _) = refPoints l
+          x = p @> l
+          res = angle l `isCollinear` azimuth p1 (cmp p)
 
   tangent l _ = angle l
 

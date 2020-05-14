@@ -36,6 +36,9 @@ class Trans a where
   reflect :: Angular -> a -> a
   reflect d = transform $ reflectT $ rad d
 
+  superpose :: (Affine p1, Affine p2) => p1 -> p2 -> a -> a
+  superpose p1 p2 = translate (cmp p2 - cmp p1)
+
 
 transformCN :: TMatrix -> CN -> CN
 transformCN t = cmp . transformXY t . coord

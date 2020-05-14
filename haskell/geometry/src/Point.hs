@@ -4,6 +4,7 @@ import Data.Complex
 
 import Base
 import Affine
+import Figure
 
 newtype Point = Point XY
 
@@ -25,3 +26,8 @@ instance Show Point where
   show (Point (x, y)) = concat ["<Point (", sx, " ", sy, ")>"]
     where sx = show x
           sy = show y 
+
+instance Figure Point where
+  isTrivial _ = False
+  isSimilar _ _ = True
+  refPoint = cmp

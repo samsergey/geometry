@@ -4,6 +4,7 @@ import Data.Complex
 
 import Base
 import Affine
+import Figure
 
 data Line = Line {refPoints :: (CN, CN) }
           | Segment {refPoints :: (CN, CN) }
@@ -12,6 +13,16 @@ data Line = Line {refPoints :: (CN, CN) }
 lineConstructor (Line _) = Line
 lineConstructor (Ray _) = Ray
 lineConstructor (Segment _) = Segment
+
+extendAs :: Line -> ((CN, CN) -> Line) -> Line
+l1 `extendAs` l = let res = l (refPoints l1)
+                   in case l1 of
+                     Segment _ -> res
+                     Ray _ -> case res of
+                                Segment _ -> l1
+                                _ -> res
+                     Line _  -> l1
+
 
 instance Show Line where
   show l = case l of
@@ -24,22 +35,23 @@ instance Show Line where
     Ray _ -> unwords [ "<Ray"
                      , "(" <> show x1 <> "," <> show y1 <> "),"
                      , show a <> ">"]
-    where (x1, y1) = coord (l `param` 0)
-          (x2, y2) = coord (l `param` 1)
+    where (x1, y1) = coord (l <@ 0)
+          (x2, y2) = coord (l <@ 1)
           a = angle l
 
  
 instance Eq Line where
   l1 == l2
-    | isTrivial l1 = isTrivial l2 && l2 `isContaining` (l1 `param` 0)
-    | otherwise = l2 `isContaining` (l1 `param` 0) &&
-                  l2 `isContaining` (l1 `param` 1)
+    | isTrivial l1 = isTrivial l2 && l2 `isContaining` (l1 <@ 0)
+    | otherwise = l2 `isContaining` (l1 <@ 0) &&
+                  l2 `isContaining` (l1 <@ 1)
 
 
 instance Figure Line where
   isTrivial l = cmp l == 0
   isSimilar s1@(Segment _) s2@(Segment _) = unit s1 ~== unit s2
   isSimilar l1 l2 = True
+  refPoint = fst . refPoints
 
 
 instance Affine Line where
@@ -49,8 +61,8 @@ instance Affine Line where
 
 instance Trans Line where
   transform t l = lineConstructor l (transformCN t p1, transformCN t p2)
-    where p1 = l `param` 0
-          p2 = l `param` 1
+    where p1 = l <@ 0
+          p2 = l <@ 1
   
 
 instance Curve Line where
@@ -67,11 +79,10 @@ instance Curve Line where
 
   isContaining l p = case l of
     Line _    -> res
-    Ray _     -> 0 <= x && res
-    Segment _ -> 0 <= x && x <= 1 && res
+    Ray _     -> res && 0 ~<= x
+    Segment _ -> res && 0 ~<= x && x ~<= 1
     where (p1, _) = refPoints l
           x = p @> l
           res = angle l `isCollinear` azimuth p1 (cmp p)
 
   tangent l _ = angle l
-

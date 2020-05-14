@@ -1,5 +1,6 @@
 {-# Language TypeApplications #-}
 {-# Language FlexibleInstances #-}
+{-# Language GeneralizedNewtypeDeriving #-}
 module Testing where
 
 import Data.Complex
@@ -11,6 +12,7 @@ import Data.Tuple.Extra (second)
 
 import Base
 import Affine
+import Figure
 import Point
 import Circle
 import Line
@@ -23,7 +25,13 @@ newtype DInt = DInt Double deriving Show
 instance Arbitrary DInt where
   arbitrary = DInt . fromIntegral <$> (arbitrary :: Gen Int)
   shrink (DInt l) = DInt <$> shrink l
-  
+
+newtype Parameter = Parameter Double deriving Show
+
+instance Arbitrary Parameter where
+  arbitrary = Parameter <$> oneof [pure 0, choose (0, 1), pure 1]
+  shrink (Parameter l) = Parameter <$> shrink l
+
 ------------------------------------------------------------
 
 newtype Position a = Position {getPosition :: a}
@@ -88,20 +96,25 @@ instance Arbitrary Line where
 
 ------------------------------------------------------------
 
-newtype AnySegment = AnySegment Line deriving Show
-newtype AnyLine = AnyLine Line deriving Show
-newtype AnyRay = AnyRay Line deriving Show
+newtype AnySegment = AnySegment Line
+  deriving (Show, Figure, Trans, Affine, Curve)
+
+newtype AnyLine = AnyLine Line 
+  deriving (Show, Figure, Trans, Affine, Curve)
+
+newtype AnyRay = AnyRay Line 
+  deriving (Show, Figure, Trans, Affine, Curve)
 
 instance Arbitrary AnySegment where
   arbitrary = AnySegment . Segment <$> arbitrary
   shrink (AnySegment l) = AnySegment <$> shrink l
 
 instance Arbitrary AnyLine where
-  arbitrary = AnyLine . Segment <$> arbitrary
+  arbitrary = AnyLine . Line <$> arbitrary
   shrink (AnyLine l) = AnyLine <$> shrink l
 
 instance Arbitrary AnyRay where
-  arbitrary = AnyRay . Segment <$> arbitrary
+  arbitrary = AnyRay . Ray <$> arbitrary
   shrink (AnyRay l) = AnyRay <$> shrink l
 
 ------------------------------------------------------------
@@ -126,7 +139,9 @@ instance Trans a => Arbitrary (Motion a) where
 
 ------------------------------------------------------------
 
-newtype Nontrivial a = Nontrivial a deriving Show
+newtype Nontrivial a = Nontrivial a deriving
+  (Show, Figure, Affine, Trans, Curve)
+
 
 instance (Arbitrary a, Figure a) => Arbitrary (Nontrivial a) where
   arbitrary = Nontrivial <$> arbitrary `suchThat` isNontrivial

@@ -33,9 +33,15 @@ instance (RealFloat a, Ord a, Fractional a, Num a, AlmostEq a) => AlmostEq (Comp
 instance (AlmostEq a, AlmostEq b) => AlmostEq (a, b) where
   (a1,b1) ~== (a2,b2) = a1 ~== a2 && b1 ~== b2
 
+infix 4 ~<=
+a ~<= b = a ~== b || a < b
+
+infix 4 ~>=
+a ~>= b = a ~== b || a > b
+
 ------------------------------------------------------------
 
-data Angular = Deg Double | Cmp CN 
+data Angular = Deg Double | Cmp CN
   deriving Show
 
 instance AlmostEq Angular where  a ~== b = rad a ~== rad b
@@ -70,15 +76,6 @@ withAngular op a = let Deg a' = deg a
 withAngular2 op a b = let Deg a' = deg a
                           Deg b' = deg b
                       in Deg $ (a' `op` b') `mod'` 360 
-
-------------------------------------------------------------
-
-class Figure a where
-  isTrivial :: a -> Bool
-  isSimilar :: a -> a -> Bool
-
-  isNontrivial :: a -> Bool
-  isNontrivial x = not (isTrivial x)
 
 ------------------------------------------------------------
 

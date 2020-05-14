@@ -4,6 +4,7 @@ import Data.Complex
 
 import Base
 import Affine
+import Figure
 
 data Circle = Circle { radius :: Double
                      , center :: CN
@@ -52,6 +53,7 @@ instance Curve Circle where
 instance Figure Circle where
   isTrivial (Circle r _ _ _) = r <= 0
   isSimilar c1 c2 = radius c1 ~== radius c2
+  refPoint = center
 
 mkCircle r c = Circle (abs r) c 1 0
 

@@ -7,6 +7,7 @@ import Data.Complex
 
 import Base
 import Affine
+import Figure
 import Point
 import Circle
 import Line
@@ -32,25 +33,59 @@ main = hspec $
 
     describe "equation and similarity" $ do
       it "1" $
-        property $ \l -> let types = l :: Line in l == l
+        property $ \l -> l == (l :: Line)
 
       it "2" $
-        property $ \l x1 x2 ->
+        property $ \(AnyLine l) x1 x2 -> x1 /= x2 ==>
                      let p1 = l <@ x1
                          p2 = l <@ x2
-                     in lineConstructor l (p1, p2) == l
+                     in Line (p1, p2) == l
 
       it "3" $
+        property $ \(AnyRay r) (Positive x) ->
+                     let p1 = r <@ 0
+                         p2 = r <@ x
+                     in Ray (p1, p2) == r
+
+      it "4" $
         property $ \(AnySegment s) m -> appMotion m s `isSimilar` s 
 
     describe "containing" $ do
       it "1" $
-        property $ \(AnyLine l) x ->
-                     isNontrivial l ==> l `isContaining` (l <@ x)
+        property $ \(AnyLine l) x -> l `isContaining` (l <@ x)
         
       it "2" $
-        property $ \(AnyRay r) x ->
-                     isNontrivial r ==> (0 <= x) == (r `isContaining` (r <@ x))
+        property $ \(Nontrivial (AnyRay r)) x ->
+                     (0 <= x) == (r `isContaining` (r <@ x))
       it "3" $
-        property $ \(AnySegment s) x ->
-                     isNontrivial s ==> (0 <= x && x <= 1) == (s `isContaining` (s <@ x))
+        property $ \(Nontrivial (AnySegment s)) x ->
+                     (0 <= x && x <= 1) == (s `isContaining` (s <@ x))
+
+    describe "tangent and family" $ do
+      it "1" $ angle (line @CN @CN 0 (1:+1)) == 45
+      it "2" $ normal (line @CN @CN 0 (1:+2)) 0 == Cmp ((-2):+1)
+
+    describe "extendAs" $ do
+      let s = segment @XY @XY (2,3) (4,6)
+      let r = ray @XY @XY (2,3) (4,6)
+      let l = line @XY @XY (2,3) (4,6)
+      it "1" $ s `extendAs` Segment == s
+      it "2" $ s `extendAs` Ray == r
+      it "3" $ s `extendAs` Line == l
+      it "4" $ r `extendAs` Segment == r
+      it "5" $ r `extendAs` Ray == r
+      it "6" $ r `extendAs` Line == l
+      it "7" $ l `extendAs` Segment == l
+      it "8" $ l `extendAs` Ray == l
+      it "9" $ l `extendAs` Line == l
+
+    describe "at" $ do
+      it "1" $ aLine `at` ((1,2) :: XY) == line @XY @XY (1,2) (2,2)
+
+    describe "along" $ do
+      it "1" $ aLine `at` ((2,3) :: XY) `along` Deg 0 == line @XY @XY (2,3) (3,3)
+      it "2" $ aLine `at` ((2,3) :: XY) `along` Deg 90 == line @XY @XY (2,3) (2,4)
+      it "3" $
+        property $ \a p l ->
+                     let types = (a :: Angular, p :: Point, l :: Line)
+                     in l `at` p `along` a == l `along` a `at` p

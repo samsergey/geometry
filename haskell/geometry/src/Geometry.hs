@@ -22,7 +22,16 @@ pointOn c t = Point $ coord $ c `param` t
 ------------------------------------------------------------
 
 line :: (Affine a1, Affine a2) => a1 -> a2 -> Line
-line p1 p2 = Line (cmp p1) (cmp p2)
+line p1 p2 = Line (cmp p1, cmp p2)
+
+segment :: (Affine a1, Affine a2) => a1 -> a2 -> Line
+segment p1 p2 = Segment (cmp p1, cmp p2)
+
+ray :: (Affine a1, Affine a2) => a1 -> a2 -> Line
+ray p1 p2 = Ray (cmp p1, cmp p2)
+
+reflectAt :: (Trans a) => Line -> a -> a
+reflectAt l = transformAt (l `param` 0) (reflect (angle l))
 
 ------------------------------------------------------------
 

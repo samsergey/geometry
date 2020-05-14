@@ -57,8 +57,20 @@ instance Arbitrary Circle where
 instance Arbitrary Line where
   arbitrary = do Position p1 <- arbitrary
                  Position p2 <- arbitrary
-                 return $ line @XY @XY p1 p2
+                 constr <- elements [Line, Ray, Segment]
+                 return $ constr (p1, p2)
                  
-  shrink (Line p1 p2) = do Position p1' <- shrink (Position p1)
-                           Position p2' <- shrink (Position p2)
-                           return $ line p1' p2'
+  shrink l = let (p1, p2) = refPoints l
+             in do Position p1' <- shrink (Position p1)
+                   Position p2' <- shrink (Position p2)
+                   return $ lineConstructor l (p1', p2')
+                  
+data Motion = Translate XY
+            | RotateAt XY Angular
+            | Reflect Angular
+
+instance Trans a => Arbitrary (Motion a) where
+  arbitrary = do Position x <- arbitrary
+                 a <- arbitrary
+                 b <- arbitrary
+                 return $ rotate a . reflect b . shift x

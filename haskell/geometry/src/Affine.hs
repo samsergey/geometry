@@ -36,8 +36,6 @@ class Trans a where
   reflect :: Angular -> a -> a
   reflect d = transform $ reflectT $ rad d
 
-  reflectAt :: Linear l => l -> a -> a
-  reflectAt l = transformAt (pivot l) (reflect (angle l))
 
 transformCN :: TMatrix -> CN -> CN
 transformCN t = cmp . transformXY t . coord
@@ -140,27 +138,24 @@ instance Affine XY where
 
 
 instance Affine Angular where
-  cmp (Cmp v) = v
+  cmp (Cmp v) = normalize v
   cmp d = mkPolar 1 (rad d)
-  fromCN = Cmp
-
-------------------------------------------------------------
-
-class Affine a => Linear a where
-  pivot :: a -> CN
-
-  vector :: a -> CN
-  vector = normalize . cmp
+  fromCN = Cmp . normalize
 
 ------------------------------------------------------------
 
 data Location = Inside | Outside | OnCurve deriving (Show, Eq)
 
 class Curve a where
-  {-# MINIMAL param, locus, unit, (normal | tangent)  #-}
+  {-# MINIMAL param, locus, (normal | tangent)  #-}
   param :: a -> Double -> CN
   locus :: Affine p => a -> p -> Double
-  unit  :: a -> Double
+
+  start :: a -> CN
+  start c = c `param` 0
+  
+  unit :: a -> Double
+  unit _ = 1
 
   tangent :: a -> Double -> Angular
   tangent f t = normal f t + 90

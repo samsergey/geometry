@@ -5,20 +5,28 @@ import Data.Complex
 import Base
 import Affine
 
-data Line = Line { start :: CN, through :: CN }
-          | Segment { start :: CN, through :: CN }
-          | Ray { start :: CN, through :: CN }
+data Line = Line {refPoints :: (CN, CN) }
+          | Segment {refPoints :: (CN, CN) }
+          | Ray {refPoints :: (CN, CN) }
+
+lineConstructor (Line _) = Line
+lineConstructor (Ray _) = Ray
+lineConstructor (Segment _) = Segment
 
 instance Show Line where
-  show l = concat ["<", name, "("
-                  , show x1, ",", show y1, "), ("
-                  , show x2, ",", show y2, ")>"]
-    where (x1, y1) = coord (start l)
-          (x2, y2) = coord (through l)
-          name = case l of
-            Line _ _ -> "Line"
-            Segment _ _ -> "Segment"
-            Ray _ _ -> "Ray"
+  show l = case l of
+    Segment _ -> unwords ["<Segment"
+                         , "(" <> show x1 <> "," <> show y1 <> "),"
+                         , "(" <> show x2 <> "," <> show y2 <> ")>"]
+    Line _ -> unwords ["<Line"
+                      , "(" <> show x1 <> "," <> show y1 <> "),"
+                      , show a <> ">"]
+    Ray _ -> unwords ["<Ray"
+                     , "(" <> show x1 <> "," <> show y1 <> "),"
+                     , show a <> ">"]
+    where (x1, y1) = coord (l `param` 0)
+          (x2, y2) = coord (l `param` 1)
+          a = angle l
 
  
 instance Eq Line where
@@ -29,32 +37,34 @@ instance Eq Line where
 
 
 instance Figure Line where
-  isTrivial l = vector l == 0
-  isSimilar _ _ = True
-
+  isTrivial l = cmp l == 0
+  isSimilar s1@(Segment _) s2@(Segment _) = unit s1 == unit s2
+  isSimilar l1 l2 = True
 
 instance Affine Line where
-  cmp (Line p1 p2) = cmp p2 - cmp p1
-  fromCN = Line 0
-
-
-instance Linear Line where
-  pivot (Line p _) = p
-
+  cmp l =  let (p1, p2) = refPoints l in normalize $ cmp p2 - cmp p1
+  fromCN p = Line (0, p)
 
 instance Trans Line where
-  transform t (Line p1 p2) = Line (transformCN t p1) (transformCN t p2)
-
+  transform t l = lineConstructor l (transformCN t p1, transformCN t p2)
+    where p1 = l `param` 0
+          p2 = l `param` 1
+  
 
 instance Curve Line where
-  param l t = start l + ((unit l * t) :+ 0) * vector l
-  locus l p = let v = cmp p - start l
-               in if isTrivial l then 0 else (v `dot` vector l) / unit l
+  unit l = let (p1, p2) = refPoints l in distance p1 p2
+
+  param l t = let (p1, p2) = refPoints l in scaleAt p1 t p2
+
+  locus l p | isTrivial l = 0
+            | otherwise = let p1 = fst $ refPoints l
+                              v = cmp p - cmp p1
+                          in (v `dot` cmp l) / unit l
+
   isClosed = const False
-  isContaining l p = vector l `collinear` (cmp p - start l)
-  tangent l _ = Cmp $ vector l
-  unit (Line p1 p2) = distance p1 p2
 
+  isContaining l p = let (p1, _) = refPoints l
+                     in angle l `collinear` azimuth p1 (cmp p)
 
-
+  tangent l _ = angle l
 

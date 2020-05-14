@@ -3,8 +3,10 @@
 {-# LANGUAGE FlexibleInstances #-}
 module SVG where
 
+import Graphics.Svg (doctype, svg11_, with, prettyText, (<<-))
 import qualified Graphics.Svg as Svg
-import Graphics.Svg (Element, prettyText, (<<-))
+import qualified Graphics.Svg.Elements as E
+import qualified Graphics.Svg.Attributes as A
 import Data.Complex
 import qualified Data.Text.Internal as Internal
 import Data.Text.Lazy (Text)
@@ -13,6 +15,7 @@ import Data.Double.Conversion.Text (toShortest, toPrecision)
 
 import Base
 import Affine
+import Figure
 import Point
 import Circle
 import Line
@@ -21,7 +24,7 @@ paperSize = 50
 svgSize = 500
 
 class SVGable a where
-  toSVG :: a -> Element
+  toSVG :: a -> Svg.Element
   toSVG x = mempty
 
   fmtSVG :: a -> Internal.Text
@@ -40,29 +43,44 @@ instance SVGable XY where
 
 instance SVGable Point where
   toSVG p = let (x, y) = coord p
-            in Svg.circle_ [ Svg.Cx_ <<- fmtSVG x
-                           , Svg.Cy_ <<- fmtSVG y
-                           , Svg.R_ <<- "3"
-                           , Svg.Fill_ <<- "red"
-                           , Svg.Stroke_ <<- "#444"
-                           , Svg.Stroke_width_ <<- "1" ]
+            in E.circle_ [ A.Cx_ <<- fmtSVG x
+                         , A.Cy_ <<- fmtSVG y
+                         , A.R_ <<- "3"
+                         , A.Fill_ <<- "red"
+                         , A.Stroke_ <<- "#444"
+                         , A.Stroke_width_ <<- "1" ]
 
 instance SVGable Circle where
-  toSVG c = Svg.circle_ [ Svg.Cx_ <<- fmtSVG x
-                        , Svg.Cy_ <<- fmtSVG y
-                        , Svg.R_ <<- fmtSVG (radius c)
-                        , Svg.Fill_ <<- "none"
-                        , Svg.Stroke_ <<- "orange"
-                        , Svg.Stroke_width_ <<- "2" ]
+  toSVG c = E.circle_ [ A.Cx_ <<- fmtSVG x
+                      , A.Cy_ <<- fmtSVG y
+                      , A.R_ <<- fmtSVG (radius c)
+                      , A.Fill_ <<- "none"
+                      , A.Stroke_ <<- "orange"
+                      , A.Stroke_width_ <<- "2" ]
     where (x :+ y) = center c
 
 instance SVGable Line where
-  toSVG l = Svg.polyline_ [ Svg.Points_ <<- pts
-                          , Svg.Fill_ <<- "none"
-                          , Svg.Stroke_ <<- "orange"
-                          , Svg.Stroke_width_ <<- "2" ]
+  toSVG l = E.polyline_ [ A.Points_ <<- pts
+                        , A.Fill_ <<- "none"
+                        , A.Stroke_ <<- "orange"
+                        , A.Stroke_width_ <<- "2" ]
     where
-      pts = fmtSVG (start l) <> " " <> fmtSVG (end l)
+      pts = case l of
+        Line _ -> fmtSVG (l <@ (-10)) <> " " <> fmtSVG (l <@ 10)
+        Ray _ -> fmtSVG (l <@ 0) <> " " <> fmtSVG (l <@ 10)
+        Segment _ -> fmtSVG (l <@ 0) <> " " <> fmtSVG (l <@ 1)
+
+instance (Figure a, SVGable a) => SVGable (Labeled a) where
+  toSVG (Labeled (l,f)) = toSVG f <> txt
+    where
+      txt = E.text_ [ A.X_ <<- fmtSVG x
+                    , A.Y_ <<- fmtSVG y
+                    , A.Font_size_ <<- "14"
+                    , A.Text_anchor_ <<- "middle"] "dfg"
+      x :+ y = lp + scale lo lv
+      lp = cmp $ labelPosition f
+      lo = labelOffset f
+      lv = cmp $ labelOrientation f
 
 ------------------------------------------------------------
 
@@ -93,10 +111,10 @@ instance SVGable Group where
 ------------------------------------------------------------
 
 svg content =
-     Svg.doctype <>
-     Svg.with (Svg.svg11_ content) [ Svg.Version_ <<- "1.1"
-                                   , Svg.Width_ <<- "500"
-                                   , Svg.Height_ <<- "500" ]
+     doctype <>
+     with (svg11_ content) [ A.Version_ <<- "1.1"
+                           , A.Width_ <<- "500"
+                           , A.Height_ <<- "500" ]
 
 chart :: String -> Group -> IO ()
 chart name figs = Txt.writeFile name $ prettyText contents

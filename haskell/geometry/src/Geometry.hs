@@ -11,6 +11,7 @@ import Point
 import Circle
 import Line
 
+ 
 ------------------------------------------------------------
 
 paperSize = 50
@@ -20,9 +21,9 @@ plane = circle (paperSize/2) origin
 
 ------------------------------------------------------------
 
-fig `at` p = superpose (refPoint fig) p fig
+at p fig = superpose (refPoint fig) p fig
 
-along l1 l2 = rotateAt (refPoint l1) (angle l2 - angle l1) l1
+along l2 l1 = rotateAt (refPoint l1) (angle l2 - angle l1) l1
 
 
 ------------------------------------------------------------

@@ -9,7 +9,7 @@ import Graphics.Svg (Element, ToElement (..))
 import Graphics.Svg.Elements
 import Graphics.Svg.Attributes
 import Data.Complex
-import Data.Text hiding (center)
+import Data.Text hiding (center, group, length)
 import Data.Text.Lazy.IO (writeFile)
 import Data.Double.Conversion.Text (toShortest, toPrecision)
 
@@ -22,6 +22,8 @@ import Line
 import Geometry
 
 svgSize = 500
+
+showt = pack . show
 
 class SVGable a where
   fmtSVG :: a -> Text
@@ -56,65 +58,76 @@ instance ToElement Circle where
                           , Stroke_width_ <<- "2" ]
     where (x :+ y) = center c
 
+------------------------------------------------------------
+
 instance ToElement Line where
   toElement l = polyline_ [ Points_ <<- pts
-                            , Fill_ <<- "none"
-                            , Stroke_ <<- "orange"
-                            , Stroke_width_ <<- "2" ]
+                          , Fill_ <<- "none"
+                          , Stroke_ <<- "orange"
+                          , Stroke_width_ <<- "2" ]
     where
       pts = case l of
         Line _ -> fmtSVG (l <@ (-10)) <> " " <> fmtSVG (l <@ 10)
         Ray _ -> fmtSVG (l <@ 0) <> " " <> fmtSVG (l <@ 10)
         Segment _ -> fmtSVG (l <@ 0) <> " " <> fmtSVG (l <@ 1)
 
+------------------------------------------------------------
 
 instance (Figure a, ToElement a) => ToElement (Labeled a) where
-  toElement (Labeled ((l, c), f)) = toElement f <> text (toElement l)
+  toElement f = (toElement $ fromLabeled f) <>
+                (text $ toElement $ getLabel f)
     where
+      fontSize = 16
+      textWidth = fromIntegral (length (getLabel f))
       text = text_ $ [ X_ <<- fmtSVG x
                      , Y_ <<- fmtSVG y
-                     , Font_size_ <<- "16"
+                     , Font_size_ <<- showt fontSize
                      , Font_family_ <<- "CMU Serif"
                      , Font_style_ <<- "italic"
                      , Stroke_ <<- "none"
                      , Fill_ <<- "white"] <> offsetX <> offsetY 
-      x :+ y = lp -- + scale lo lv
-      lo = labelOffset f
-      offsetX = case cornerX c of
-                  -1 -> mempty
+      x :+ y = labelPosition f + (dx :+ dy)
+      (dx, dy) = scale (fromIntegral fontSize) (labelOffset f)
+      (cx, cy) = labelCorner f
+      offsetX = case signum cx of
+                  -1 -> [ Text_anchor_ <<- "start" ]
                   0 -> [ Text_anchor_ <<- "middle" ]
                   1 -> [ Text_anchor_ <<- "end" ]
-      offsetY = case cornerY c of
-                  -1 -> mempty
-                  0 -> [Dy_ <<- "8"]
-                  1 -> [Dy_ <<- "16"]
+      offsetY = case signum cy of
+                  1 -> [ Dy_ <<- showt (-fontSize `div` 4 -1) ]
+                  0 -> [ Dy_ <<- showt (fontSize `div` 4 +1) ]
+                  -1 -> [ Dy_ <<- showt (fontSize - 2) ]
       
 ------------------------------------------------------------
 
 data Group where 
     Nil :: Group
-    Cons :: (ToElement a, Show a, Trans a) => a -> Group -> Group
+    G :: (ToElement a, Show a, Trans a) => a -> Group
     Append :: Group -> Group -> Group
 
-infixr 5 <+>
-a <+> b = Append (Cons a Nil) (Cons b Nil)
+instance Semigroup Group where (<>) = Append
+instance Monoid Group where mempty = Nil
+
+infix 5 <+>
+a <+> b = G a <> G b
 
 instance Trans Group where
     transform t Nil = Nil
-    transform t (Cons x xs) = Cons (transform t x) (transform t xs)
+    transform t (G f) = G $ transform t f 
     transform t (Append x xs) = Append (transform t x) (transform t xs)
 
 
 instance Show Group where
     show Nil = mempty
-    show (Cons x xs) = show x <> show xs
+    show (G a) = show a
     show (Append x xs) = show x <> show xs
 
 
 instance ToElement Group where
     toElement Nil = mempty
-    toElement (Cons x xs) = toElement x <> toElement xs
-    toElement (Append x xs) = toElement x <> toElement xs
+    toElement (G a) = toElement a
+    toElement (Append a b) = toElement a <> toElement b
+
 
 ------------------------------------------------------------
 
@@ -129,7 +142,12 @@ chart :: String -> Group -> IO ()
 chart name figs = writeFile name $ prettyText contents
   where
     contents = svg $ toElement $ scaler figs
-    scaler = translate ((svgSize/2) :+ (svgSize/2))
-           . scale (svgSize/(paperSize + 1))
+    scaler = translate (svgSize/2, svgSize/2) .
+             scale (svgSize/(paperSize + 1)) .
+             reflect 0 
 
 ------------------------------------------------------------
+
+main l = chart "test.svg" $ foldMap G pts
+  where pts = [ aRay <| scale 5 <| along (Deg x) <| label l
+              | x <- [45, 90..180] ]

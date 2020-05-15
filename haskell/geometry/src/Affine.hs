@@ -1,8 +1,9 @@
 {-# Language FlexibleInstances #-}
-
+{-# Language MultiParamTypeClasses #-}
 module Affine where
 
 import Data.Complex
+import Data.List
 
 import Base
 
@@ -131,6 +132,13 @@ class Trans a => Affine a where
   angle :: a -> Angular
   angle = deg . Cmp . cmp
 
+  det :: (a, a) -> Double
+  det (a, b) = 0
+
+  transpose :: (a, a) -> (a, a)
+  transpose (a, b) = (a, b)
+
+    
 infix 8 <@
 (<@) :: Curve a => a -> Double -> CN
 c <@ x = param c x
@@ -188,3 +196,9 @@ class Curve a where
   
   isEnclosing :: Affine p => a -> p -> Bool
   isEnclosing c p = location p c == Inside 
+
+class (Curve a, Curve b) => Intersections a b where
+  intersections :: a -> b -> [XY]
+
+  isIntersecting :: a -> b -> Bool
+  isIntersecting a b = not $ null $ intersections a b

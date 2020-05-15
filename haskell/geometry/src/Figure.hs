@@ -3,9 +3,13 @@ module Figure where
 
 import Control.Applicative
 import Data.Monoid
+import Data.Maybe
+import Data.Complex
 
 import Base
 import Affine
+
+------------------------------------------------------------
 
 newtype Corner = Corner (Endo (Int, Int))
   deriving (Semigroup, Monoid)
@@ -21,6 +25,8 @@ corner (Corner c) = appEndo c (-1, -1)
 cornerX = fst . corner
 cornerY = snd . corner
 
+------------------------------------------------------------
+
 class Figure a where
   isTrivial :: a -> Bool
   isSimilar :: a -> a -> Bool
@@ -33,15 +39,16 @@ class Figure a where
   labelPosition :: a -> CN
   labelPosition = refPoint
   
-  labelOffset :: a -> Angular
-  labelOffset _ = 45
+  labelOffset :: a -> XY
+  labelOffset _ = (0.5, 0.5)
   
-  labelCorner :: a -> Corner
-  labelCorner _ = lower <> left
+  labelCorner :: a -> (Int, Int)
+  labelCorner f = let (x, y) = labelOffset f
+                  in (signum (round x), signum (round y))
 
 ------------------------------------------------------------
 
-newtype Labeled a = Labeled ((String, Corner, First Double), a)
+newtype Labeled a = Labeled ((String, First (Int, Int), First XY), a)
   deriving Functor
 
 
@@ -53,16 +60,16 @@ instance Applicative Labeled where
   pure x = Labeled (mempty, x)
   Labeled (l1, f) <*> Labeled (l2, x) = Labeled (l1 <> l2, f x)
 
-  
-fromLabeled  (Labeled (_, x)) = x
-getLabel (Labeled ((l, _, _), _)) = l
-getLabelCorner (Labeled ((_, c, _), _)) = corner c
-getLabelOffset (Labeled ((_, _, First (Just o)), _)) = o
+
+fromLabeled    (Labeled (_, x)) = x
+getLabel       (Labeled ((l, _, _), _)) = l
+getLabelCorner (Labeled ((_, First c, _), _)) = c
+getLabelOffset (Labeled ((_, _, First o), _)) = o
 appLabel l = Labeled (l, id)
 
-x `label` l = appLabel (l, mempty, pure 0) <*> pure x
-x `lpos` p  = appLabel (mempty, p, mempty) <*> x
-x `loffset` d  = appLabel (mempty, mempty, pure d) <*> x
+label l x = appLabel (l, mempty, mempty) <*> pure x
+lcorn p x  = appLabel (mempty, pure p, mempty) <*> x
+lpos d x  = appLabel (mempty, mempty, pure d) <*> x
 
 withLabeled f l = fromLabeled $ f <$> l
 withLabeled2 f (Labeled (l, a)) = f a
@@ -81,5 +88,13 @@ instance Curve a => Curve (Labeled a) where
   param = withLabeled2 param
   locus = withLabeled2 locus
   normal = withLabeled2 normal
+
+instance Figure a => Figure (Labeled a) where
+   refPoint = withLabeled refPoint
+   isTrivial = withLabeled isTrivial
+   isSimilar a b = fromLabeled $ isSimilar <$> a <*> b
+   labelPosition = withLabeled labelPosition
+   labelOffset lf = labelOffset (fromLabeled lf) `fromMaybe` getLabelOffset lf
+   labelCorner lf = labelCorner (fromLabeled lf) `fromMaybe` getLabelCorner lf
 
 ------------------------------------------------------------

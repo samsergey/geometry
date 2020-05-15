@@ -1,3 +1,5 @@
+{-# Language MultiParamTypeClasses #-}
+
 module Line where
 
 import Data.Complex
@@ -52,6 +54,11 @@ instance Figure Line where
   isSimilar s1@(Segment _) s2@(Segment _) = unit s1 ~== unit s2
   isSimilar l1 l2 = True
   refPoint = fst . refPoints
+  labelPosition l = case l of
+    Segment _ -> l <@ 0.5
+    _ -> l <@ 1
+  labelOffset l = coord $ scale 12 $ normal l 0
+  labelCorner _ = (0,0)
 
 
 instance Affine Line where
@@ -86,3 +93,21 @@ instance Curve Line where
           res = angle l `isCollinear` azimuth p1 (cmp p)
 
   tangent l _ = angle l
+
+instance Intersections Line Line where
+  intersections l1 l2 = []
+
+intersectionV (x1, y1) (v1x, v1y) (x2, y2) (v2x, v2y) =
+  if det == 0 then [] else [res]
+  where  
+    det = v1x*v2y - v1y*v2x
+    det1 = v1x*y1 - v1y*x1
+    det2 = v2y*x2 - v2x*y2
+    res = ((v1x*det2 + v2x*det1)/det, (v1y*det2 + v2y*det1)/det)
+
+intersectionV2 p1 v1 p2 v2 =
+  if det == 0 then [] else [res]
+  where
+    det = v1 `cross` v2 
+    d = (v1 `cross` p1 / det, p2 `cross` v2 / det)
+    res = ((fst v1, fst v2) `cross` d, (snd v1, snd v2) `cross` d)

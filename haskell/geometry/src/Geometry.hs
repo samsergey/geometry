@@ -11,6 +11,12 @@ import Point
 import Circle
 import Line
 
+------------------------------------------------------------
+
+paperSize = 50
+
+origin = Point ((0, 0) :: XY)
+plane = circle (paperSize/2) origin
 
 ------------------------------------------------------------
 
@@ -23,9 +29,7 @@ along l1 l2 = rotateAt (refPoint l1) (angle l2 - angle l1) l1
 
 point :: Affine a => a -> Point
 point p = Point (coord p)
-
-origin = Point ((0, 0) :: XY)
-
+ 
 pointOn :: Curve a => a -> Double -> Point
 pointOn c t = Point $ coord $ c `param` t
 

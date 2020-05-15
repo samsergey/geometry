@@ -3,14 +3,14 @@
 {-# LANGUAGE FlexibleInstances #-}
 module SVG where
 
+import Prelude hiding (writeFile)
 import Graphics.Svg (doctype, svg11_, with, prettyText, (<<-))
-import qualified Graphics.Svg as Svg
-import qualified Graphics.Svg.Elements as E
-import qualified Graphics.Svg.Attributes as A
+import Graphics.Svg (Element, ToElement (..))
+import Graphics.Svg.Elements
+import Graphics.Svg.Attributes
 import Data.Complex
-import qualified Data.Text.Internal as Internal
-import Data.Text.Lazy (Text)
-import qualified Data.Text.Lazy.IO as Txt
+import Data.Text hiding (center)
+import Data.Text.Lazy.IO (writeFile)
 import Data.Double.Conversion.Text (toShortest, toPrecision)
 
 import Base
@@ -19,16 +19,12 @@ import Figure
 import Point
 import Circle
 import Line
+import Geometry
 
-paperSize = 50
 svgSize = 500
 
 class SVGable a where
-  toSVG :: a -> Svg.Element
-  toSVG x = mempty
-
-  fmtSVG :: a -> Internal.Text
-  fmtSVG = mempty
+  fmtSVG :: a -> Text
 
 instance SVGable Double where
   fmtSVG n = if n ~== 0 then "0" else toShortest n
@@ -41,52 +37,63 @@ instance SVGable XY where
   fmtSVG p = fmtSVG x <> "," <> fmtSVG y
     where (x, y) = coord p
 
-instance SVGable Point where
-  toSVG p = let (x, y) = coord p
-            in E.circle_ [ A.Cx_ <<- fmtSVG x
-                         , A.Cy_ <<- fmtSVG y
-                         , A.R_ <<- "3"
-                         , A.Fill_ <<- "red"
-                         , A.Stroke_ <<- "#444"
-                         , A.Stroke_width_ <<- "1" ]
 
-instance SVGable Circle where
-  toSVG c = E.circle_ [ A.Cx_ <<- fmtSVG x
-                      , A.Cy_ <<- fmtSVG y
-                      , A.R_ <<- fmtSVG (radius c)
-                      , A.Fill_ <<- "none"
-                      , A.Stroke_ <<- "orange"
-                      , A.Stroke_width_ <<- "2" ]
+instance ToElement Point where
+  toElement p = let (x, y) = coord p
+                in circle_ [ Cx_ <<- fmtSVG x
+                             , Cy_ <<- fmtSVG y
+                             , R_ <<- "3"
+                             , Fill_ <<- "red"
+                             , Stroke_ <<- "#444"
+                             , Stroke_width_ <<- "1" ]
+
+instance ToElement Circle where
+  toElement c = circle_ [ Cx_ <<- fmtSVG x
+                          , Cy_ <<- fmtSVG y
+                          , R_ <<- fmtSVG (radius c)
+                          , Fill_ <<- "none"
+                          , Stroke_ <<- "orange"
+                          , Stroke_width_ <<- "2" ]
     where (x :+ y) = center c
 
-instance SVGable Line where
-  toSVG l = E.polyline_ [ A.Points_ <<- pts
-                        , A.Fill_ <<- "none"
-                        , A.Stroke_ <<- "orange"
-                        , A.Stroke_width_ <<- "2" ]
+instance ToElement Line where
+  toElement l = polyline_ [ Points_ <<- pts
+                            , Fill_ <<- "none"
+                            , Stroke_ <<- "orange"
+                            , Stroke_width_ <<- "2" ]
     where
       pts = case l of
         Line _ -> fmtSVG (l <@ (-10)) <> " " <> fmtSVG (l <@ 10)
         Ray _ -> fmtSVG (l <@ 0) <> " " <> fmtSVG (l <@ 10)
         Segment _ -> fmtSVG (l <@ 0) <> " " <> fmtSVG (l <@ 1)
 
-instance (Figure a, SVGable a) => SVGable (Labeled a) where
-  toSVG (Labeled (l,f)) = toSVG f <> txt
-    where
-      txt = E.text_ [ A.X_ <<- fmtSVG x
-                    , A.Y_ <<- fmtSVG y
-                    , A.Font_size_ <<- "14"
-                    , A.Text_anchor_ <<- "middle"] "dfg"
-      x :+ y = lp + scale lo lv
-      lp = cmp $ labelPosition f
-      lo = labelOffset f
-      lv = cmp $ labelOrientation f
 
+instance (Figure a, ToElement a) => ToElement (Labeled a) where
+  toElement (Labeled ((l, c), f)) = toElement f <> text (toElement l)
+    where
+      text = text_ $ [ X_ <<- fmtSVG x
+                     , Y_ <<- fmtSVG y
+                     , Font_size_ <<- "16"
+                     , Font_family_ <<- "CMU Serif"
+                     , Font_style_ <<- "italic"
+                     , Stroke_ <<- "none"
+                     , Fill_ <<- "white"] <> offsetX <> offsetY 
+      x :+ y = lp -- + scale lo lv
+      lo = labelOffset f
+      offsetX = case cornerX c of
+                  -1 -> mempty
+                  0 -> [ Text_anchor_ <<- "middle" ]
+                  1 -> [ Text_anchor_ <<- "end" ]
+      offsetY = case cornerY c of
+                  -1 -> mempty
+                  0 -> [Dy_ <<- "8"]
+                  1 -> [Dy_ <<- "16"]
+      
 ------------------------------------------------------------
 
 data Group where 
     Nil :: Group
-    Cons :: (SVGable a, Show a, Trans a) => a -> Group -> Group
+    Cons :: (ToElement a, Show a, Trans a) => a -> Group -> Group
     Append :: Group -> Group -> Group
 
 infixr 5 <+>
@@ -97,28 +104,32 @@ instance Trans Group where
     transform t (Cons x xs) = Cons (transform t x) (transform t xs)
     transform t (Append x xs) = Append (transform t x) (transform t xs)
 
+
 instance Show Group where
     show Nil = mempty
     show (Cons x xs) = show x <> show xs
     show (Append x xs) = show x <> show xs
 
 
-instance SVGable Group where
-    toSVG Nil = mempty
-    toSVG (Cons x xs) = toSVG x <> toSVG xs
-    toSVG (Append x xs) = toSVG x <> toSVG xs
+instance ToElement Group where
+    toElement Nil = mempty
+    toElement (Cons x xs) = toElement x <> toElement xs
+    toElement (Append x xs) = toElement x <> toElement xs
 
 ------------------------------------------------------------
 
 svg content =
      doctype <>
-     with (svg11_ content) [ A.Version_ <<- "1.1"
-                           , A.Width_ <<- "500"
-                           , A.Height_ <<- "500" ]
+     with (svg11_ content) [ Version_ <<- "1.1"
+                           , Width_ <<- "500"
+                           , Height_ <<- "500"
+                           , Style_ <<- "background : #444;" ]
 
 chart :: String -> Group -> IO ()
-chart name figs = Txt.writeFile name $ prettyText contents
+chart name figs = writeFile name $ prettyText contents
   where
-    contents = svg $ toSVG $ scaler figs
+    contents = svg $ toElement $ scaler figs
     scaler = translate ((svgSize/2) :+ (svgSize/2))
-           . scale (svgSize/paperSize)
+           . scale (svgSize/(paperSize + 1))
+
+------------------------------------------------------------

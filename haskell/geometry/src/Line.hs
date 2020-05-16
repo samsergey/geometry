@@ -94,24 +94,20 @@ instance Curve Line where
 
   tangent l _ = angle l
 
-intersectionV (x1, y1) (v1x, v1y) (x2, y2) (v2x, v2y) = [res | det /= 0]
-  where  
-    det = v1x*v2y - v1y*v2x
-    det1 = (v1x*y1 - v1y*x1)/det
-    det2 = (v2y*x2 - v2x*y2)/det
-    res = (v1x*det2 + v2x*det1, v1y*det2 + v2y*det1)
-
---intersectionV2 :: Affine a => a -> a -> a -> a -> [XY]
-intersectionV2 p1 v1 p2 v2 = [res | d0 /= 0]
-  where  
+intersectionV p1 v1 p2 v2 =
+  [(det (x12, d), det (y12, d)) | d0 /= 0]
+  where
+    (x12, y12) = transpose (v1, v2)
     d0 = det (v1, v2)
-    d = fromCoord (det (v1, p1), det (v2, p2))
-    (vx, vy) = transpose (v1, v2)
-    res = fromCoord (det (d, vx) / d0, det (d, vy) / d0)
+    d = (det (v1, p1) / d0,  det (p2, v2) / d0)
 
 instance Intersections Line Line where
-  intersections l1 l2 = intersectionV2 p1 v1 p2 v2
-    where p1 = refPoint l1
-          v1 = cmp l1
-          p2 = refPoint l2
-          v2 = cmp l2
+  intersections l1 l2
+    | isTrivial l1 = filter (isContaining l2) [coord $ refPoint l1]
+    | isTrivial l2 = filter (isContaining l1) [coord $ refPoint l2]
+    | otherwise = 
+      filter (isContaining l1) $
+      filter (isContaining l2) $
+      intersectionV (refPoint l1) l1 (refPoint l2) l2
+
+

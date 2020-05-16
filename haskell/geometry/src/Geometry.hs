@@ -25,7 +25,6 @@ at p fig = superpose (refPoint fig) p fig
 
 along l2 l1 = rotateAt (refPoint l1) (angle l2 - angle l1) l1
 
-
 ------------------------------------------------------------
 
 point :: Affine a => a -> Point

@@ -105,13 +105,13 @@ newtype AnyLine = AnyLine Line
 newtype AnyRay = AnyRay Line 
   deriving (Show, Figure, Trans, Affine, Curve)
 
-instance Arbitrary AnySegment where
-  arbitrary = AnySegment . Segment <$> arbitrary
-  shrink (AnySegment l) = AnySegment <$> shrink l
-
 instance Arbitrary AnyLine where
   arbitrary = AnyLine . Line <$> arbitrary
   shrink (AnyLine l) = AnyLine <$> shrink l
+
+instance Arbitrary AnySegment where
+  arbitrary = AnySegment . Segment <$> arbitrary
+  shrink (AnySegment l) = AnySegment <$> shrink l
 
 instance Arbitrary AnyRay where
   arbitrary = AnyRay . Ray <$> arbitrary

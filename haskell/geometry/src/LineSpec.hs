@@ -20,10 +20,10 @@ main = hspec $
     describe "parametrization" $ do
       it "1" $
         property $ \(Nontrivial l) x ->
-                     let types = l ::Line in (l <@ x) @> l ~== x
+                     let _ = l ::Line in (l <@ x) @> l ~== x
 
       it "2" $ property $
-        \l x -> let types = l :: Line
+        \l x -> let _ = l :: Line
                     p = l <@ x
                 in l <@ (p @> l) ~== p
 
@@ -80,16 +80,17 @@ main = hspec $
       it "9" $ l `extendAs` Line == l
 
     describe "at" $ do
-      it "1" $ aLine `at` ((1,2) :: XY) == line @XY @XY (1,2) (2,2)
+      it "1" $ aLine <| at ((1,2) :: XY) == Line (1:+2, 2:+2)
 
     describe "along" $ do
-      it "1" $ aLine `at` ((2,3) :: XY) `along` Deg 0 == line @XY @XY (2,3) (3,3)
-      it "2" $ aLine `at` ((2,3) :: XY) `along` Deg 90 == line @XY @XY (2,3) (2,4)
+      it "1" $ aLine <| at ((2,3) :: XY) <| along (Deg 0) == line @XY @XY (2,3) (3,3)
+      it "2" $ aLine <| at ((2,3) :: XY) <| along (Deg 90) == line @XY @XY (2,3) (2,4)
       it "3" $
         property $ \a p l ->
-                     let types = (a :: Angular, p :: Point, l :: Line)
-                     in l `at` p `along` a == l `along` a `at` p
+                     let _ = (a :: Angular, p :: Point, l :: Line)
+                     in l <| at p <| along a == l <| along a <| at p
 
     describe "intersections" $ do
       it "1" $
-        property $ \l1 l2 -> intersections l1 l2
+        property $ \(AnyLine l1) (AnyLine l2) ->
+                     length (intersections l1 l2) == if (l1 `isCollinear` l2) then 0 else 1

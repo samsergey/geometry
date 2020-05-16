@@ -97,17 +97,17 @@ instance Curve Line where
 instance Intersections Line Line where
   intersections l1 l2 = []
 
-intersectionV (x1, y1) (v1x, v1y) (x2, y2) (v2x, v2y) =
-  if det == 0 then [] else [res]
+intersectionV (x1, y1) (v1x, v1y) (x2, y2) (v2x, v2y) = [res | det == 0]
   where  
     det = v1x*v2y - v1y*v2x
-    det1 = v1x*y1 - v1y*x1
-    det2 = v2y*x2 - v2x*y2
-    res = ((v1x*det2 + v2x*det1)/det, (v1y*det2 + v2y*det1)/det)
+    det1 = (v1x*y1 - v1y*x1)/det
+    det2 = (v2y*x2 - v2x*y2)/det
+    res = (v1x*det2 + v2x*det1, v1y*det2 + v2y*det1)
 
-intersectionV2 p1 v1 p2 v2 =
-  if det == 0 then [] else [res]
-  where
-    det = v1 `cross` v2 
-    d = (v1 `cross` p1 / det, p2 `cross` v2 / det)
-    res = ((fst v1, fst v2) `cross` d, (snd v1, snd v2) `cross` d)
+intersectionV2 :: Affine a => (a, a) -> (a, a) -> [a]
+intersectionV2 (p1, v1) (p2, v2) = [res | d0 /= 0]
+  where  
+    d0 = det (v1, v2)
+    d = fromCoord (det (v1, p1), det (v2, p2))
+    (vx, vy) = tr (v1, v2)
+    res = fromCoord (det (d, vx) / d0, det (d, vy) / d0)

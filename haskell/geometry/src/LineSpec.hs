@@ -89,3 +89,7 @@ main = hspec $
         property $ \a p l ->
                      let types = (a :: Angular, p :: Point, l :: Line)
                      in l `at` p `along` a == l `along` a `at` p
+
+    describe "intersections" $ do
+      it "1" $
+        property $ \l1 l2 -> intersections l1 l2

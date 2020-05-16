@@ -106,18 +106,10 @@ class Trans a => Affine a where
   azimuth :: a -> a -> Angular
   azimuth p1 p2 = Cmp (cmp p2 - cmp p1)
 
-  det :: (a, a) -> Double
-  det (a, b) = let (xa, ya) = coord a
-                   (xb, yb) = coord b
-               in xa*yb - ya*xb
-
-  tr :: (a, a) -> (a, a)
-  tr (a,b) = (fromCoord (ax, bx), fromCoord (ay, by))
-    where (ax,ay) = coord a
-          (bx,by) = coord b
-    
   cross :: a -> a -> Double
-  cross a b = det (a, b)
+  cross a b = let (xa, ya) = coord a
+                  (xb, yb) = coord b
+              in xa*yb - ya*xb
 
   norm :: a -> Double
   norm = magnitude . cmp
@@ -139,6 +131,12 @@ class Trans a => Affine a where
 
   angle :: a -> Angular
   angle = deg . Cmp . cmp
+
+  det :: (a, a) -> Double
+  det (a, b) = 0
+
+  transpose :: (a, a) -> (a, a)
+  transpose (a, b) = (a, b)
 
     
 infix 8 <@
@@ -198,6 +196,8 @@ class Curve a where
   
   isEnclosing :: Affine p => a -> p -> Bool
   isEnclosing c p = location p c == Inside 
+
+------------------------------------------------------------
 
 class (Curve a, Curve b) => Intersections a b where
   intersections :: a -> b -> [XY]

@@ -1,20 +1,29 @@
-{-# Language TypeApplications #-}
-module Geometry where
+module Geometry ( module Base
+                , module Point
+                , module Line
+                , module Circle
+                , module Polygon
+                , module SVG
+                , origin, plane
+                , at, along, reflectAt
+                , point, pointOn
+                , line, segment, ray
+                , aLine, aSegment, aRay
+                , circle
+                , parametricPoly, polarPoly, regularPoly
+                ) where
 
 import Data.Double.Conversion.Text (toShortest)
 import Data.Complex
 
 import Base
-import Affine
-import Figure
 import Point
 import Circle
 import Line
-
+import Polygon
+import SVG
  
 ------------------------------------------------------------
-
-paperSize = 50
 
 origin = Point ((0, 0) :: XY)
 plane = circle (paperSize/2) origin
@@ -25,6 +34,8 @@ at p fig = superpose (refPoint fig) p fig
 
 along l2 l1 = rotateAt (refPoint l1) (angle l2 - angle l1) l1
 
+reflectAt :: (Trans a) => Line -> a -> a
+reflectAt l = transformAt (l <@ 0) (reflect (angle l))
 ------------------------------------------------------------
 
 point :: Affine a => a -> Point
@@ -44,13 +55,9 @@ segment p1 p2 = Segment (cmp p1, cmp p2)
 ray :: (Affine a1, Affine a2) => a1 -> a2 -> Line
 ray p1 p2 = Ray (cmp p1, cmp p2)
 
-reflectAt :: (Trans a) => Line -> a -> a
-reflectAt l = transformAt (l <@ 0) (reflect (angle l))
-
 aSegment = segment origin ((1,0) :: XY)
 aLine = aSegment `extendAs` Line
 aRay = aSegment `extendAs` Ray
-
 
 ------------------------------------------------------------
 
@@ -58,6 +65,17 @@ circle :: Affine a => Double -> a -> Circle
 circle r p = mkCircle2 c $ c + (r :+ 0)
   where c = cmp p
 
-
 ------------------------------------------------------------
 
+parametricPoly f range =
+  Polyline $ [ x :+ y | t <- range , let (x,y) = f t ]
+
+polarPoly rho range =
+  Polyline $ [ mkPolar (rho phi) phi | x <- range
+                                     , let phi = 2*pi*x ]
+
+regularPoly :: Int -> Polygon
+regularPoly n' = rotate 90 $
+                 closePoly $
+                 polarPoly (const 1) [0,1/n..1-1/n]
+  where n = fromIntegral n'

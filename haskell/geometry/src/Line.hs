@@ -5,8 +5,6 @@ module Line where
 import Data.Complex
 
 import Base
-import Affine
-import Figure
 
 data Line = Line {refPoints :: (CN, CN) }
           | Segment {refPoints :: (CN, CN) }

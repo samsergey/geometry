@@ -3,8 +3,6 @@ module Point where
 import Data.Complex
 
 import Base
-import Affine
-import Figure
 
 newtype Point = Point XY
 

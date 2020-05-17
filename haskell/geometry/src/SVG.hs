@@ -1,7 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleInstances #-}
-module SVG where
+module SVG ( chart
+           , paperSize
+           , Group (..)
+           , (<+>)
+           ) where
 
 import Prelude hiding (writeFile)
 import Graphics.Svg (doctype, svg11_, with, prettyText, (<<-))
@@ -9,19 +13,19 @@ import Graphics.Svg (Element, ToElement (..))
 import Graphics.Svg.Elements
 import Graphics.Svg.Attributes
 import Data.Complex
-import Data.Text hiding (center, group, length)
+import Data.Text (Text, pack)
 import Data.Text.Lazy.IO (writeFile)
 import Data.Double.Conversion.Text (toShortest, toPrecision)
 
 import Base
-import Affine
-import Figure
 import Point
 import Circle
+import Polygon
 import Line
-import Geometry
+
 
 svgSize = 500
+paperSize = 50
 
 showt = pack . show
 
@@ -32,7 +36,7 @@ instance SVGable Double where
   fmtSVG n = if n ~== 0 then "0" else toShortest n
 
 instance SVGable CN where
-  fmtSVG p = fmtSVG x <> "," <> fmtSVG y
+  fmtSVG p = fmtSVG x <> "," <> fmtSVG y <> " "
     where (x, y) = coord p
 
 instance SVGable XY where
@@ -49,6 +53,8 @@ instance ToElement Point where
                              , Stroke_ <<- "#444"
                              , Stroke_width_ <<- "1" ]
 
+------------------------------------------------------------
+
 instance ToElement Circle where
   toElement c = circle_ [ Cx_ <<- fmtSVG x
                           , Cy_ <<- fmtSVG y
@@ -57,6 +63,18 @@ instance ToElement Circle where
                           , Stroke_ <<- "orange"
                           , Stroke_width_ <<- "2" ]
     where (x :+ y) = center c
+
+------------------------------------------------------------
+
+instance ToElement Polygon where
+  toElement p = polyline_ [ Points_ <<- foldMap fmtSVG pts
+                          , Fill_ <<- "none"
+                          , Stroke_ <<- "orange"
+                          , Stroke_width_ <<- "2" ]
+    where
+      pts = case p of
+        Polyline p -> p
+        Polygon p -> p ++ [head p]
 
 ------------------------------------------------------------
 
@@ -74,7 +92,7 @@ instance ToElement Line where
 ------------------------------------------------------------
 
 instance (Figure a, ToElement a) => ToElement (Labeled a) where
-  toElement f = (toElement $ fromLabeled f) <>
+  toElement f = toElement (fromLabeled f) <>
                 (text $ toElement $ getLabel f)
     where
       fontSize = 16
@@ -108,7 +126,7 @@ data Group where
 instance Semigroup Group where (<>) = Append
 instance Monoid Group where mempty = Nil
 
-infix 5 <+>
+infixr 5 <+>
 a <+> b = G a <> G b
 
 instance Trans Group where
@@ -139,15 +157,10 @@ svg content =
                            , Style_ <<- "background : #444;" ]
 
 chart :: String -> Group -> IO ()
-chart name figs = writeFile name $ prettyText contents
+chart name gr = writeFile name $ prettyText contents
   where
-    contents = svg $ toElement $ scaler figs
+    contents = svg $ toElement $ scaler gr
     scaler = translate (svgSize/2, svgSize/2) .
              scale (svgSize/(paperSize + 1)) .
              reflect 0 
 
-------------------------------------------------------------
-
-main l = chart "test.svg" $ foldMap G pts
-  where pts = [ aRay <| scale 5 <| along (Deg x) <| label l
-              | x <- [45, 90..180] ]

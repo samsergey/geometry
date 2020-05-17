@@ -1,13 +1,15 @@
 {-# Language UndecidableInstances #-}
 {-# Language FlexibleInstances #-}
 {-# Language MultiParamTypeClasses #-}
+{-# language GeneralizedNewtypeDeriving #-}
 module Base where
 
 import Data.Fixed (mod')
 import Data.Complex
 import Data.List
-import Test.QuickCheck
-import Test.QuickCheck.Modifiers
+import Control.Applicative
+import Data.Monoid
+import Data.Maybe
 
 ------------------------------------------------------------
 
@@ -38,6 +40,9 @@ instance (RealFloat a, Ord a, Fractional a, Num a, AlmostEq a) => AlmostEq (Comp
 instance (AlmostEq a, AlmostEq b) => AlmostEq (a, b) where
   (a1,b1) ~== (a2,b2) = a1 ~== a2 && b1 ~== b2
 
+instance (AlmostEq a) => AlmostEq [a] where
+  as ~== bs = and $ zipWith (~==) as bs
+
 infix 4 ~<=
 a ~<= b = a ~== b || a < b
 
@@ -46,7 +51,10 @@ a ~>= b = a ~== b || a > b
 
 ------------------------------------------------------------
 
-data Angular = Deg Double | Cmp CN
+data Angular = Deg Double
+             | Cmp CN
+             | Rad Double
+             | Turns Double 
   deriving Show
 
 instance AlmostEq Angular where  a ~== b = rad a ~== rad b
@@ -55,17 +63,19 @@ instance Eq Angular  where  a == b = a ~== b
 
 instance Ord Angular where  a <= b = a == b || rad a < rad b
 
-deg (Deg a) = Deg a
-deg (Cmp v) | v ~== 0 = Deg 0
+toDeg (Deg a) = Deg a
+toDeg (Rad r) = Deg (180*r/pi)
+toDeg (Turns r) = Deg (360*r)
+toDeg (Cmp v) | v ~== 0 = Deg 0
               | otherwise = Deg $ (180/pi * phase v) `mod'` 360
 
-toCmp (Cmp x) = Cmp x
-toCmp d = Cmp $ mkPolar 1 (rad d)
+toRad a = Rad $ (deg a*pi/180) `mod'` (2*pi)
+toTurns a = Turns $ rad a / (2*pi)
+toCmp a = Cmp $ mkPolar 1 (rad a)
 
-rad (Cmp v) = if v ~== 0 then 0 else phase v `mod'` (2*pi)
-rad (Deg a) = (a*pi/180) `mod'` (2*pi)
-
-toTurns = (/ (2*pi)) . rad
+deg a = let (Deg x) = toDeg a in x
+rad a = let (Rad x) = toRad a in x
+turns a = let (Turns x) = toTurns a in x
 
 instance Num Angular where
   fromInteger n = Deg $ fromIntegral n `mod'` 360
@@ -75,13 +85,304 @@ instance Num Angular where
   abs = withAngular abs
   signum = withAngular signum
 
-withAngular op a = let Deg a' = deg a
-                   in Deg $ op a' `mod'` 360 
+withAngular op a = Deg $ op (deg a) `mod'` 360 
                   
-withAngular2 op a b = let Deg a' = deg a
-                          Deg b' = deg b
-                      in Deg $ (a' `op` b') `mod'` 360 
+withAngular2 op a b = Deg $ (deg a `op` deg b) `mod'` 360 
 
 ------------------------------------------------------------
 
 both f (a,b) = (f a, f b)
+
+------------------------------------------------------------
+
+type TMatrix = ((Double, Double, Double),(Double, Double, Double))
+
+class Trans a where
+  {-# MINIMAL transform #-}
+  transform :: TMatrix -> a -> a
+
+  transformAt :: Affine p => p -> (a -> a) -> a -> a
+  transformAt p t = translate xy . t . translate (-xy)
+    where xy = cmp p
+  
+  translate :: Affine p => p -> a -> a
+  translate = transform . translateT . cmp
+
+  scale :: Double -> a -> a
+  scale = transform . scaleT
+
+  scaleAt :: Affine p => p -> Double -> a -> a
+  scaleAt p s = transformAt p (scale s)
+
+  rotate :: Angular -> a -> a
+  rotate = transform . rotateT . rad
+
+  rotateAt :: Affine p => p -> Angular -> a -> a
+  rotateAt p a = transformAt p (rotate a)
+         
+  reflect :: Angular -> a -> a
+  reflect d = transform $ reflectT $ rad d
+
+  superpose :: (Affine p1, Affine p2) => p1 -> p2 -> a -> a
+  superpose p1 p2 = translate (cmp p2 - cmp p1)
+
+
+transformCN :: TMatrix -> CN -> CN
+transformCN t = cmp . transformXY t . coord
+
+transformXY :: TMatrix -> XY -> XY
+transformXY ((a11, a12, sx), (a21, a22, sy)) (x, y) =
+    (a12*y + a11*x + sx, a22*y + a21*x + sy)
+
+rotateT :: Double -> TMatrix
+rotateT a = ((cos a, -(sin a), 0), (sin a, cos a, 0))
+
+reflectT :: Double -> TMatrix
+reflectT a = ((cos (2*a), sin (2*a), 0), (sin (2*a), -(cos (2*a)), 0))
+
+translateT :: CN -> TMatrix
+translateT (dx :+ dy) = ((1, 0, dx), (0, 1, dy))
+
+scaleT :: Double -> TMatrix
+scaleT  a = ((a, 0, 0), (0, a, 0))
+
+------------------------------------------------------------
+
+instance Trans CN where
+  transform t = cmp . transformXY t . coord
+
+instance Trans XY where
+  transform  = transformXY
+
+instance Trans Angular where
+  transform t  = Cmp . cmp . transformXY t . coord
+
+ 
+------------------------------------------------------------
+
+class Trans a => Affine a where
+  {-# MINIMAL (fromCN | fromCoord), (cmp | coord) #-}
+
+  fromCN :: CN -> a
+  fromCN = fromCoord . coord
+
+  fromCoord :: XY -> a
+  fromCoord = fromCN . cmp
+
+  getX :: a -> Double
+  getX = fst . coord
+  
+  getY :: a -> Double
+  getY = snd . coord
+    
+  cmp :: a -> CN
+  cmp p = let (x, y) = coord p in x :+ y
+  
+  coord :: a -> XY
+  coord p = let x :+ y = cmp p in (x, y)
+
+  dot :: a -> a -> Double
+  dot a b = let (xa, ya) = coord a
+                (xb, yb) = coord b
+                in xa*xb + ya*yb
+
+  isOrthogonal :: a -> a -> Bool
+  isOrthogonal  a b = a `dot` b ~== 0
+
+  isOpposite :: a -> a -> Bool
+  isOpposite a b = cmp a + cmp b ~== 0
+
+  isCollinear :: a -> a -> Bool
+  isCollinear a b = a `cross` b ~== 0
+
+  azimuth :: a -> a -> Angular
+  azimuth p1 p2 = Cmp (cmp p2 - cmp p1)
+
+  det :: Affine b => (a, b) -> Double
+  det (a, b) = let (xa, ya) = coord a
+                   (xb, yb) = coord b
+               in xa*yb - ya*xb
+
+  cross :: a -> a -> Double
+  cross a b = det (a, b)
+
+  norm :: a -> Double
+  norm = magnitude . cmp
+
+  distance :: a -> a -> Double
+  distance a b = magnitude (cmp a - cmp b)
+
+  normalize :: a -> a
+  normalize v
+    | cmp v == 0 = v
+    | otherwise = scale (1/norm v) v
+
+  roundUp :: Double -> a -> a
+  roundUp d = fromCoord . (\(x,y) -> (rounding x, rounding y)) . coord
+    where rounding x = fromIntegral (ceiling (x /d)) * d
+
+  isZero :: a -> Bool
+  isZero a = cmp a ~== 0
+
+  angle :: a -> Angular
+  angle = toCmp . Cmp . cmp
+
+  transpose :: (a, a) -> (a, a)
+  transpose (a, b) = ( fromCoord (getX a, getX b)
+                     , fromCoord (getY a, getY b))
+
+    
+infix 8 <@
+(<@) :: Curve a => a -> Double -> CN
+c <@ x = param c x
+
+infix 8 @>
+(@>) :: (Curve a, Affine p) => p -> a -> Double
+p @> c  = locus c p
+
+------------------------------------------------------------
+
+instance Affine CN where
+  cmp = id
+  fromCN = id
+
+
+instance Affine XY where
+  coord = id
+  fromCoord = id
+
+
+instance Affine Angular where
+  cmp a = let (Cmp x) = toCmp a in normalize x
+  fromCN = Cmp . normalize
+
+------------------------------------------------------------
+
+data Location = Inside | Outside | OnCurve deriving (Show, Eq)
+
+class Curve a where
+  {-# MINIMAL param, locus, (normal | tangent)  #-}
+  param :: a -> Double -> CN
+  locus :: Affine p => a -> p -> Double
+
+  start :: a -> CN
+  start c = c `param` 0
+  
+  unit :: a -> Double
+  unit _ = 1
+
+  tangent :: a -> Double -> Angular
+  tangent f t = normal f t + 90
+  
+  normal :: a -> Double -> Angular
+  normal f t = 90 + tangent f t
+
+  isClosed :: a -> Bool
+  isClosed _ = False
+  
+  location :: Affine p => p -> a -> Location
+  location _ _ = Outside
+  
+  isContaining :: Affine p => a -> p -> Bool
+  isContaining c p = location p c == OnCurve
+  
+  isEnclosing :: Affine p => a -> p -> Bool
+  isEnclosing c p = location p c == Inside 
+
+------------------------------------------------------------
+
+class (Curve a, Curve b) => Intersections a b where
+  intersections :: a -> b -> [XY]
+
+  isIntersecting :: a -> b -> Bool
+  isIntersecting a b = not . null $ intersections a b
+
+------------------------------------------------------------
+
+newtype Corner = Corner (Endo (Int, Int))
+  deriving (Semigroup, Monoid)
+
+lower =  Corner . Endo $ \(_, x) -> (-1, x)
+upper =  Corner . Endo $ \(_, x) -> (1, x)
+middleX =   Corner . Endo $ \(_, x) -> (0, x)
+left =  Corner . Endo $ \(x, _) -> (x, -1)
+right =  Corner . Endo $ \(x, _) -> (x, 1)
+middleY =   Corner . Endo $ \(x, _) -> (x, 0)
+middle = middleX <> middleY
+corner (Corner c) = appEndo c (-1, -1)
+cornerX = fst . corner
+cornerY = snd . corner
+
+------------------------------------------------------------
+
+class Figure a where
+  isTrivial :: a -> Bool
+  isSimilar :: a -> a -> Bool
+
+  isNontrivial :: a -> Bool
+  isNontrivial x = not (isTrivial x)
+
+  refPoint :: a -> CN
+
+  labelPosition :: a -> CN
+  labelPosition = refPoint
+  
+  labelOffset :: a -> XY
+  labelOffset _ = (0.5, 0.5)
+  
+  labelCorner :: a -> (Int, Int)
+  labelCorner f = let (x, y) = labelOffset f
+                  in (signum (round x), signum (round y))
+
+------------------------------------------------------------
+
+newtype Labeled a = Labeled ((String, First (Int, Int), First XY), a)
+  deriving Functor
+
+
+instance Show a => Show (Labeled a) where
+  show (Labeled ((s,_,_), x)) = s <> ":" <> show x
+
+
+instance Applicative Labeled where
+  pure x = Labeled (mempty, x)
+  Labeled (l1, f) <*> Labeled (l2, x) = Labeled (l1 <> l2, f x)
+
+
+fromLabeled    (Labeled (_, x)) = x
+getLabel       (Labeled ((l, _, _), _)) = l
+getLabelCorner (Labeled ((_, First c, _), _)) = c
+getLabelOffset (Labeled ((_, _, First o), _)) = o
+appLabel l = Labeled (l, id)
+
+label l x = appLabel (l, mempty, mempty) <*> pure x
+lcorn p x  = appLabel (mempty, pure p, mempty) <*> x
+lpos d x  = appLabel (mempty, mempty, pure d) <*> x
+
+withLabeled f l = fromLabeled $ f <$> l
+withLabeled2 f (Labeled (l, a)) = f a
+
+instance Eq a => Eq (Labeled a) where
+  a == b = fromLabeled $ (==) <$> a <*> b
+
+instance Trans a => Trans (Labeled a) where
+  transform t x = transform t <$> x
+
+instance Affine a => Affine (Labeled a) where
+  cmp  = withLabeled cmp
+  fromCN c = pure (fromCN c)
+
+instance Curve a => Curve (Labeled a) where
+  param = withLabeled2 param
+  locus = withLabeled2 locus
+  normal = withLabeled2 normal
+
+instance Figure a => Figure (Labeled a) where
+   refPoint = withLabeled refPoint
+   isTrivial = withLabeled isTrivial
+   isSimilar a b = fromLabeled $ isSimilar <$> a <*> b
+   labelPosition = withLabeled labelPosition
+   labelOffset lf = labelOffset (fromLabeled lf) `fromMaybe` getLabelOffset lf
+   labelCorner lf = labelCorner (fromLabeled lf) `fromMaybe` getLabelCorner lf
+
+------------------------------------------------------------

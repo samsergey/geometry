@@ -1,4 +1,3 @@
-{-# Language TypeApplications #-}
 {-# Language FlexibleInstances #-}
 {-# Language GeneralizedNewtypeDeriving #-}
 module Testing where
@@ -10,12 +9,6 @@ import Test.QuickCheck
 import Test.QuickCheck.Modifiers
 import Data.Tuple.Extra (second)
 
-import Base
-import Affine
-import Figure
-import Point
-import Circle
-import Line
 import Geometry
 
 ------------------------------------------------------------

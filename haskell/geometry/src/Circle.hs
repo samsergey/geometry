@@ -3,8 +3,6 @@ module Circle where
 import Data.Complex
 
 import Base
-import Affine
-import Figure
 
 data Circle = Circle { radius :: Double
                      , center :: CN
@@ -34,7 +32,7 @@ instance Curve Circle where
     c + mkPolar r (2*pi*w*(t + ph))
 
   locus (Circle _ c w ph) p =
-    w * (toTurns (Cmp (cmp p - c)) - ph)
+    w * (turns (Cmp (cmp p - c)) - ph)
 
   isClosed = const True
 

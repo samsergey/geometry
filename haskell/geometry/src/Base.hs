@@ -51,10 +51,19 @@ a ~>= b = a ~== b || a > b
 
 ------------------------------------------------------------
 
-data Angular = Deg Double
-             | Cmp CN
-             | Rad Double
-             | Turns Double deriving Show
+newtype Angular = Angular Double
+
+asRad = Angular . (`mod'` (2*pi))
+asDeg a = asRad $ a / 180*pi
+asCmp a = asRad $ phase a
+asTurns a = asRad $ a*2*pi
+
+deg (Angular a) = (a * 180 / pi) `mod'` 360
+rad (Angular a) = a  `mod'` (2*pi)
+turns (Angular a) = (a / (2*pi))  `mod'` 1
+
+instance Show Angular where
+  show a = show (deg a) <> "°"
 
 instance AlmostEq Angular where  a ~== b = rad a ~== rad b
 
@@ -62,31 +71,16 @@ instance Eq Angular  where  a == b = a ~== b
 
 instance Ord Angular where  a <= b = a == b || rad a < rad b
 
-toDeg (Deg a) = Deg a
-toDeg (Rad r) = Deg (180*r/pi)
-toDeg (Turns r) = Deg (360*r)
-toDeg (Cmp v) | v ~== 0 = Deg 0
-              | otherwise = Deg $ (180/pi * phase v) `mod'` 360
-
-toRad a = Rad $ (deg a*pi/180) `mod'` (2*pi)
-toTurns a = Turns $ rad a / (2*pi)
-toCmp a = Cmp $ mkPolar 1 (rad a)
-
-deg a = let (Deg x) = toDeg a in x
-rad a = let (Rad x) = toRad a in x
-turns a = let (Turns x) = toTurns a in x
-
 instance Num Angular where
-  fromInteger n = Deg $ fromIntegral n `mod'` 360
+  fromInteger = asDeg . fromIntegral
   (+) = withAngular2 (+)
   (*) = withAngular2 (*)
   negate = withAngular negate
   abs = withAngular abs
   signum = withAngular signum
 
-withAngular op a = Deg $ op (deg a) `mod'` 360 
-                  
-withAngular2 op a b = Deg $ (deg a `op` deg b) `mod'` 360 
+withAngular op a = asRad $ op (rad a)
+withAngular2 op a b = asRad (rad a `op` rad b)
 
 ------------------------------------------------------------
 
@@ -154,7 +148,7 @@ instance Trans XY where
   transform  = transformXY
 
 instance Trans Angular where
-  transform t  = Cmp . cmp . transformXY t . coord
+  transform t  = asCmp . cmp . transformXY t . coord
 
  
 ------------------------------------------------------------
@@ -195,7 +189,7 @@ class Trans a => Affine a where
   isCollinear a b = a `cross` b ~== 0
 
   azimuth :: a -> a -> Angular
-  azimuth p1 p2 = Cmp (cmp p2 - cmp p1)
+  azimuth p1 p2 = asCmp (cmp p2 - cmp p1)
 
   det :: Affine b => (a, b) -> Double
   det (a, b) = let (xa, ya) = coord a
@@ -224,20 +218,20 @@ class Trans a => Affine a where
   isZero a = cmp a ~== 0
 
   angle :: a -> Angular
-  angle = toCmp . Cmp . cmp
+  angle = asCmp . cmp
 
   transpose :: (a, a) -> (a, a)
   transpose (a, b) = ( fromCoord (getX a, getX b)
                      , fromCoord (getY a, getY b))
 
     
-infix 8 <@
-(<@) :: Curve a => a -> Double -> CN
-c <@ x = param c x
+infix 8 .@
+(.@) :: Curve a => a -> Double -> CN
+c .@ x = param c x
 
-infix 8 @>
-(@>) :: (Curve a, Affine p) => p -> a -> Double
-p @> c  = locus c p
+infix 8 @.
+(@.) :: (Curve a, Affine p) => p -> a -> Double
+p @. c  = locus c p
 
 ------------------------------------------------------------
 
@@ -252,8 +246,8 @@ instance Affine XY where
 
 
 instance Affine Angular where
-  cmp a = let (Cmp x) = toCmp a in normalize x
-  fromCN = Cmp . normalize
+  cmp a = mkPolar 1 (rad a)
+  fromCN = asCmp . normalize
 
 ------------------------------------------------------------
 
@@ -291,7 +285,7 @@ class Curve a where
 ------------------------------------------------------------
 
 class (Curve a, Curve b) => Intersections a b where
-  intersections :: a -> b -> [XY]
+  intersections :: a -> b -> [CN]
 
   isIntersecting :: a -> b -> Bool
   isIntersecting a b = not . null $ intersections a b
@@ -314,7 +308,7 @@ cornerY = snd . corner
 
 ------------------------------------------------------------
 
-class Figure a where
+class Trans a => Figure a where
   isTrivial :: a -> Bool
   isSimilar :: a -> a -> Bool
 

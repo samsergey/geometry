@@ -1,11 +1,14 @@
+{-# language MultiParamTypeClasses #-}
 module Polygon where
 
 import Data.Complex
 
 import Base
+import Line
 
 data Polygon = Polyline { vertices :: [CN] }
              | Polygon { vertices :: [CN] }
+
 
 closePoly (Polyline p) = Polygon p
 closePoly p = p
@@ -13,9 +16,18 @@ closePoly p = p
 polyConstructor (Polyline _) = Polyline
 polyConstructor (Polygon _) = Polygon
 
+segments :: Polygon -> [Line]
+segments p = Segment <$> zip vs (tail vs)
+  where vs = case p of
+          Polyline p -> p
+          Polygon p -> p ++ [head p]
+
 instance Show Polygon where
-  show p = concat ["<", t , " (", vs, ")>"]
-    where vs = unwords $ show . coord <$> vertices p
+  show p = concat ["<", t, " ", n,">"]
+    where vs = vertices p
+          n = if length vs < 5
+              then unwords $ show . coord <$> vs
+              else "-" <> show (length vs) <> "-"
           t = case p of
             Polyline _ -> "Polyline"
             Polygon _ -> "Polygon"
@@ -34,7 +46,11 @@ instance Curve Polygon where
   isClosed (Polyline _) = False
   isClosed (Polygon _) = True
 
-  location p _ = undefined
+  location pt p = res
+    where res | any (`isContaining` pt) (segments p) = OnCurve
+              | isClosed p && odd (length (intersections r p)) = Inside
+              | otherwise   = Outside
+          r = Ray (cmp pt, cmp pt + 1)
 
   unit _ = 1
 
@@ -44,3 +60,9 @@ instance Figure Polygon where
   isTrivial p = null $ vertices p
   isSimilar p1 p2 = p1 == p2
   refPoint p = head $ vertices p
+
+instance Intersections Line Polygon where
+  intersections = flip intersections
+  
+instance Intersections Polygon Line where
+  intersections p l = foldMap (intersections l) (segments p)

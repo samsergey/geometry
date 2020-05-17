@@ -4,12 +4,12 @@ module Geometry ( module Base
                 , module Circle
                 , module Polygon
                 , module SVG
-                , origin, plane
-                , at, along, reflectAt
-                , point, pointOn
+                , origin
+                , at, at', along, reflectAt
+                , point, point', pointOn
                 , line, segment, ray
                 , aLine, aSegment, aRay
-                , circle
+                , circle, circle'
                 , parametricPoly, polarPoly, regularPoly
                 ) where
 
@@ -26,7 +26,11 @@ import SVG
 ------------------------------------------------------------
 
 origin = Point ((0, 0) :: XY)
-plane = circle (paperSize/2) origin
+
+point' = point @XY
+circle' = circle @XY
+at' :: Figure a => XY -> a -> a
+at' = at
 
 ------------------------------------------------------------
 
@@ -35,7 +39,8 @@ at p fig = superpose (refPoint fig) p fig
 along l2 l1 = rotateAt (refPoint l1) (angle l2 - angle l1) l1
 
 reflectAt :: (Trans a) => Line -> a -> a
-reflectAt l = transformAt (l <@ 0) (reflect (angle l))
+reflectAt l = transformAt (l .@ 0) (reflect (angle l))
+
 ------------------------------------------------------------
 
 point :: Affine a => a -> Point

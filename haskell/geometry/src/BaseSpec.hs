@@ -3,6 +3,7 @@ import Test.QuickCheck hiding (scale)
 import Test.Invariant
 
 import Data.Complex
+import Data.Fixed (mod')
 
 import Base
 import Testing
@@ -12,38 +13,26 @@ main :: IO ()
 main = hspec $ do
   describe "Angular" $ do
     describe "equality" $ do
-      it "1" $ Deg 0 == Deg 360
-      it "2" $ Deg 10 == Deg 370
-      it "3" $ 45 == Cmp (1 :+ 1)
-      it "4" $ 90 == Cmp (0 :+ 1)
-      it "5" $ 90 == Deg (90 + 1e-12)
-      it "6" $ Cmp (2 :+ 3) == Cmp (4 :+ 6)
+      it "1" $ asDeg 0 == asDeg 360
+      it "2" $ asDeg 10 == asDeg 370
+      it "3" $ 45 == asCmp (1 :+ 1)
+      it "4" $ 90 == asCmp (0 :+ 1)
+      it "5" $ 90 == asDeg (90 + 1e-12)
+      it "6" $ asCmp (2 :+ 3) == asCmp (4 :+ 6)
 
     describe "inequality" $ do
-      it "1" $ Deg 0 <= Deg 360
-      it "2" $ Deg 0 < Deg 360.0001
+      it "1" $ asDeg 0 <= asDeg 360
+      it "2" $ asDeg 0 < asDeg 360.0001
       it "3" $ property $ \a -> 0 <= turns a && turns a <= 1
       
     describe "isomorphism" $ do
-      it "Rad 1" $ property $ (Rad . rad) `inverts` toRad
-      it "Rad 2" $ property $ involutory toRad
-      it "Rad 3" $ property $ idempotent toRad
-      it "Deg 1" $ property $ (Deg . deg) `inverts` toDeg
-      it "Deg 2" $ property $ involutory toDeg
-      it "Deg 3" $ property $ idempotent toDeg
-      it "Cmp 1" $ property $ (Cmp . cmp) `inverts` toCmp
-      it "Cmp 2" $ property $ involutory toCmp
-      it "Cmp 3" $ property $ idempotent toCmp
-      it "Turns 1" $ property $ (Turns . turns) `inverts` toTurns
-      it "Turns 2" $ property $ involutory toTurns
-      it "Turns 3" $ property $ idempotent toTurns
-      it "1" $ property $ (toTurns . toCmp) <=> toTurns
-      it "2" $ property $ (toTurns . toCmp . toDeg) <=> toTurns
-      it "3" $ property $ (toTurns . toCmp . toDeg . toRad) <=> toTurns
+      it "asRad" $ property $ \x -> (rad . asRad) x ~== x `mod'` (2*pi)
+      it "asDeg" $ property $ \x -> (deg . asDeg) x ~== x `mod'` 360
+      it "asTurns" $ property $ \x -> (turns . asTurns) x ~== x `mod'` 1
 
     describe "radians" $ do
-      it "1" $ rad 10 == rad 370
-      it "2" $ rad (-10) == rad 350
+      it "1" $ rad 10 ~== rad 370
+      it "2" $ rad (-10) ~== rad 350
 
     describe "Affine" $ do
       describe "isomorphism" $ do
@@ -85,7 +74,7 @@ main = hspec $ do
       it "1" $ rotate @XY 0 (3, 4)  == (3, 4)
       it "2" $ rotate @XY 90 (3, 4)  ~== (-4, 3)
       it "3" $ rotate @XY 360 (3, 4)  == (3, 4)
-      it "4" $ rotate @XY (Cmp (0 :+ 1)) (3, 4) ~== (-4, 3)
+      it "4" $ rotate @XY (asCmp (0 :+ 1)) (3, 4) ~== (-4, 3)
 
     describe "rotateAt" $ do
       it "1" $ rotateAt @XY @XY (0, 0) 0 (3, 4) == (3, 4)

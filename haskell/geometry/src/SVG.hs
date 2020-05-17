@@ -2,18 +2,19 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleInstances #-}
 module SVG ( chart
-           , paperSize
+           , paperSize, plane
            , Group (..)
            , (<+>)
+           , group
            ) where
 
-import Prelude hiding (writeFile)
+import Prelude hiding (writeFile, unwords)
 import Graphics.Svg (doctype, svg11_, with, prettyText, (<<-))
 import Graphics.Svg (Element, ToElement (..))
 import Graphics.Svg.Elements
 import Graphics.Svg.Attributes
 import Data.Complex
-import Data.Text (Text, pack)
+import Data.Text (Text, pack, unwords)
 import Data.Text.Lazy.IO (writeFile)
 import Data.Double.Conversion.Text (toShortest, toPrecision)
 
@@ -26,8 +27,18 @@ import Line
 
 svgSize = 500
 paperSize = 50
+plane = Polygon [(-1):+(-1), 1:+(-1), 1:+1, (-1):+1]
+        <| scale (paperSize/3)
+        <| rotate 30
+
+scaled :: Trans a => a -> a
+scaled = translate (svgSize/2, svgSize/2) .
+         scale (svgSize/(paperSize + 1)) .
+         reflect 0 
 
 showt = pack . show
+
+data Viewport = Viewport { size :: (Double, Double) }
 
 class SVGable a where
   fmtSVG :: a -> Text
@@ -39,9 +50,11 @@ instance SVGable CN where
   fmtSVG p = fmtSVG x <> "," <> fmtSVG y <> " "
     where (x, y) = coord p
 
+instance SVGable [CN] where
+  fmtSVG pts = foldMap fmtSVG pts
+
 instance SVGable XY where
-  fmtSVG p = fmtSVG x <> "," <> fmtSVG y
-    where (x, y) = coord p
+  fmtSVG = fmtSVG . cmp
 
 
 instance ToElement Point where
@@ -56,38 +69,38 @@ instance ToElement Point where
 ------------------------------------------------------------
 
 instance ToElement Circle where
-  toElement c = circle_ [ Cx_ <<- fmtSVG x
-                          , Cy_ <<- fmtSVG y
-                          , R_ <<- fmtSVG (radius c)
-                          , Fill_ <<- "none"
-                          , Stroke_ <<- "orange"
-                          , Stroke_width_ <<- "2" ]
-    where (x :+ y) = center c
-
-------------------------------------------------------------
-
-instance ToElement Polygon where
-  toElement p = polyline_ [ Points_ <<- foldMap fmtSVG pts
-                          , Fill_ <<- "none"
-                          , Stroke_ <<- "orange"
-                          , Stroke_width_ <<- "2" ]
-    where
-      pts = case p of
-        Polyline p -> p
-        Polygon p -> p ++ [head p]
+  toElement c' = let c = scaled c'
+                     (x :+ y) = center c
+    in circle_ [ Cx_ <<- fmtSVG x
+               , Cy_ <<- fmtSVG y
+               , R_ <<- fmtSVG (radius c)
+               , Fill_ <<- "none"
+               , Stroke_ <<- "orange"
+               , Stroke_width_ <<- "2" ]
 
 ------------------------------------------------------------
 
 instance ToElement Line where
-  toElement l = polyline_ [ Points_ <<- pts
-                          , Fill_ <<- "none"
-                          , Stroke_ <<- "orange"
-                          , Stroke_width_ <<- "2" ]
-    where
-      pts = case l of
-        Line _ -> fmtSVG (l <@ (-10)) <> " " <> fmtSVG (l <@ 10)
-        Ray _ -> fmtSVG (l <@ 0) <> " " <> fmtSVG (l <@ 10)
-        Segment _ -> fmtSVG (l <@ 0) <> " " <> fmtSVG (l <@ 1)
+  toElement l' = case l' of
+    Segment _ -> let Segment (a, b) = scaled l'
+      in polyline_ [ Points_ <<- fmtSVG [a,b]
+                   , Fill_ <<- "none"
+                   , Stroke_ <<- "orange"
+                   , Stroke_width_ <<- "2" ]
+    Line _ ->  foldMap toElement $ l' `clipBy` plane
+    Ray _ -> foldMap toElement $ l' `clipBy` plane
+
+------------------------------------------------------------
+
+instance ToEleme+nt Polygon where
+  toElement p' = let p = scaled p'
+                     element = case p of
+                       Polyline _ -> polyline_
+                       Polygon _ -> polygon_
+    in element [ Points_ <<- foldMap fmtSVG (vertices p)
+               , Fill_ <<- "none"
+               , Stroke_ <<- "orange"
+               , Stroke_width_ <<- "2" ]
 
 ------------------------------------------------------------
 
@@ -115,7 +128,8 @@ instance (Figure a, ToElement a) => ToElement (Labeled a) where
                   1 -> [ Dy_ <<- showt (-fontSize `div` 4 -1) ]
                   0 -> [ Dy_ <<- showt (fontSize `div` 4 +1) ]
                   -1 -> [ Dy_ <<- showt (fontSize - 2) ]
-      
+
+ 
 ------------------------------------------------------------
 
 data Group where 
@@ -127,7 +141,7 @@ instance Semigroup Group where (<>) = Append
 instance Monoid Group where mempty = Nil
 
 infixr 5 <+>
-a <+> b = G a <> G b
+(<+>) a b = G a <> G b
 
 instance Trans Group where
     transform t Nil = Nil
@@ -146,6 +160,8 @@ instance ToElement Group where
     toElement (G a) = toElement a
     toElement (Append a b) = toElement a <> toElement b
 
+group :: (ToElement a, Show a, Trans a) => [a] -> Group
+group = foldMap G
 
 ------------------------------------------------------------
 
@@ -159,8 +175,7 @@ svg content =
 chart :: String -> Group -> IO ()
 chart name gr = writeFile name $ prettyText contents
   where
-    contents = svg $ toElement $ scaler gr
-    scaler = translate (svgSize/2, svgSize/2) .
-             scale (svgSize/(paperSize + 1)) .
-             reflect 0 
+    contents = svg $ toElement gr
+
+
 

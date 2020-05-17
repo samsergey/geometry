@@ -32,7 +32,7 @@ instance Curve Circle where
     c + mkPolar r (2*pi*w*(t + ph))
 
   locus (Circle _ c w ph) p =
-    w * (turns (Cmp (cmp p - c)) - ph)
+    w * (turns (asCmp (cmp p - c)) - ph)
 
   isClosed = const True
 
@@ -44,9 +44,9 @@ instance Curve Circle where
 
   unit _ = 2 * pi
 
-  normal cir t = Cmp (cir `param` t - center cir)
+  normal cir t = asCmp (cir `param` t - center cir)
 
-  tangent cir t = normal cir t + Deg (orientation cir * 90)
+  tangent cir t = normal cir t + asDeg (orientation cir * 90)
 
 instance Figure Circle where
   isTrivial (Circle r _ _ _) = r <= 0

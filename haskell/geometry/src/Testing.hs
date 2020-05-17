@@ -52,7 +52,7 @@ shrinkPos d x = res
 
 ------------------------------------------------------------
 instance Arbitrary Angular where
-  arbitrary = oneof [Deg <$> arbitrary, Cmp <$> arbitrary]
+  arbitrary = oneof [asDeg <$> arbitrary, asCmp <$> arbitrary]
   shrink = shrinkPos 1
 
 ------------------------------------------------------------

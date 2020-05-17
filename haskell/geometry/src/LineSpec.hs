@@ -5,15 +5,9 @@ import Test.Invariant
 
 import Data.Complex
 
-import Base
-import Affine
-import Figure
-import Point
-import Circle
-import Line
 import Geometry
 import Testing
-
+g
 main :: IO ()
 main = hspec $
   describe "Line" $ do

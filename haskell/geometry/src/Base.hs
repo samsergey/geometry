@@ -54,8 +54,7 @@ a ~>= b = a ~== b || a > b
 data Angular = Deg Double
              | Cmp CN
              | Rad Double
-             | Turns Double 
-  deriving Show
+             | Turns Double deriving Show
 
 instance AlmostEq Angular where  a ~== b = rad a ~== rad b
 
@@ -355,12 +354,15 @@ getLabelCorner (Labeled ((_, First c, _), _)) = c
 getLabelOffset (Labeled ((_, _, First o), _)) = o
 appLabel l = Labeled (l, id)
 
+
 label l x = appLabel (l, mempty, mempty) <*> pure x
 lcorn p x  = appLabel (mempty, pure p, mempty) <*> x
 lpos d x  = appLabel (mempty, mempty, pure d) <*> x
 
+
 withLabeled f l = fromLabeled $ f <$> l
 withLabeled2 f (Labeled (l, a)) = f a
+
 
 instance Eq a => Eq (Labeled a) where
   a == b = fromLabeled $ (==) <$> a <*> b

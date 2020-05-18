@@ -15,6 +15,9 @@ lineConstructor (Line _) = Line
 lineConstructor (Ray _) = Ray
 lineConstructor (Segment _) = Segment
 
+trivialLine :: Line
+trivialLine = Line (0,0)
+
 extendAs :: Line -> ((CN, CN) -> Line) -> Line
 l1 `extendAs` l = let res = l (refPoints l1)
                    in case l1 of

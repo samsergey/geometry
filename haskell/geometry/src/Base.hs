@@ -233,6 +233,14 @@ infix 8 @.
 (@.) :: (Curve a, Affine p) => p -> a -> Double
 p @. c  = locus c p
 
+infix 8 .?
+(.?) :: Curve a => a -> Double -> Maybe CN
+c .? x = maybeParam c x
+
+infix 8 ?.
+(?.) :: (Curve a, Affine p) => p -> a -> Maybe Double
+p ?. c  = maybeLocus c p
+
 ------------------------------------------------------------
 
 instance Affine CN where
@@ -254,10 +262,32 @@ instance Affine Angular where
 data Location = Inside | Outside | OnCurve deriving (Show, Eq)
 
 class Curve a where
-  {-# MINIMAL param, locus, (normal | tangent)  #-}
+  {-# MINIMAL (param | maybeParam),
+              (locus | maybeLocus),
+              (normal | tangent)  #-}
+  
   param :: a -> Double -> CN
-  locus :: Affine p => a -> p -> Double
+  param c x =
+    case maybeParam c x of
+      Just p -> p
+      Nothing -> 0
 
+  maybeParam :: a -> Double -> Maybe CN
+  maybeParam c x =
+    let p = param c x
+    in if c `isContaining` p then Just p else Nothing                  
+
+  locus :: Affine p => a -> p -> Double
+  locus c p = 
+    case maybeLocus c p of
+      Just x -> x
+      Nothing -> 0
+
+  maybeLocus :: Affine p => a -> p -> Maybe Double
+  maybeLocus c p = 
+    let x = locus c p
+    in if c `isContaining` (param c x) then Just x else Nothing                  
+  
   start :: a -> CN
   start c = c `param` 0
   

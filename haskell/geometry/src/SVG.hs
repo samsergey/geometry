@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ConstraintKinds #-}
 module SVG ( chart
            , paperSize, plane
            , Group (..)
@@ -31,17 +32,16 @@ plane = Polygon [(-1):+(-1), 1:+(-1), 1:+1, (-1):+1]
         <| scale (paperSize/3)
         <| rotate 30
 
-scaled :: Trans a => a -> a
-scaled = translate (svgSize/2, svgSize/2) .
-         scale (svgSize/(paperSize + 1)) .
-         reflect 0 
-
 showt = pack . show
 
 data Viewport = Viewport { size :: (Double, Double) }
 
-class SVGable a where
+class Show a => SVGable a where
   fmtSVG :: a -> Text
+  fmtSVG = pack . show
+  
+  preprocess :: a -> a
+  preprocess = id
 
 instance SVGable Double where
   fmtSVG n = if n ~== 0 then "0" else toShortest n
@@ -51,7 +51,7 @@ instance SVGable CN where
     where (x, y) = coord p
 
 instance SVGable [CN] where
-  fmtSVG pts = foldMap fmtSVG pts
+  fmtSVG = foldMap fmtSVG
 
 instance SVGable XY where
   fmtSVG = fmtSVG . cmp
@@ -66,11 +66,11 @@ instance ToElement Point where
                              , Stroke_ <<- "#444"
                              , Stroke_width_ <<- "1" ]
 
+instance SVGable Point 
 ------------------------------------------------------------
 
 instance ToElement Circle where
-  toElement c' = let c = scaled c'
-                     (x :+ y) = center c
+  toElement c = let (x :+ y) = center c
     in circle_ [ Cx_ <<- fmtSVG x
                , Cy_ <<- fmtSVG y
                , R_ <<- fmtSVG (radius c)
@@ -78,30 +78,40 @@ instance ToElement Circle where
                , Stroke_ <<- "orange"
                , Stroke_width_ <<- "2" ]
 
+instance SVGable Circle 
 ------------------------------------------------------------
 
 instance ToElement Line where
-  toElement l' = case l' of
-    Segment _ -> let Segment (a, b) = scaled l'
-      in polyline_ [ Points_ <<- fmtSVG [a,b]
-                   , Fill_ <<- "none"
-                   , Stroke_ <<- "orange"
-                   , Stroke_width_ <<- "2" ]
-    Line _ ->  foldMap toElement $ l' `clipBy` plane
-    Ray _ -> foldMap toElement $ l' `clipBy` plane
+  toElement l = if isTrivial l
+    then mempty
+    else let (a, b) = refPoints l
+      in line_ [ X1_ <<- fmtSVG (getX a)
+               , Y1_ <<- fmtSVG (getY a)
+               , X2_ <<- fmtSVG (getX b)
+               , Y2_ <<- fmtSVG (getY b)
+               , Fill_ <<- "none"
+               , Stroke_ <<- "orange"
+               , Stroke_width_ <<- "2" ]
 
+instance SVGable Line where
+  preprocess l = case l of
+    Segment _ -> l
+    l -> case l `clipBy` plane of
+      (s:_) -> s
+      [] -> trivialLine
+      
 ------------------------------------------------------------
 
-instance ToEleme+nt Polygon where
-  toElement p' = let p = scaled p'
-                     element = case p of
-                       Polyline _ -> polyline_
-                       Polygon _ -> polygon_
+instance ToElement Polygon where
+  toElement p = let element = case p of
+                                Polyline _ -> polyline_
+                                Polygon _ -> polygon_
     in element [ Points_ <<- foldMap fmtSVG (vertices p)
                , Fill_ <<- "none"
                , Stroke_ <<- "orange"
                , Stroke_width_ <<- "2" ]
 
+instance SVGable Polygon 
 ------------------------------------------------------------
 
 instance (Figure a, ToElement a) => ToElement (Labeled a) where
@@ -131,10 +141,11 @@ instance (Figure a, ToElement a) => ToElement (Labeled a) where
 
  
 ------------------------------------------------------------
+type Groupable a = (SVGable a, ToElement a, Show a, Trans a)
 
 data Group where 
     Nil :: Group
-    G :: (ToElement a, Show a, Trans a) => a -> Group
+    G :: Groupable a => a -> Group
     Append :: Group -> Group -> Group
 
 instance Semigroup Group where (<>) = Append
@@ -155,12 +166,19 @@ instance Show Group where
     show (Append x xs) = show x <> show xs
 
 
+instance SVGable Group where
+  preprocess Nil = Nil
+  preprocess (G a) = G (preprocess a)
+  preprocess (Append a b) = preprocess a <> preprocess b
+
+
 instance ToElement Group where
     toElement Nil = mempty
     toElement (G a) = toElement a
     toElement (Append a b) = toElement a <> toElement b
 
-group :: (ToElement a, Show a, Trans a) => [a] -> Group
+
+group :: Groupable a => [a] -> Group
 group = foldMap G
 
 ------------------------------------------------------------
@@ -175,7 +193,9 @@ svg content =
 chart :: String -> Group -> IO ()
 chart name gr = writeFile name $ prettyText contents
   where
-    contents = svg $ toElement gr
-
+    contents = svg . toElement . scaled . preprocess $ gr
+    scaled = translate (svgSize/2, svgSize/2) .
+             scale (svgSize/(paperSize + 1)) .
+             reflect 0 
 
 

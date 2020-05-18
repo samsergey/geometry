@@ -2,6 +2,7 @@
 module Polygon where
 
 import Data.Complex
+import Data.Monoid
 
 import Base
 import Line
@@ -39,7 +40,8 @@ instance Trans Polygon where
   transform t p = polyConstructor p $ transform t <$> vertices p
 
 instance Curve Polygon where
-  param p t = head $ vertices p
+  maybeParam p t = undefined
+    where ds = scanl (+) 0 $ unit <$> segments p
 
   locus p pt = 0
 
@@ -52,7 +54,8 @@ instance Curve Polygon where
               | otherwise   = Outside
           r = Ray (cmp pt, cmp pt + 1)
 
-  unit _ = 1
+  unit p = sum $ zipWith distance vs (tail vs)
+    where vs = vertices p
 
   tangent p t = undefined
 

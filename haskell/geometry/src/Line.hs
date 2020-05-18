@@ -96,6 +96,10 @@ instance Curve Line where
 
   tangent l _ = angle l
 
+  distanceTo l p = case p ?. l of
+    Just x -> p `distance` (l .@ x)
+    Nothing -> (p `distance` (l .@ 0)) `min`
+               (p `distance` (l .@ 1))
 
 instance Intersections Line Line where
   intersections l1 l2

@@ -202,7 +202,7 @@ class Trans a => Affine a where
   norm :: a -> Double
   norm = magnitude . cmp
 
-  distance :: a -> a -> Double
+  distance :: Affine b => a -> b -> Double
   distance a b = magnitude (cmp a - cmp b)
 
   normalize :: a -> a
@@ -264,13 +264,11 @@ data Location = Inside | Outside | OnCurve deriving (Show, Eq)
 class Curve a where
   {-# MINIMAL (param | maybeParam),
               (locus | maybeLocus),
-              (normal | tangent)  #-}
+              (normal | tangent),
+              distanceTo #-}
   
   param :: a -> Double -> CN
-  param c x =
-    case maybeParam c x of
-      Just p -> p
-      Nothing -> 0
+  param c x = fromMaybe 0 $ maybeParam c x
 
   maybeParam :: a -> Double -> Maybe CN
   maybeParam c x =
@@ -278,16 +276,17 @@ class Curve a where
     in if c `isContaining` p then Just p else Nothing                  
 
   locus :: Affine p => a -> p -> Double
-  locus c p = 
-    case maybeLocus c p of
-      Just x -> x
-      Nothing -> 0
+  locus c p =  fromMaybe 0 $ maybeLocus c p 
 
   maybeLocus :: Affine p => a -> p -> Maybe Double
   maybeLocus c p = 
     let x = locus c p
-    in if c `isContaining` (param c x) then Just x else Nothing                  
-  
+    in if c `isContaining` param c x
+       then Just x
+       else Nothing                  
+
+  distanceTo :: Affine p => a -> p -> Double
+    
   start :: a -> CN
   start c = c `param` 0
   
@@ -402,6 +401,7 @@ instance Curve a => Curve (Labeled a) where
   param = withLabeled2 param
   locus = withLabeled2 locus
   normal = withLabeled2 normal
+  distanceTo = withLabeled2 distanceTo
 
 instance Figure a => Figure (Labeled a) where
    refPoint = withLabeled refPoint

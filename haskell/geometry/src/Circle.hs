@@ -48,6 +48,8 @@ instance Curve Circle where
 
   tangent cir t = normal cir t + asDeg (orientation cir * 90)
 
+  distanceTo c p = abs (center c `distance` p - radius c)
+
 instance Figure Circle where
   isTrivial (Circle r _ _ _) = r <= 0
   isSimilar c1 c2 = radius c1 ~== radius c2

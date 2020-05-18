@@ -15,6 +15,7 @@ module Geometry ( module Base
 
 import Data.Double.Conversion.Text (toShortest)
 import Data.Complex
+import Data.Foldable
 
 import Base
 import Point
@@ -84,3 +85,14 @@ regularPoly n' = rotate 90 $
                  closePoly $
                  polarPoly (const 1) [0,1/n..1-1/n]
   where n = fromIntegral n'
+
+linterp p x = param' <$> find (\((a,b),_) -> a <= x && x <= b) tbl
+  where
+    ds = scanl (+) 0 $ unit <$> segments p
+    tbl = zip (zip ds (tail ds)) (segments p)
+    param' ((a, b), s) = s .@ ((x - a)/(b-a))
+    interval 
+
+pl = regularPoly 4 <| scale (sqrt 2)
+
+

@@ -4,14 +4,14 @@ module Geometry ( module Base
                 , module Circle
                 , module Polygon
                 , module SVG
-                , origin
+                , origin, aPoint, aLabel
                 , at, at', along, reflectAt
                 , point, point', pointOn
-                , label
                 , line, segment, ray
                 , aLine, aSegment, aRay
                 , circle, circle'
                 , parametricPoly, polarPoly, regularPoly
+                , aTriangle, aSquare
                 ) where
 
 import Data.Double.Conversion.Text (toShortest)
@@ -19,7 +19,6 @@ import Data.Complex
 
 import Base
 import Point
-import Label
 import Circle
 import Line
 import Polygon
@@ -27,10 +26,16 @@ import SVG
  
 ------------------------------------------------------------
 
-origin = Point ((0, 0) :: XY)
+origin = mkPoint 0
+
+aPoint = origin
+
+aLabel s = mkLabel 0 <| label s
 
 point' = point @XY
+
 circle' = circle @XY
+
 at' :: Figure a => XY -> a -> a
 at' = at
 
@@ -46,23 +51,21 @@ reflectAt l = transformAt (l .@ 0) (reflect (angle l))
 ------------------------------------------------------------
 
 point :: Affine a => a -> Point
-point p = Point (coord p)
- 
-pointOn :: Curve a => a -> Double -> Point
-pointOn c t = Point $ coord $ c `param` t
+point p = mkPoint (cmp p)
 
-label :: String -> Label
-label s = Label s 0
+pointOn :: Curve a => a -> Double -> Point
+pointOn c t = mkPoint $ c `param` t
+
 ------------------------------------------------------------
 
 line :: (Affine a1, Affine a2) => a1 -> a2 -> Line
-line p1 p2 = Line (cmp p1, cmp p2)
+line p1 p2 = mkLine (cmp p1, cmp p2)
 
 segment :: (Affine a1, Affine a2) => a1 -> a2 -> Line
-segment p1 p2 = Segment (cmp p1, cmp p2)
+segment p1 p2 = mkSegment (cmp p1, cmp p2)
 
 ray :: (Affine a1, Affine a2) => a1 -> a2 -> Line
-ray p1 p2 = Ray (cmp p1, cmp p2)
+ray p1 p2 = mkRay (cmp p1, cmp p2)
 
 aSegment = segment origin ((1,0) :: XY)
 aLine = aSegment `extendAs` Line
@@ -74,14 +77,16 @@ circle :: Affine a => Double -> a -> Circle
 circle r p = mkCircle2 c $ c + (r :+ 0)
   where c = cmp p
 
+aCircle = circle 1 origin
+
 ------------------------------------------------------------
 
 parametricPoly f range =
-  Polyline $ [ x :+ y | t <- range , let (x,y) = f t ]
+  Polyline mempty [ x :+ y | t <- range , let (x,y) = f t ]
 
 polarPoly rho range =
-  Polyline $ [ mkPolar (rho phi) phi | x <- range
-                                     , let phi = 2*pi*x ]
+  Polyline mempty [ mkPolar (rho phi) phi | x <- range
+                                             , let phi = 2*pi*x ]
 
 regularPoly :: Int -> Polygon
 regularPoly n' = rotate 90 $
@@ -89,4 +94,5 @@ regularPoly n' = rotate 90 $
                  polarPoly (const 1) [0,1/n..1-1/n]
   where n = fromIntegral n'
 
-
+aSquare = mkPolygon @XY [(0,0),(1,0),(1,1),(0,1)]
+aTriangle = mkPolygon @XY [(0,0),(1,0),(cos (pi/3), sin (pi/3))]

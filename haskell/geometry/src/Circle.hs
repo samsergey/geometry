@@ -9,7 +9,7 @@ data Circle = Circle { radius :: Double
                      , center :: CN
                      , orientation :: Double
                      , phaseShift :: Double
-                     , aLabelData :: LabelData }
+                     , circleOptions :: Options }
 
 mkCircle r c = Circle (abs r) c 1 0 mempty
 
@@ -43,11 +43,11 @@ instance Curve Circle where
 
   isClosed = const True
 
-  location p (Circle r c _ _ _) = res
-    where res | r' ~== r = OnCurve
-              | r' < r   = Inside
-              | r' > r   = Outside
-          r' = magnitude (cmp p - c)
+  location p Circle{..} = res
+    where res | r' ~== radius = OnCurve
+              | r' < radius   = Inside
+              | r' > radius   = Outside
+          r' = magnitude (cmp p - center)
 
   unit _ = 2 * pi
 
@@ -58,10 +58,17 @@ instance Curve Circle where
   distanceTo c p = abs (center c `distance` p - radius c)
 
 instance Figure Circle where
-  labelData = aLabelData
-  appLabelData lb c = c {aLabelData = labelData c <> lb}
-  
-  isTrivial (Circle {..}) = radius <= 0
+  options = circleOptions
+  setOptions o p = p { circleOptions = circleOptions p <> o }
+
+  labelDefaults c = LabelSettings
+    { getLabel = mempty
+    , getLabelPosition = pure $ c .@ 0
+    , getLabelOffset = pure $ coord $ normal c 0
+    , getLabelCorner = pure (0,0)
+    , getLabelAngle = pure 0 }
+
+  isTrivial Circle {..} = radius <= 0
 
   isSimilar c1 c2 = radius c1 ~== radius c2
 

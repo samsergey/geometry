@@ -1,7 +1,8 @@
 {-# Language UndecidableInstances #-}
 {-# Language FlexibleInstances #-}
 {-# Language MultiParamTypeClasses #-}
-{-# language GeneralizedNewtypeDeriving #-}
+{-# language DeriveAnyClass #-}
+
 module Base where
 
 import Data.Fixed (mod')
@@ -321,134 +322,155 @@ class (Curve a, Curve b) => Intersections a b where
 
 ------------------------------------------------------------
 
-newtype Corner = Corner (Endo (Int, Int))
-  deriving (Semigroup, Monoid)
+-- newtype Corner = Corner (Endo (Int, Int))
+--   deriving (Semigroup, Monoid)
 
-lower =  Corner . Endo $ \(_, x) -> (-1, x)
-upper =  Corner . Endo $ \(_, x) -> (1, x)
-middleX =   Corner . Endo $ \(_, x) -> (0, x)
-left =  Corner . Endo $ \(x, _) -> (x, -1)
-right =  Corner . Endo $ \(x, _) -> (x, 1)
-middleY =   Corner . Endo $ \(x, _) -> (x, 0)
-middle = middleX <> middleY
-corner (Corner c) = appEndo c (-1, -1)
-cornerX = fst . corner
-cornerY = snd . corner
+-- lower =  Corner . Endo $ \(_, x) -> (-1, x)
+-- upper =  Corner . Endo $ \(_, x) -> (1, x)
+-- middleX =   Corner . Endo $ \(_, x) -> (0, x)
+-- left =  Corner . Endo $ \(x, _) -> (x, -1)
+-- right =  Corner . Endo $ \(x, _) -> (x, 1)
+-- middleY =   Corner . Endo $ \(x, _) -> (x, 0)
+-- middle = middleX <> middleY
+-- corner (Corner c) = appEndo c (-1, -1)
+-- cornerX = fst . corner
+-- cornerY = snd . corner
 
 ------------------------------------------------------------
-newtype LabelData = LabelData ( String
-                              , First (Int, Int)
-                              , First XY
-                              , First CN)
-                    deriving (Show, Semigroup, Monoid)
-                 
+
+data LabelSettings = LabelSettings
+  { getLabel :: Last String
+  , getLabelCorner :: Last (Int, Int)
+  , getLabelOffset :: Last XY
+  , getLabelPosition :: Last CN
+  , getLabelAngle :: Last Angular} deriving (Show)
+
+
+instance Semigroup LabelSettings where
+  l1 <> l2 = LabelSettings
+    { getLabel = getLabel l1 <> getLabel l2
+    , getLabelCorner = getLabelCorner l1 <> getLabelCorner l2
+    , getLabelOffset = getLabelOffset l1 <> getLabelOffset l2
+    , getLabelPosition = getLabelPosition l1 <> getLabelPosition l2
+    , getLabelAngle = getLabelAngle l1 <> getLabelAngle l2 }
+
+instance Monoid LabelSettings where
+  mempty = LabelSettings mempty mempty mempty mempty mempty
+
+getLabelOption op = fromJust . getMaybeLabelOption op
+getMaybeLabelOption op = getLast . op . (labelDefaults <> labelSettings)
+
+------------------------------------------------------------
+
+data Style = Style
+  { getStroke :: Last String
+  , getFill :: Last String
+  , getDashing :: Last String
+  , getStrokeWidth :: Last String } deriving (Show)
+
+instance Semigroup Style where
+  l1 <> l2 = Style
+    { getStroke = getStroke l1 <> getStroke l2
+    , getFill = getFill l1 <> getFill l2
+    , getDashing = getDashing l1 <> getDashing l2
+    , getStrokeWidth = getStrokeWidth l1 <> getStrokeWidth l2 }
+
+instance Monoid Style where
+  mempty = Style mempty mempty mempty mempty
+
+getStyleOption op
+  = getLast . op . (styleDefaults <> style)
+  
+------------------------------------------------------------
+
+type Options = (LabelSettings, Style)
+
 class (Eq a, Trans a) => Figure a where
-  {-# MINIMAL isTrivial, refPoint, labelData, appLabelData #-}
+  {-# MINIMAL isTrivial, refPoint, labelDefaults
+            , options, setOptions #-}
+  
   isTrivial :: a -> Bool
   refPoint :: a -> CN
-  labelData :: a -> LabelData
-  appLabelData :: LabelData -> a -> a
+  options :: a -> Options
+  setOptions :: Options -> a -> a
+
+  setLabel :: LabelSettings -> a -> a
+  setLabel lb = setOptions (lb, mempty)
+
+  setStyle :: Style -> a -> a
+  setStyle s = setOptions (mempty, s)
+  
+  labelSettings :: a -> LabelSettings
+  labelSettings = fst . options
+
+  style :: a -> Style
+  style = snd . options
 
   isSimilar :: a -> a -> Bool
   isSimilar = (==)
   
   isNontrivial :: a -> Bool
   isNontrivial x = not (isTrivial x)
-  
+
+  styleDefaults :: a -> Style
+  styleDefaults _ = mempty
+
+  labelDefaults :: a -> LabelSettings
+  labelDefaults _ = mempty
+
+  labelText :: a -> Maybe String
+  labelText = getMaybeLabelOption getLabel
+
   labelPosition :: a -> CN
-  labelPosition = refPoint
+  labelPosition = getLabelOption getLabelPosition
   
   labelOffset :: a -> XY
-  labelOffset _ = (0.5, 0.5)
+  labelOffset = getLabelOption getLabelOffset
   
   labelCorner :: a -> (Int, Int)
   labelCorner f = let (x, y) = labelOffset f
                   in (signum (round x), signum (round y))
 
-  getLabel :: a -> String
-  getLabel f =
-    let LabelData (s,_,_,_) = labelData f in s
+  labelAngle :: a -> Angular
+  labelAngle = getLabelOption getLabelAngle
 
-  getLabelCorner :: a -> (Int,Int)
-  getLabelCorner f =
-    let LabelData (_,First x,_,_) = labelData f
-    in labelCorner f `fromMaybe` x
-  
-  getLabelOffset :: a -> XY
-  getLabelOffset f =
-    let LabelData (_,_,First x,_) = labelData f
-    in labelOffset f `fromMaybe` x
-  
-  getLabelPosition :: a -> CN
-  getLabelPosition f =
-    let LabelData (_,_,_,First x) = labelData f
-    in labelPosition f `fromMaybe` x
 
 label :: Figure a => String -> a -> a
-label l = appLabelData $
-          LabelData (l, mempty, mempty, mempty)
+label l f = setLabel ld f
+  where ld = (labelSettings f) { getLabel = pure l}
+
+
+loffs :: Figure a => XY -> a -> a
+loffs o f = setLabel ld f
+  where ld = (labelSettings f) { getLabelOffset = pure o}
+
 
 lpos :: (Affine p, Figure a) => p -> a -> a
-lpos p = appLabelData $
-         LabelData (mempty, mempty, mempty, pure (cmp p))
+lpos x f = setLabel ld f
+  where ld = (labelSettings f) { getLabelPosition = pure (cmp x) }
 
-lpar :: (Figure a, Curve a) => Double -> a -> a
-lpar t f = appLabelData ld f
-  where ld = LabelData (mempty, mempty, mempty, pure (f .@ t))
 
+lparam :: (Curve a, Figure a) => Double -> a -> a
+lparam x f = setLabel ld f
+  where ld = (labelSettings f) { getLabelPosition = pure (f .@ x) }
   
-------------------------------------------------------------
 
+stroke :: Figure a => String -> a -> a
+stroke s f = setStyle ld f
+  where ld = (style f) { getStroke = pure s}
 
--- newtype Labeled a = Labeled (LabelData, a)
---   deriving Functor
+fill :: Figure a => String -> a -> a
+fill s f = setStyle ld f
+  where ld = (style f) { getFill = pure s}
 
+width :: Figure a => String -> a -> a
+width s f = setStyle ld f
+  where ld = (style f) { getStrokeWidth = pure s}
 
--- instance Show a => Show (Labeled a) where
---   show (Labeled ((s,_,_,_), x)) = s <> ":" <> show x
+dashed :: Figure a => a -> a
+dashed f = setStyle ld f
+  where ld = (style f) { getStrokeWidth = pure "5,5"}
 
-
--- instance Applicative Labeled where
---   pure x = Labeled (mempty, x)
---   Labeled (l1, f) <*> Labeled (l2, x) = Labeled (l1 <> l2, f x)
-
-
--- fromLabeled    (Labeled (_, x)) = x
--- getLabel       (Labeled ((l,_,_,_), _)) = l
--- getLabelCorner (Labeled ((_,First c,_,_),_)) = c
--- getLabelOffset (Labeled ((_,_,First o,_),_)) = o
--- getLabelPos    (Labeled ((_,_,_,First x),_)) = x
--- appLabel l = Labeled (l, id)
-
-
-
-
--- withLabeled f l = fromLabeled $ f <$> l
--- withLabeled2 f (Labeled (l, a)) = f a
-
-
--- instance Eq a => Eq (Labeled a) where
---   a == b = fromLabeled $ (==) <$> a <*> b
-
--- instance Trans a => Trans (Labeled a) where
---   transform t x = transform t <$> x
-
--- instance Affine a => Affine (Labeled a) where
---   cmp  = withLabeled cmp
---   fromCN c = pure (fromCN c)
-
--- instance Curve a => Curve (Labeled a) where
---   param = withLabeled2 param
---   locus = withLabeled2 locus
---   normal = withLabeled2 normal
---   distanceTo = withLabeled2 distanceTo
-
--- instance Figure a => Figure (Labeled a) where
---    refPoint = withLabeled refPoint
---    isTrivial = withLabeled isTrivial
---    isSimilar a b = fromLabeled $ isSimilar <$> a <*> b
---    labelPosition lf = labelPosition (fromLabeled lf) `fromMaybe` getLabelPos lf
---    labelOffset lf = labelOffset (fromLabeled lf) `fromMaybe` getLabelOffset lf
---    labelCorner lf = labelCorner (fromLabeled lf) `fromMaybe` getLabelCorner lf
-
--- ------------------------------------------------------------
+dotted :: Figure a => a -> a
+dotted f = setStyle ld f
+  where ld = (style f) { getStrokeWidth = pure "2,5"}

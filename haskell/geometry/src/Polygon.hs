@@ -10,30 +10,30 @@ import Data.Fixed (mod')
 import Base
 import Line
 
-data Polygon = Polyline { vertices :: [CN] }
-             | Polygon { vertices :: [CN] }
+data Polygon = Polyline { polyOptions :: Options, vertices :: [CN] }
+             | Polygon { polyOptions :: Options, vertices :: [CN] }
 
 mkPolygon :: Affine a => [a] -> Polygon
-mkPolygon pts = Polygon $ cmp <$> pts
+mkPolygon pts = Polygon mempty $ cmp <$> pts
   
 mkPolyline :: Affine a => [a] -> Polygon
-mkPolyline pts = Polyline $ cmp <$> pts
+mkPolyline pts = Polyline mempty $ cmp <$> pts
 
-closePoly (Polyline p) = Polygon p
+closePoly (Polyline o p) = Polygon o p
 closePoly p = p
 
-polyConstructor (Polyline _) = Polyline
-polyConstructor (Polygon _) = Polygon
+polyConstructor (Polyline _ _) = Polyline
+polyConstructor (Polygon _ _) = Polygon
 
 segments :: Polygon -> [Line]
 segments p = mkSegment <$> zip vs (tail vs)
   where vs = case p of
-          Polyline p -> p
-          Polygon p -> p ++ [head p]
+          Polyline _ p -> p
+          Polygon _ p -> p ++ [head p]
 
 vertex :: Polygon -> Int -> CN
-vertex (Polygon vs) i = vs !! (i `mod` length vs)
-vertex (Polyline vs) i = vs !! ((0 `max` i) `min` length vs)
+vertex (Polygon _ vs) i = vs !! (i `mod` length vs)
+vertex (Polyline _ vs) i = vs !! ((0 `max` i) `min` length vs)
 
 instance Show Polygon where
   show p = concat ["<", t, " ", n,">"]
@@ -42,8 +42,8 @@ instance Show Polygon where
               then unwords $ show . coord <$> vs
               else "-" <> show (length vs) <> "-"
           t = case p of
-            Polyline _ -> "Polyline"
-            Polygon _ -> "Polygon"
+            Polyline _ _ -> "Polyline"
+            Polygon _ _ -> "Polygon"
 
 
 instance Eq Polygon where
@@ -51,14 +51,16 @@ instance Eq Polygon where
 
 
 instance Trans Polygon where
-  transform t p = polyConstructor p $ transform t <$> vertices p
+  transform t p = polyConstructor p
+                  (polyOptions p)
+                  (transform t <$> vertices p)
 
 
 instance Curve Polygon where
   maybeParam p t =
     case p of
-      Polygon _ -> interpolation (t `mod'` unit p)
-      Polyline _ -> interpolation t
+      Polygon _ _ -> interpolation (t `mod'` unit p)
+      Polyline _ _ -> interpolation t
     where
       interpolation x = param' <$> find interval tbl
         where
@@ -73,14 +75,14 @@ instance Curve Polygon where
       ds = scanl (+) 0 $ unit <$> ss
       (x0, s) = minimumOn (\(_,s) -> s `distanceTo` pt) $ zip ds ss
 
-  isClosed (Polyline _) = False
-  isClosed (Polygon _) = True
+  isClosed (Polyline _ _) = False
+  isClosed (Polygon _ _) = True
 
   location pt p = res
     where res | any (`isContaining` pt) (segments p) = OnCurve
               | isClosed p && odd (length (intersections r p)) = Inside
               | otherwise   = Outside
-          r = Ray (mempty, (cmp pt, cmp pt + 1))
+          r = Ray mempty (cmp pt, cmp pt + 1)
 
   unit p = sum $ unit <$> segments p
 
@@ -90,9 +92,9 @@ instance Curve Polygon where
   
 
 instance Figure Polygon where
-  labelData _ = mempty
-  appLabelData _ = id
-  
+  options = polyOptions
+  setOptions o p = p { polyOptions = polyOptions p <> o }
+
   isTrivial p = null $ vertices p
 
   isSimilar p1 p2 = p1 == p2
@@ -101,6 +103,7 @@ instance Figure Polygon where
                then head $ vertices p
                else 0
 
+  labelDefaults = mempty
 
 instance Intersections Line Polygon where
   intersections = flip intersections

@@ -7,48 +7,45 @@ import Data.List
 
 import Base
 
-data Line = Line (LabelData, (CN, CN))
-          | Segment (LabelData, (CN, CN))
-          | Ray (LabelData, (CN, CN))
+data Line = Line { lineOptions :: Options , refPoints :: (CN, CN) }
+          | Segment { lineOptions :: Options , refPoints :: (CN, CN) }
+          | Ray { lineOptions :: Options , refPoints :: (CN, CN) }
 
-refPoints (Line (_, p)) = p
-refPoints (Ray (_, p)) = p
-refPoints (Segment (_, p)) = p
+lineType (Line _ _) = "Line"
+lineType (Ray _ _) = "Ray"
+lineType (Segment _ _) = "Segment"
 
-instance Eq Line where
-  Line (_, p1)    == Line (_,p2)     = p1 ~== p2
-  Ray (_, p1)     == Ray (_, p2)     = p1 ~== p2
-  Segment (_, p1) == Segment (_, p2) = p1 ~== p2
-  _ == _ = False
-
-lineConstructor (Line _) = Line
-lineConstructor (Ray _)  = Ray
-lineConstructor (Segment _) = Segment
+lineConstructor (Line _ _) = Line
+lineConstructor (Ray _ _)  = Ray
+lineConstructor (Segment _ _) = Segment
 
 trivialLine = mkLine (0,0)
-mkLine ps = Line (mempty, ps)
-mkRay ps = Ray (mempty, ps)
-mkSegment ps = Segment (mempty, ps)
+mkLine ps = Line mempty ps
+mkRay ps = Ray mempty ps
+mkSegment ps = Segment mempty ps
 
-extendAs :: Line -> ((LabelData, (CN, CN)) -> Line) -> Line
-l1 `extendAs` l = let res = l (labelData l1, refPoints l1)
-                   in case l1 of
-                     Segment _ -> res
-                     Ray _ -> case res of
-                                Segment _ -> l1
-                                _ -> res
-                     Line _  -> l1
+instance Eq Line where
+  l1 == l2 = lineType l1 == lineType l2 &&
+             refPoints l1 ~== refPoints l2
+
+l1 `extendAs` l = let res = l (lineOptions l1) (refPoints l1)
+                   in case lineType l1 of
+                     "Segment" -> res
+                     "Ray" -> case lineType res of
+                       "Segment" -> l1
+                       _ -> res
+                     "Line" -> l1
 
 
 instance Show Line where
-  show l = case l of
-    Segment _ -> unwords [ "<Segment"
+  show l = case lineType l of
+    "Segment" -> unwords [ "<Segment"
                          , "(" <> show x1 <> "," <> show y1 <> "),"
                          , "(" <> show x2 <> "," <> show y2 <> ")>"]
-    Line _ -> unwords [ "<Line"
+    "Line" -> unwords [ "<Line"
                       , "(" <> show x1 <> "," <> show y1 <> "),"
                       , show a <> ">"]
-    Ray _ -> unwords [ "<Ray"
+    "Ray" -> unwords [ "<Ray"
                      , "(" <> show x1 <> "," <> show y1 <> "),"
                      , show a <> ">"]
     where (x1, y1) = coord (l .@ 0)
@@ -56,36 +53,35 @@ instance Show Line where
           a = angle l
 
 instance Figure Line where
-  labelData (Line (l,_)) = l
-  labelData (Ray (l,_)) = l
-  labelData (Segment (l,_)) = l
+  options = lineOptions
+  setOptions o p = p { lineOptions = lineOptions p <> o }
 
-  appLabelData lb l = lineConstructor l (labelData l <> lb, refPoints l)
+  labelDefaults l =
+    LabelSettings { getLabel = mempty
+                  , getLabelPosition = pure $ l .@ 0.5
+                  , getLabelOffset = pure $ coord $ scale 1 $ normal l 0
+                  , getLabelCorner = pure (0,0)
+                  , getLabelAngle = pure 0 }
 
   isTrivial l = cmp l == 0
 
-  isSimilar s1@(Segment _) s2@(Segment _) = unit s1 ~== unit s2
-  isSimilar (Line _) (Line _) = True
-  isSimilar (Ray _) (Ray _) = True
-  isSimilar _ _ = False
+  isSimilar l1 l2
+    | lineType l1 /= lineType l2 = False
+    | lineType l1 == "Segment" = unit l1 ~== unit l2
+    | otherwise = True
 
   refPoint = fst . refPoints
 
-  labelPosition l = l .@ 0.5
-  labelOffset l = coord $ scale 12 $ normal l 0
-  labelCorner _ = (0,0)
-
-
 instance Affine Line where
   cmp l =  let (p1, p2) = refPoints l in normalize $ cmp p2 - cmp p1
-  fromCN p = Line (mempty, (0, p))
+  fromCN p = Line mempty (0, p)
 
 
 instance Trans Line where
   transform t l = constr (transformCN t p1, transformCN t p2)
     where p1 = l .@ 0
           p2 = l .@ 1
-          constr ps = lineConstructor l (labelData l, ps)
+          constr ps = lineConstructor l (lineOptions l) ps
   
 
 instance Curve Line where
@@ -100,10 +96,10 @@ instance Curve Line where
 
   isClosed = const False
 
-  isContaining l p = case l of
-    Line _    -> res
-    Ray _     -> cmp p ~== start l || (res && 0 <= x)
-    Segment _ -> cmp p ~== start l || (res && 0 <= x && x ~<= 1)
+  isContaining l p = case lineType l of
+    "Line"    -> res
+    "Ray"     -> cmp p ~== start l || (res && 0 <= x)
+    "Segment" -> cmp p ~== start l || (res && 0 <= x && x ~<= 1)
     where p1 = refPoint l
           x = p @. l
           res = l `isCollinear` azimuth p1 p
@@ -135,13 +131,13 @@ intersectionV (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
 
 
 clipBy :: (Intersections Line c, Curve c) => Line -> c -> [Line]
-clipBy l c = filter internal $ (\p -> Segment (ld, p)) <$> zip ints (tail ints) 
+clipBy l c = filter internal $ Segment opts <$> zip ints (tail ints) 
   where
-    ld = labelData l
+    opts = lineOptions l
     ints = sortOn (locus l) $ intersections l c <> ends
     internal s = c `isEnclosing` (s .@ 1/2)
-    ends = case l of
-             Segment _ -> [l .@ 0, l .@ 1]
-             Ray _ -> [l .@ 0]
-             Line _ -> []
+    ends = case lineType l of
+             "Segment" -> [l .@ 0, l .@ 1]
+             "Ray" -> [l .@ 0]
+             "Line" -> []
 

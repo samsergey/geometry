@@ -10,6 +10,7 @@ module SVG ( chart
            ) where
 
 import Prelude hiding (writeFile, unwords)
+import Graphics.Svg.Core
 import Graphics.Svg (doctype, svg11_, with, prettyText, (<<-))
 import Graphics.Svg (Element, ToElement (..))
 import Graphics.Svg.Elements
@@ -62,6 +63,7 @@ attribute getAttr attr f =
     Just s -> [ attr <<- pack s ]
     Nothing -> mempty
 
+attributes :: Figure f => f -> [Graphics.Svg.Core.Attribute]
 attributes = attribute getStroke Stroke_ <>
              attribute getFill Fill_ <>
              attribute getStrokeWidth Stroke_width_ <>
@@ -76,12 +78,10 @@ instance ToElement Point where
     where
       pt = case p of
         Label _ _ -> mempty
-        Point _ _ -> circle_ [ Cx_ <<- fmtSVG (getX p)
-                             , Cy_ <<- fmtSVG (getY p)
-                             , R_ <<- "3"
-                             , Fill_ <<- "red"
-                             , Stroke_ <<- "#444"
-                             , Stroke_width_ <<- "1" ]
+        Point _ _ -> circle_ $ [ Cx_ <<- fmtSVG (getX $ scaled p)
+                               , Cy_ <<- fmtSVG (getY $ scaled p)
+                               , R_ <<- "3" ] <>
+                     attributes p
       
 ------------------------------------------------------------
 

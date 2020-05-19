@@ -1,3 +1,4 @@
+{-# Language RecordWildCards #-}
 module Circle where
 
 import Data.Complex
@@ -7,12 +8,18 @@ import Base
 data Circle = Circle { radius :: Double
                      , center :: CN
                      , orientation :: Double
-                     , phaseShift :: Double }
+                     , phaseShift :: Double
+                     , aLabelData :: LabelData }
+
+mkCircle r c = Circle (abs r) c 1 0 mempty
+
+mkCircle2 c p = Circle (magnitude r) c 1 (phase r / (2*pi)) mempty
+  where r = p - c
 
 instance Show Circle where
-  show cir = concat ["<Circle ", r, ",", c, ">"]
-    where r = show $ radius cir
-          c = show $ coord $ center cir
+  show Circle {..} = concat ["<Circle ", r, ",", c, ">"]
+    where r = show radius
+          c = show $ coord center
 
 instance Eq Circle where
   c1 == c2 = radius c1 ~== radius c2 &&
@@ -28,15 +35,15 @@ instance Trans Circle where
           w = signum $ cross (p - c) (p' - c)
 
 instance Curve Circle where
-  param (Circle r c w ph) t =
+  param (Circle r c w ph _) t =
     c + mkPolar r (2*pi*w*(t + ph))
 
-  locus (Circle _ c w ph) p =
+  locus (Circle _ c w ph _) p =
     w * (turns (asCmp (cmp p - c)) - ph)
 
   isClosed = const True
 
-  location p (Circle r c _ _) = res
+  location p (Circle r c _ _ _) = res
     where res | r' ~== r = OnCurve
               | r' < r   = Inside
               | r' > r   = Outside
@@ -51,11 +58,11 @@ instance Curve Circle where
   distanceTo c p = abs (center c `distance` p - radius c)
 
 instance Figure Circle where
-  isTrivial (Circle r _ _ _) = r <= 0
+  labelData = aLabelData
+  appLabelData lb c = c {aLabelData = labelData c <> lb}
+  
+  isTrivial (Circle {..}) = radius <= 0
+
   isSimilar c1 c2 = radius c1 ~== radius c2
+
   refPoint = center
-
-mkCircle r c = Circle (abs r) c 1 0
-
-mkCircle2 c p = Circle (magnitude r) c 1 (phase r / (2*pi))
-  where r = p - c

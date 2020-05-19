@@ -174,21 +174,21 @@ class Trans a => Affine a where
   coord :: a -> XY
   coord p = let x :+ y = cmp p in (x, y)
 
-  dot :: a -> a -> Double
+  dot :: Affine b => a -> b -> Double
   dot a b = let (xa, ya) = coord a
                 (xb, yb) = coord b
                 in xa*xb + ya*yb
 
-  isOrthogonal :: a -> a -> Bool
-  isOrthogonal  a b = a `dot` b ~== 0
+  isOrthogonal :: Affine b => a -> b -> Bool
+  isOrthogonal  a b = cmp a `dot` cmp b ~== 0
 
-  isOpposite :: a -> a -> Bool
+  isOpposite :: Affine b => a -> b -> Bool
   isOpposite a b = cmp a + cmp b ~== 0
 
-  isCollinear :: a -> a -> Bool
-  isCollinear a b = a `cross` b ~== 0
+  isCollinear :: Affine b => a -> b -> Bool
+  isCollinear a b = cmp a `cross` cmp b ~== 0
 
-  azimuth :: a -> a -> Angular
+  azimuth :: Affine b => a -> b -> Angular
   azimuth p1 p2 = asCmp (cmp p2 - cmp p1)
 
   det :: Affine b => (a, b) -> Double
@@ -196,7 +196,7 @@ class Trans a => Affine a where
                    (xb, yb) = coord b
                in xa*yb - ya*xb
 
-  cross :: a -> a -> Double
+  cross :: Affine b => a -> b -> Double
   cross a b = det (a, b)
 
   norm :: a -> Double
@@ -336,16 +336,25 @@ cornerX = fst . corner
 cornerY = snd . corner
 
 ------------------------------------------------------------
-
-class Trans a => Figure a where
+newtype LabelData = LabelData ( String
+                              , First (Int, Int)
+                              , First XY
+                              , First CN)
+                    deriving (Show, Semigroup, Monoid)
+                 
+class (Eq a, Trans a) => Figure a where
+  {-# MINIMAL isTrivial, refPoint, labelData, appLabelData #-}
   isTrivial :: a -> Bool
-  isSimilar :: a -> a -> Bool
+  refPoint :: a -> CN
+  labelData :: a -> LabelData
+  appLabelData :: LabelData -> a -> a
 
+  isSimilar :: a -> a -> Bool
+  isSimilar = (==)
+  
   isNontrivial :: a -> Bool
   isNontrivial x = not (isTrivial x)
-
-  refPoint :: a -> CN
-
+  
   labelPosition :: a -> CN
   labelPosition = refPoint
   
@@ -356,59 +365,90 @@ class Trans a => Figure a where
   labelCorner f = let (x, y) = labelOffset f
                   in (signum (round x), signum (round y))
 
+  getLabel :: a -> String
+  getLabel f =
+    let LabelData (s,_,_,_) = labelData f in s
+
+  getLabelCorner :: a -> (Int,Int)
+  getLabelCorner f =
+    let LabelData (_,First x,_,_) = labelData f
+    in labelCorner f `fromMaybe` x
+  
+  getLabelOffset :: a -> XY
+  getLabelOffset f =
+    let LabelData (_,_,First x,_) = labelData f
+    in labelOffset f `fromMaybe` x
+  
+  getLabelPosition :: a -> CN
+  getLabelPosition f =
+    let LabelData (_,_,_,First x) = labelData f
+    in labelPosition f `fromMaybe` x
+
+label :: Figure a => String -> a -> a
+label l = appLabelData $
+          LabelData (l, mempty, mempty, mempty)
+
+lpos :: (Affine p, Figure a) => p -> a -> a
+lpos p = appLabelData $
+         LabelData (mempty, mempty, mempty, pure (cmp p))
+
+lpar :: (Figure a, Curve a) => Double -> a -> a
+lpar t f = appLabelData ld f
+  where ld = LabelData (mempty, mempty, mempty, pure (f .@ t))
+
+  
 ------------------------------------------------------------
 
-newtype Labeled a = Labeled ((String, First (Int, Int), First XY), a)
-  deriving Functor
+
+-- newtype Labeled a = Labeled (LabelData, a)
+--   deriving Functor
 
 
-instance Show a => Show (Labeled a) where
-  show (Labeled ((s,_,_), x)) = s <> ":" <> show x
+-- instance Show a => Show (Labeled a) where
+--   show (Labeled ((s,_,_,_), x)) = s <> ":" <> show x
 
 
-instance Applicative Labeled where
-  pure x = Labeled (mempty, x)
-  Labeled (l1, f) <*> Labeled (l2, x) = Labeled (l1 <> l2, f x)
+-- instance Applicative Labeled where
+--   pure x = Labeled (mempty, x)
+--   Labeled (l1, f) <*> Labeled (l2, x) = Labeled (l1 <> l2, f x)
 
 
-fromLabeled    (Labeled (_, x)) = x
-getLabel       (Labeled ((l, _, _), _)) = l
-getLabelCorner (Labeled ((_, First c, _), _)) = c
-getLabelOffset (Labeled ((_, _, First o), _)) = o
-appLabel l = Labeled (l, id)
+-- fromLabeled    (Labeled (_, x)) = x
+-- getLabel       (Labeled ((l,_,_,_), _)) = l
+-- getLabelCorner (Labeled ((_,First c,_,_),_)) = c
+-- getLabelOffset (Labeled ((_,_,First o,_),_)) = o
+-- getLabelPos    (Labeled ((_,_,_,First x),_)) = x
+-- appLabel l = Labeled (l, id)
 
 
-label l x = appLabel (l, mempty, mempty) <*> pure x
-lcorn p x  = appLabel (mempty, pure p, mempty) <*> x
-lpos d x  = appLabel (mempty, mempty, pure d) <*> x
 
 
-withLabeled f l = fromLabeled $ f <$> l
-withLabeled2 f (Labeled (l, a)) = f a
+-- withLabeled f l = fromLabeled $ f <$> l
+-- withLabeled2 f (Labeled (l, a)) = f a
 
 
-instance Eq a => Eq (Labeled a) where
-  a == b = fromLabeled $ (==) <$> a <*> b
+-- instance Eq a => Eq (Labeled a) where
+--   a == b = fromLabeled $ (==) <$> a <*> b
 
-instance Trans a => Trans (Labeled a) where
-  transform t x = transform t <$> x
+-- instance Trans a => Trans (Labeled a) where
+--   transform t x = transform t <$> x
 
-instance Affine a => Affine (Labeled a) where
-  cmp  = withLabeled cmp
-  fromCN c = pure (fromCN c)
+-- instance Affine a => Affine (Labeled a) where
+--   cmp  = withLabeled cmp
+--   fromCN c = pure (fromCN c)
 
-instance Curve a => Curve (Labeled a) where
-  param = withLabeled2 param
-  locus = withLabeled2 locus
-  normal = withLabeled2 normal
-  distanceTo = withLabeled2 distanceTo
+-- instance Curve a => Curve (Labeled a) where
+--   param = withLabeled2 param
+--   locus = withLabeled2 locus
+--   normal = withLabeled2 normal
+--   distanceTo = withLabeled2 distanceTo
 
-instance Figure a => Figure (Labeled a) where
-   refPoint = withLabeled refPoint
-   isTrivial = withLabeled isTrivial
-   isSimilar a b = fromLabeled $ isSimilar <$> a <*> b
-   labelPosition = withLabeled labelPosition
-   labelOffset lf = labelOffset (fromLabeled lf) `fromMaybe` getLabelOffset lf
-   labelCorner lf = labelCorner (fromLabeled lf) `fromMaybe` getLabelCorner lf
+-- instance Figure a => Figure (Labeled a) where
+--    refPoint = withLabeled refPoint
+--    isTrivial = withLabeled isTrivial
+--    isSimilar a b = fromLabeled $ isSimilar <$> a <*> b
+--    labelPosition lf = labelPosition (fromLabeled lf) `fromMaybe` getLabelPos lf
+--    labelOffset lf = labelOffset (fromLabeled lf) `fromMaybe` getLabelOffset lf
+--    labelCorner lf = labelCorner (fromLabeled lf) `fromMaybe` getLabelCorner lf
 
-------------------------------------------------------------
+-- ------------------------------------------------------------

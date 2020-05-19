@@ -4,28 +4,30 @@ import Data.Complex
 
 import Base
 
-newtype Point = Point XY
-
+data Point = Point LabelData CN
 
 instance Eq Point where
   p1 == p2 = cmp p1 ~== cmp p2
 
 
 instance Trans Point where
-  transform t (Point p) = Point $ transformXY t p
+  transform t (Point l p) = Point l $ transformCN t p
 
 
 instance Affine Point where
-  coord (Point p) = p
-  fromCoord = Point
+  cmp (Point _ p) = p
+  fromCN = Point mempty
 
 
 instance Show Point where
-  show (Point (x, y)) = concat ["<Point (", sx, " ", sy, ")>"]
-    where sx = show x
-          sy = show y 
+  show p = concat ["<Point ", sl, " (", sx, " ", sy, ")>"]
+    where sx = show $ getX p
+          sy = show $ getY p
+          sl = getLabel p
 
 instance Figure Point where
   isTrivial _ = False
   isSimilar _ _ = True
   refPoint = cmp
+  labelData (Point l _) = l
+  appLabelData l (Point l' p) = Point (l <> l') p

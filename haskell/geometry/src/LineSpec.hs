@@ -7,7 +7,7 @@ import Data.Complex
 
 import Geometry
 import Testing
-g
+
 main :: IO ()
 main = hspec $
   describe "Line" $ do
@@ -26,21 +26,9 @@ main = hspec $
       it "5" $ line @CN @CN 0 2 .@ 0.5 == 1
 
     describe "equation and similarity" $ do
-      it "1" $
-        property $ \l -> l == (l :: Line)
-
-      it "2" $
-        property $ \(AnyLine l) x1 x2 -> x1 /= x2 ==>
-                     let p1 = l .@ x1
-                         p2 = l .@ x2
-                     in Line (p1, p2) == l
-
-      it "3" $
-        property $ \(AnyRay r) (Positive x) ->
-                     let p1 = r .@ 0
-                         p2 = r .@ x
-                     in Ray (p1, p2) == r
-
+      it "1" $ Line(0,1) == Line (0,1)
+      it "2" $ Line(0,1) /= Ray (0,1)
+      it "3" $ Line(0,1) /= Segment (0,1)
       it "4" $
         property $ \(AnySegment s) m -> appMotion m s `isSimilar` s 
 
@@ -49,8 +37,9 @@ main = hspec $
         property $ \(AnyLine l) x -> l `isContaining` (l .@ x)
         
       it "2" $
-        property $ \(Nontrivial (AnyRay r)) x ->
-                     (0 <= x) == (r `isContaining` (r .@ x))
+        property $ \(Nontrivial (AnyRay r)) (NonNegative x) ->
+                     r `isContaining` (r .@ x)
+        
       it "3" $
         property $ \(Nontrivial (AnySegment s)) x ->
                      (0 <= x && x <= 1) == (s `isContaining` (s .@ x))
@@ -84,6 +73,18 @@ main = hspec $
                      let _ = (a :: Angular, p :: Point, l :: Line)
                      in l <| at p <| along a == l <| along a <| at p
 
+    describe "distanceTo" $ do
+      it "1" $ aLine `distanceTo` origin == 0
+      it "2" $ (aLine <| at' (0,1)) `distanceTo` origin == 1
+      it "3" $ (aLine <| at' (0,1) <| along (asDeg 45)) `distanceTo` origin ~== 1/sqrt 2
+      it "4" $ aRay `distanceTo` origin == 0
+      it "5" $ (aRay <| at' (3,4)) `distanceTo` origin == 5
+      it "6" $ (aRay <| at' (-1,0)) `distanceTo` origin == 0
+      it "7" $ aSegment `distanceTo` origin == 0
+      it "8" $ (aSegment <| at' (3,4)) `distanceTo` origin == 5
+      it "9" $ (aSegment <| at' (-2,0)) `distanceTo` origin == 1
+      it "10" $ (segment @XY @XY (-1,0) (0,1)) `distanceTo` origin == 1/sqrt 2
+      
     -- describe "intersections" $ do
     --   it "1" $
     --     property $ \(AnyLine l1) (AnyLine l2) ->

@@ -23,6 +23,7 @@ import Base
 import Point
 import Circle
 import Polygon
+import Label
 import Line
 
 
@@ -32,6 +33,7 @@ plane = Polygon [(-1):+(-1), 1:+(-1), 1:+1, (-1):+1]
         <| scale (paperSize/3)
         <| rotate 30
 
+showt :: Show a => a -> Text
 showt = pack . show
 
 data Viewport = Viewport { size :: (Double, Double) }
@@ -56,7 +58,9 @@ instance SVGable [CN] where
 instance SVGable XY where
   fmtSVG = fmtSVG . cmp
 
+------------------------------------------------------------
 
+instance SVGable Point 
 instance ToElement Point where
   toElement p = let (x, y) = coord p
                 in circle_ [ Cx_ <<- fmtSVG x
@@ -66,9 +70,9 @@ instance ToElement Point where
                              , Stroke_ <<- "#444"
                              , Stroke_width_ <<- "1" ]
 
-instance SVGable Point 
 ------------------------------------------------------------
 
+instance SVGable Circle 
 instance ToElement Circle where
   toElement c = let (x :+ y) = center c
     in circle_ [ Cx_ <<- fmtSVG x
@@ -78,7 +82,6 @@ instance ToElement Circle where
                , Stroke_ <<- "orange"
                , Stroke_width_ <<- "2" ]
 
-instance SVGable Circle 
 ------------------------------------------------------------
 
 instance ToElement Line where
@@ -102,6 +105,7 @@ instance SVGable Line where
       
 ------------------------------------------------------------
 
+instance SVGable Polygon
 instance ToElement Polygon where
   toElement p = let element = case p of
                                 Polyline _ -> polyline_
@@ -111,25 +115,22 @@ instance ToElement Polygon where
                , Stroke_ <<- "orange"
                , Stroke_width_ <<- "2" ]
 
-instance SVGable Polygon 
 ------------------------------------------------------------
 
-instance (Figure a, ToElement a) => ToElement (Labeled a) where
-  toElement f = toElement (fromLabeled f) <>
-                (text $ toElement $ getLabel f)
+instance SVGable Label
+instance ToElement Label where
+  toElement lb = text_ [ X_ <<- fmtSVG x
+                       , Y_ <<- fmtSVG y
+                       , Font_size_ <<- showt fontSize
+                       , Font_family_ <<- "CMU Serif"
+                       , Font_style_ <<- "italic"
+                       , Stroke_ <<- "none"
+                       , Fill_ <<- "white"] (toElement (labelText lb))
     where
       fontSize = 16
-      textWidth = fromIntegral (length (getLabel f))
-      text = text_ $ [ X_ <<- fmtSVG x
-                     , Y_ <<- fmtSVG y
-                     , Font_size_ <<- showt fontSize
-                     , Font_family_ <<- "CMU Serif"
-                     , Font_style_ <<- "italic"
-                     , Stroke_ <<- "none"
-                     , Fill_ <<- "white"] <> offsetX <> offsetY 
-      x :+ y = labelPosition f + (dx :+ dy)
-      (dx, dy) = scale (fromIntegral fontSize) (labelOffset f)
-      (cx, cy) = labelCorner f
+      x :+ y = labelPosition lb + (dx :+ dy)
+      (dx, dy) = scale (fromIntegral fontSize) (labelOffset lb)
+      (cx, cy) = labelCorner lb
       offsetX = case signum cx of
                   -1 -> [ Text_anchor_ <<- "start" ]
                   0 -> [ Text_anchor_ <<- "middle" ]
@@ -139,7 +140,34 @@ instance (Figure a, ToElement a) => ToElement (Labeled a) where
                   0 -> [ Dy_ <<- showt (fontSize `div` 4 +1) ]
                   -1 -> [ Dy_ <<- showt (fontSize - 2) ]
 
- 
+------------------------------------------------------------
+
+-- instance (Figure a, ToElement a) => ToElement (Labeled a) where
+--   toElement f = toElement (fromLabeled f) <> text (toElement (getLabel f))
+--     where
+--       fontSize = 16
+--       textWidth = fromIntegral (length (getLabel f))
+--       text = text_ $ [ X_ <<- fmtSVG x
+--                      , Y_ <<- fmtSVG y
+--                      , Font_size_ <<- showt fontSize
+--                      , Font_family_ <<- "CMU Serif"
+--                      , Font_style_ <<- "italic"
+--                      , Stroke_ <<- "none"
+--                      , Fill_ <<- "white"] <> offsetX <> offsetY 
+--       x :+ y = labelPosition f + d
+--       d = scale (fromIntegral fontSize) (cmp $ labelOffset f)
+--       (cx, cy) = labelCorner f
+--       offsetX = case signum cx of
+--                   -1 -> [ Text_anchor_ <<- "start" ]
+--                   0 -> [ Text_anchor_ <<- "middle" ]
+--                   1 -> [ Text_anchor_ <<- "end" ]
+--       offsetY = case signum cy of
+--                   1 -> [ Dy_ <<- showt (-fontSize `div` 4 -1) ]
+--                   0 -> [ Dy_ <<- showt (fontSize `div` 4 +1) ]
+--                   -1 -> [ Dy_ <<- showt (fontSize - 2) ]
+
+-- instance SVGable a => SVGable (Labeled a) where
+--   preprocess l = preprocess <$> l
 ------------------------------------------------------------
 type Groupable a = (SVGable a, ToElement a, Show a, Trans a)
 

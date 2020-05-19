@@ -3,6 +3,7 @@ module Polygon where
 
 import Data.Complex
 import Data.Foldable
+import Data.List.Extra
 import Data.Monoid
 import Data.Fixed (mod')
 
@@ -12,6 +13,11 @@ import Line
 data Polygon = Polyline { vertices :: [CN] }
              | Polygon { vertices :: [CN] }
 
+mkPolygon :: Affine a => [a] -> Polygon
+mkPolygon pts = Polygon $ cmp <$> pts
+  
+mkPolyline :: Affine a => [a] -> Polygon
+mkPolyline pts = Polyline $ cmp <$> pts
 
 closePoly (Polyline p) = Polygon p
 closePoly p = p
@@ -20,10 +26,14 @@ polyConstructor (Polyline _) = Polyline
 polyConstructor (Polygon _) = Polygon
 
 segments :: Polygon -> [Line]
-segments p = Segment <$> zip vs (tail vs)
+segments p = mkSegment <$> zip vs (tail vs)
   where vs = case p of
           Polyline p -> p
           Polygon p -> p ++ [head p]
+
+vertex :: Polygon -> Int -> CN
+vertex (Polygon vs) i = vs !! (i `mod` length vs)
+vertex (Polyline vs) i = vs !! ((0 `max` i) `min` length vs)
 
 instance Show Polygon where
   show p = concat ["<", t, " ", n,">"]
@@ -57,7 +67,11 @@ instance Curve Polygon where
           tbl = zip (zip ds (tail ds)) $ segments p
           ds = scanl (+) 0 $ unit <$> segments p
 
-  maybeLocus p pt = undefined
+  locus p pt = x0 + pt @. s
+    where
+      ss = segments p
+      ds = scanl (+) 0 $ unit <$> ss
+      (x0, s) = minimumOn (\(_,s) -> s `distanceTo` pt) $ zip ds ss
 
   isClosed (Polyline _) = False
   isClosed (Polygon _) = True
@@ -66,14 +80,19 @@ instance Curve Polygon where
     where res | any (`isContaining` pt) (segments p) = OnCurve
               | isClosed p && odd (length (intersections r p)) = Inside
               | otherwise   = Outside
-          r = Ray (cmp pt, cmp pt + 1)
+          r = Ray (mempty, (cmp pt, cmp pt + 1))
 
   unit p = sum $ unit <$> segments p
 
   tangent p t = undefined
 
+  distanceTo p pt = minimum $ (`distanceTo` pt) <$> segments p
+  
 
 instance Figure Polygon where
+  labelData _ = mempty
+  appLabelData _ = id
+  
   isTrivial p = null $ vertices p
 
   isSimilar p1 p2 = p1 == p2

@@ -7,6 +7,7 @@ module Geometry ( module Base
                 , origin
                 , at, at', along, reflectAt
                 , point, point', pointOn
+                , label
                 , line, segment, ray
                 , aLine, aSegment, aRay
                 , circle, circle'
@@ -15,10 +16,10 @@ module Geometry ( module Base
 
 import Data.Double.Conversion.Text (toShortest)
 import Data.Complex
-import Data.List.Extra
 
 import Base
 import Point
+import Label
 import Circle
 import Line
 import Polygon
@@ -50,6 +51,8 @@ point p = Point (coord p)
 pointOn :: Curve a => a -> Double -> Point
 pointOn c t = Point $ coord $ c `param` t
 
+label :: String -> Label
+label s = Label s 0
 ------------------------------------------------------------
 
 line :: (Affine a1, Affine a2) => a1 -> a2 -> Line
@@ -86,12 +89,4 @@ regularPoly n' = rotate 90 $
                  polarPoly (const 1) [0,1/n..1-1/n]
   where n = fromIntegral n'
 
-
-pl = regularPoly 4 <| scale (sqrt 2)
-
-loc p pt = x0 + (pt @. s )
-  where
-    ss = segments p
-    ds = scanl (+) 0 $ unit <$> ss
-    (x0, s) = minimumOn (\(_,s) -> s `distanceTo` pt) $ zip ds ss
 

@@ -7,19 +7,31 @@ import Data.List
 
 import Base
 
-data Line = Line {refPoints :: (CN, CN) }
-          | Segment {refPoints :: (CN, CN) }
-          | Ray {refPoints :: (CN, CN) }
+data Line = Line (LabelData, (CN, CN))
+          | Segment (LabelData, (CN, CN))
+          | Ray (LabelData, (CN, CN))
+
+refPoints (Line (_, p)) = p
+refPoints (Ray (_, p)) = p
+refPoints (Segment (_, p)) = p
+
+instance Eq Line where
+  Line (_, p1)    == Line (_,p2)     = p1 ~== p2
+  Ray (_, p1)     == Ray (_, p2)     = p1 ~== p2
+  Segment (_, p1) == Segment (_, p2) = p1 ~== p2
+  _ == _ = False
 
 lineConstructor (Line _) = Line
-lineConstructor (Ray _) = Ray
+lineConstructor (Ray _)  = Ray
 lineConstructor (Segment _) = Segment
 
-trivialLine :: Line
-trivialLine = Line (0,0)
+trivialLine = mkLine (0,0)
+mkLine ps = Line (mempty, ps)
+mkRay ps = Ray (mempty, ps)
+mkSegment ps = Segment (mempty, ps)
 
-extendAs :: Line -> ((CN, CN) -> Line) -> Line
-l1 `extendAs` l = let res = l (refPoints l1)
+extendAs :: Line -> ((LabelData, (CN, CN)) -> Line) -> Line
+l1 `extendAs` l = let res = l (labelData l1, refPoints l1)
                    in case l1 of
                      Segment _ -> res
                      Ray _ -> case res of
@@ -43,35 +55,37 @@ instance Show Line where
           (x2, y2) = coord (l .@ 1)
           a = angle l
 
- 
-instance Eq Line where
-  l1 == l2
-    | isTrivial l1 = isTrivial l2 && l2 `isContaining` (l1 .@ 0)
-    | otherwise = l2 `isContaining` (l1 .@ 0) &&
-                  l2 `isContaining` (l1 .@ 1)
-
-
 instance Figure Line where
+  labelData (Line (l,_)) = l
+  labelData (Ray (l,_)) = l
+  labelData (Segment (l,_)) = l
+
+  appLabelData lb l = lineConstructor l (labelData l <> lb, refPoints l)
+
   isTrivial l = cmp l == 0
+
   isSimilar s1@(Segment _) s2@(Segment _) = unit s1 ~== unit s2
-  isSimilar l1 l2 = True
+  isSimilar (Line _) (Line _) = True
+  isSimilar (Ray _) (Ray _) = True
+  isSimilar _ _ = False
+
   refPoint = fst . refPoints
-  labelPosition l = case l of
-    Segment _ -> l .@ 0.5
-    _ -> l .@ 1
+
+  labelPosition l = l .@ 0.5
   labelOffset l = coord $ scale 12 $ normal l 0
   labelCorner _ = (0,0)
 
 
 instance Affine Line where
   cmp l =  let (p1, p2) = refPoints l in normalize $ cmp p2 - cmp p1
-  fromCN p = Line (0, p)
+  fromCN p = Line (mempty, (0, p))
 
 
 instance Trans Line where
-  transform t l = lineConstructor l (transformCN t p1, transformCN t p2)
+  transform t l = constr (transformCN t p1, transformCN t p2)
     where p1 = l .@ 0
           p2 = l .@ 1
+          constr ps = lineConstructor l (labelData l, ps)
   
 
 instance Curve Line where
@@ -88,11 +102,11 @@ instance Curve Line where
 
   isContaining l p = case l of
     Line _    -> res
-    Ray _     -> res && 0 ~<= x
-    Segment _ -> res && 0 ~<= x && x ~<= 1
-    where (p1, _) = refPoints l
+    Ray _     -> cmp p ~== start l || (res && 0 <= x)
+    Segment _ -> cmp p ~== start l || (res && 0 <= x && x ~<= 1)
+    where p1 = refPoint l
           x = p @. l
-          res = angle l `isCollinear` azimuth p1 (cmp p)
+          res = l `isCollinear` azimuth p1 p
 
   tangent l _ = angle l
 
@@ -100,6 +114,7 @@ instance Curve Line where
     Just x -> p `distance` (l .@ x)
     Nothing -> (p `distance` (l .@ 0)) `min`
                (p `distance` (l .@ 1))
+
 
 instance Intersections Line Line where
   intersections l1 l2
@@ -110,6 +125,7 @@ instance Intersections Line Line where
       filter (isContaining l2) $
       intersectionV (refPoint l1) (cmp l1) (refPoint l2) (cmp l2)
 
+
 intersectionV (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
   [(v1x*d2 - v2x*d1) :+ (v1y*d2 - v2y*d1) | d0 /= 0]
   where
@@ -119,7 +135,13 @@ intersectionV (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
 
 
 clipBy :: (Intersections Line c, Curve c) => Line -> c -> [Line]
-clipBy l c = filter internal $ Segment <$> zip ints (tail ints) 
-  where ints = sortOn (locus l) $ intersections l c
-        internal s = c `isEnclosing` (s .@ 1/2)
+clipBy l c = filter internal $ (\p -> Segment (ld, p)) <$> zip ints (tail ints) 
+  where
+    ld = labelData l
+    ints = sortOn (locus l) $ intersections l c <> ends
+    internal s = c `isEnclosing` (s .@ 1/2)
+    ends = case l of
+             Segment _ -> [l .@ 0, l .@ 1]
+             Ray _ -> [l .@ 0]
+             Line _ -> []
 

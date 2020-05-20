@@ -19,8 +19,8 @@ type XY = (Double, Double)
 
 ------------------------------------------------------------
 
-infixl 5 <|
-(<|) = flip ($)
+infixl 5 %
+(%) = flip ($)
 
 ------------------------------------------------------------
 
@@ -95,39 +95,6 @@ class Trans a where
   {-# MINIMAL transform #-}
   transform :: TMatrix -> a -> a
 
-  transformAt :: Affine p => p -> (a -> a) -> a -> a
-  transformAt p t = translate xy . t . translate (-xy)
-    where xy = cmp p
-  
-  translate :: Affine p => p -> a -> a
-  translate = transform . translateT . cmp
-
-  scale :: Double -> a -> a
-  scale = transform . scaleT
-
-  scaleAt :: Affine p => p -> Double -> a -> a
-  scaleAt p s = transformAt p (scale s)
-
-  rotate :: Angular -> a -> a
-  rotate = transform . rotateT . rad
-
-  rotateAt :: Affine p => p -> Angular -> a -> a
-  rotateAt p a = transformAt p (rotate a)
-         
-  reflect :: Angular -> a -> a
-  reflect d = transform $ reflectT $ rad d
-
-  superpose :: (Affine p1, Affine p2) => p1 -> p2 -> a -> a
-  superpose p1 p2 = translate (cmp p2 - cmp p1)
-
-
-transformCN :: TMatrix -> CN -> CN
-transformCN t = cmp . transformXY t . coord
-
-transformXY :: TMatrix -> XY -> XY
-transformXY ((a11, a12, sx), (a21, a22, sy)) (x, y) =
-    (a12*y + a11*x + sx, a22*y + a21*x + sy)
-
 rotateT :: Double -> TMatrix
 rotateT a = ((cos a, -(sin a), 0), (sin a, cos a, 0))
 
@@ -137,8 +104,55 @@ reflectT a = ((cos (2*a), sin (2*a), 0), (sin (2*a), -(cos (2*a)), 0))
 translateT :: CN -> TMatrix
 translateT (dx :+ dy) = ((1, 0, dx), (0, 1, dy))
 
-scaleT :: Double -> TMatrix
-scaleT  a = ((a, 0, 0), (0, a, 0))
+scaleT :: Double -> Double -> TMatrix
+scaleT x y = ((x, 0, 0), (0, y, 0))
+
+transformCN :: TMatrix -> CN -> CN
+transformCN t = cmp . transformXY t . coord
+
+transformXY :: TMatrix -> XY -> XY
+transformXY ((a11, a12, sx), (a21, a22, sy)) (x, y) =
+    (a12*y + a11*x + sx, a22*y + a21*x + sy)
+
+
+
+transformAt :: (Trans a, Affine p) => p -> (a -> a) -> a -> a
+transformAt p t = translate xy . t . translate (-xy)
+  where xy = cmp p
+  
+translate :: (Trans a, Affine p) => p -> a -> a
+translate = transform . translateT . cmp
+
+scale :: Trans a => Double -> a -> a
+scale s = transform (scaleT s s)
+
+scaleX :: Trans a => Double -> a -> a
+scaleX s = transform (scaleT s 1)
+
+scaleY :: Trans a => Double -> a -> a
+scaleY s = transform (scaleT 1 s)
+
+scaleAt :: (Trans a, Affine p) => p -> Double -> a -> a
+scaleAt p s = transformAt p (scale s)
+
+scaleXAt :: (Trans a, Affine p) => p -> Double -> a -> a
+scaleXAt p s = transformAt p (scaleX s)
+
+scaleYAt :: (Trans a, Affine p) => p -> Double -> a -> a
+scaleYAt p s = transformAt p (scaleY s)
+
+rotate :: Trans a => Angular -> a -> a
+rotate = transform . rotateT . rad
+
+rotateAt :: (Trans a, Affine p) => p -> Angular -> a -> a
+rotateAt p a = transformAt p (rotate a)
+         
+reflect :: Trans a => Angular -> a -> a
+reflect d = transform $ reflectT $ rad d
+
+superpose :: (Trans a, Affine p1, Affine p2) => p1 -> p2 -> a -> a
+superpose p1 p2 = translate (cmp p2 - cmp p1)
+
 
 ------------------------------------------------------------
 
@@ -150,11 +164,10 @@ instance Trans XY where
 
 instance Trans Angular where
   transform t  = asCmp . cmp . transformXY t . coord
-
  
 ------------------------------------------------------------
 
-class Trans a => Affine a where
+class Affine a where
   {-# MINIMAL (fromCN | fromCoord), (cmp | coord) #-}
 
   fromCN :: CN -> a
@@ -175,55 +188,55 @@ class Trans a => Affine a where
   coord :: a -> XY
   coord p = let x :+ y = cmp p in (x, y)
 
-  dot :: Affine b => a -> b -> Double
-  dot a b = let (xa, ya) = coord a
-                (xb, yb) = coord b
-                in xa*xb + ya*yb
+dot :: (Affine a, Affine b) => a -> b -> Double
+dot a b = let (xa, ya) = coord a
+              (xb, yb) = coord b
+              in xa*xb + ya*yb
 
-  isOrthogonal :: Affine b => a -> b -> Bool
-  isOrthogonal  a b = cmp a `dot` cmp b ~== 0
+isOrthogonal :: (Affine a, Affine b) => a -> b -> Bool
+isOrthogonal  a b = cmp a `dot` cmp b ~== 0
 
-  isOpposite :: Affine b => a -> b -> Bool
-  isOpposite a b = cmp a + cmp b ~== 0
+isOpposite :: (Affine a, Affine b) => a -> b -> Bool
+isOpposite a b = cmp a + cmp b ~== 0
 
-  isCollinear :: Affine b => a -> b -> Bool
-  isCollinear a b = cmp a `cross` cmp b ~== 0
+isCollinear :: (Affine a, Affine b) => a -> b -> Bool
+isCollinear a b = cmp a `cross` cmp b ~== 0
 
-  azimuth :: Affine b => a -> b -> Angular
-  azimuth p1 p2 = asCmp (cmp p2 - cmp p1)
+azimuth :: (Affine a, Affine b) => a -> b -> Angular
+azimuth p1 p2 = asCmp (cmp p2 - cmp p1)
 
-  det :: Affine b => (a, b) -> Double
-  det (a, b) = let (xa, ya) = coord a
-                   (xb, yb) = coord b
-               in xa*yb - ya*xb
+det :: (Affine a, Affine b) => (a, b) -> Double
+det (a, b) = let (xa, ya) = coord a
+                 (xb, yb) = coord b
+             in xa*yb - ya*xb
 
-  cross :: Affine b => a -> b -> Double
-  cross a b = det (a, b)
+cross :: (Affine a, Affine b) => a -> b -> Double
+cross a b = det (a, b)
 
-  norm :: a -> Double
-  norm = magnitude . cmp
+norm :: Affine a => a -> Double
+norm = magnitude . cmp
 
-  distance :: Affine b => a -> b -> Double
-  distance a b = magnitude (cmp a - cmp b)
+distance :: (Affine a, Affine b) => a -> b -> Double
+distance a b = magnitude (cmp a - cmp b)
 
-  normalize :: a -> a
-  normalize v
-    | cmp v == 0 = v
-    | otherwise = scale (1/norm v) v
+normalize :: Affine a => a -> a
+normalize v
+  | cmp v == 0 = v
+  | otherwise = fromCN $ (1/norm v :+ 0) * cmp v
 
-  roundUp :: Double -> a -> a
-  roundUp d = fromCoord . (\(x,y) -> (rounding x, rounding y)) . coord
-    where rounding x = fromIntegral (ceiling (x /d)) * d
+roundUp :: Affine a => Double -> a -> a
+roundUp d = fromCoord . (\(x,y) -> (rounding x, rounding y)) . coord
+  where rounding x = fromIntegral (ceiling (x /d)) * d
 
-  isZero :: a -> Bool
-  isZero a = cmp a ~== 0
+isZero :: Affine a => a -> Bool
+isZero a = cmp a ~== 0
 
-  angle :: a -> Angular
-  angle = asCmp . cmp
+angle :: Affine a => a -> Angular
+angle = asCmp . cmp
 
-  transpose :: (a, a) -> (a, a)
-  transpose (a, b) = ( fromCoord (getX a, getX b)
-                     , fromCoord (getY a, getY b))
+transpose :: Affine a => (a, a) -> (a, a)
+transpose (a, b) = ( fromCoord (getX a, getX b)
+                   , fromCoord (getY a, getY b))
 
     
 infix 8 .@
@@ -266,7 +279,8 @@ class Curve a where
   {-# MINIMAL (param | maybeParam),
               (locus | maybeLocus),
               (normal | tangent),
-              distanceTo #-}
+              distanceTo,
+              (location | (isContaining, isEnclosing)) #-}
   
   param :: a -> Double -> CN
   param c x = fromMaybe 0 $ maybeParam c x
@@ -288,9 +302,6 @@ class Curve a where
 
   distanceTo :: Affine p => a -> p -> Double
     
-  start :: a -> CN
-  start c = c `param` 0
-  
   unit :: a -> Double
   unit _ = 1
 
@@ -304,7 +315,9 @@ class Curve a where
   isClosed _ = False
   
   location :: Affine p => p -> a -> Location
-  location _ _ = Outside
+  location p c | isContaining c p = OnCurve
+               | isClosed c && isEnclosing c p = Inside
+               | otherwise = Outside
   
   isContaining :: Affine p => a -> p -> Bool
   isContaining c p = location p c == OnCurve
@@ -312,13 +325,17 @@ class Curve a where
   isEnclosing :: Affine p => a -> p -> Bool
   isEnclosing c p = location p c == Inside 
 
+start :: Curve a => a -> CN
+start c = c .@ 0
+
+
 ------------------------------------------------------------
 
 class (Curve a, Curve b) => Intersections a b where
   intersections :: a -> b -> [CN]
 
-  isIntersecting :: a -> b -> Bool
-  isIntersecting a b = not . null $ intersections a b
+isIntersecting :: Intersections a b => a -> b -> Bool
+isIntersecting a b = not . null $ intersections a b
 
 ------------------------------------------------------------
 
@@ -454,23 +471,3 @@ lparam :: (Curve a, Figure a) => Double -> a -> a
 lparam x f = setLabel ld f
   where ld = (labelSettings f) { getLabelPosition = pure (f .@ x) }
   
-
-stroke :: Figure a => String -> a -> a
-stroke s f = setStyle ld f
-  where ld = (style f) { getStroke = pure s}
-
-fill :: Figure a => String -> a -> a
-fill s f = setStyle ld f
-  where ld = (style f) { getFill = pure s}
-
-width :: Figure a => String -> a -> a
-width s f = setStyle ld f
-  where ld = (style f) { getStrokeWidth = pure s}
-
-dashed :: Figure a => a -> a
-dashed f = setStyle ld f
-  where ld = (style f) { getStrokeWidth = pure "5,5"}
-
-dotted :: Figure a => a -> a
-dotted f = setStyle ld f
-  where ld = (style f) { getStrokeWidth = pure "2,5"}

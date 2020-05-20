@@ -2,24 +2,13 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="500" width="500" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
-  <line x2="438.67655855870123" y1="250" stroke="orange" stroke-width="2" fill="none" y2="250" x1="250"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="428.87263699007383" text-anchor="middle" y="234">a
+  <polygon points="250,250 367.6470588235294,250 308.82352941176475,182.07643891886755 " stroke="orange" stroke-width="2" fill="none"/>
+  <circle stroke="orange" stroke-width="2" fill="none" cy="308.8235294117647" r="39.215686274509835" cx="308.8235294117647"/>
+  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="360.9834875962737" text-anchor="middle" y="299.4189653750851">c
   </text>
-  <line x2="391.50741891902595" y1="250" stroke="orange" stroke-width="2" fill="none" y2="168.30065359477123" x1="250"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="375.0169737838844" text-anchor="middle" y="159.34620791853396">a
-  </text>
-  <line x2="344.3382792793507" y1="250" stroke="orange" stroke-width="2" fill="none" y2="86.60130718954244" x1="250"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="325.579912034486" text-anchor="middle" y="87.091752324684">a
-  </text>
-  <line x2="250" y1="250" stroke="orange" stroke-width="2" fill="none" y2="61.32344144129874" x1="250"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="234" text-anchor="middle" y="71.1273630099262">a
-  </text>
-  <line x2="168.30065359477126" y1="250" stroke="orange" stroke-width="2" fill="none" y2="108.49258108097405" x1="250"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="159.34620791853396" text-anchor="middle" y="124.98302621611559">a
-  </text>
-  <line x2="86.60130718954238" y1="250" stroke="orange" stroke-width="2" fill="none" y2="155.66172072064938" x1="250"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="87.09175232468397" text-anchor="middle" y="174.4200879655141">a
-  </text>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="289.21568627450984" text-anchor="middle" y="184.98039215686273">A
+  <line x2="186.0143175081442" y1="495.0980392156863" stroke="white" stroke-width="2" fill="none" y2="4.901960784313701" stroke-dasharray="2,3" x1="272.44911197307783"/>
+  <polygon points="209.7159103359864,257.10317190104456 99.16383730235006,297.3408358217114 131.20864772300956,213.39473473593688 " stroke="orange" stroke-width="2" fill="none"/>
+  <circle stroke="orange" stroke-width="2" fill="none" cy="332.49804037819615" r="39.215686274509814" cx="174.55870577950165"/>
+  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="122.32782763327643" text-anchor="middle" y="341.5003973253464">c
   </text>
 </svg>

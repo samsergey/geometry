@@ -6,7 +6,8 @@ module SVG ( chart
            , paperSize, plane
            , Group (..)
            , (<+>)
-           , group
+           , group, attributes
+           ,Element, ToElement (..)
            ) where
 
 import Prelude hiding (writeFile, unwords)
@@ -30,8 +31,7 @@ import Line
 svgSize = 500
 paperSize = 50
 plane = mkPolygon @XY [(-1,-1), (1,-1), (1,1), (-1,1)]
-        <| scale (paperSize/3)
-        <| rotate 30
+        % scale (paperSize/2)
 
 showt :: Show a => a -> Text
 showt = pack . show
@@ -73,62 +73,59 @@ attributes = attribute getStroke Stroke_ <>
 
 instance SVGable Point 
 instance ToElement Point where
-  toElement p = el <> labelElement p
+  toElement p = elem <> labelElement p
     where
-      el = circle_ $ [ Cx_ <<- fmtSVG (getX $ scaled p)
-                     , Cy_ <<- fmtSVG (getY $ scaled p)
-                     , R_ <<- "3" ] <> attributes p
-
-instance SVGable Label 
-instance ToElement Label where
-  toElement p = labelElement p
+      p' = scaled p
+      elem = if visible p then circle_ attr else mempty
+      attr = attributes p <>
+             [ Cx_ <<- fmtSVG (getX p')
+             , Cy_ <<- fmtSVG (getY p')
+             , R_ <<- "3" ]
 
 ------------------------------------------------------------
 
 instance SVGable Circle 
 instance ToElement Circle where
-  toElement c = let (x :+ y) = center c
-    in circle_ [ Cx_ <<- fmtSVG x
-               , Cy_ <<- fmtSVG y
-               , R_ <<- fmtSVG (radius c)
-               , Fill_ <<- "none"
-               , Stroke_ <<- "orange"
-               , Stroke_width_ <<- "2" ] <>
-       labelElement c
+  toElement c = circle_ attr <> labelElement c
+    where
+      c' = scaled c
+      (x :+ y) = center c'
+      attr =  attributes c <>
+              [ Cx_ <<- fmtSVG x
+              , Cy_ <<- fmtSVG y
+              , R_ <<- fmtSVG (radius c') ]
 
 ------------------------------------------------------------
 
 instance ToElement Line where
-  toElement l = if isTrivial l
-    then mempty
-    else let (a, b) = refPoints $ scaled l
-      in line_ [ X1_ <<- fmtSVG (getX a)
-               , Y1_ <<- fmtSVG (getY a)
-               , X2_ <<- fmtSVG (getX b)
-               , Y2_ <<- fmtSVG (getY b)
-               , Fill_ <<- "none"
-               , Stroke_ <<- "orange"
-               , Stroke_width_ <<- "2" ] <>
-         labelElement l
+  toElement l = elem <> labelElement l
+    where
+      l' = scaled l
+      (a, b) = refPoints l'
+      attr = attributes l <>
+             [ X1_ <<- fmtSVG (getX a)
+             , Y1_ <<- fmtSVG (getY a)
+             , X2_ <<- fmtSVG (getX b)
+             , Y2_ <<- fmtSVG (getY b) ]
+      elem = if isTrivial l then mempty else line_ attr
 
 instance SVGable Line where
-  preprocess l = case l of
-    Segment _ _ -> l
-    l -> case l `clipBy` plane of
-      (s:_) -> s <| lpos ((s .@ 1) - cmp s)
+  preprocess l = case bounding l of
+    Bound -> l
+    _ -> case l `clipBy` plane of
+      (s:_) -> s % lpos ((s .@ 1) - cmp s)
       [] -> trivialLine
       
 ------------------------------------------------------------
 
 instance SVGable Polygon
 instance ToElement Polygon where
-  toElement p =
-    let element = if isClosed p then polyline_ else polygon_
-    in element [ Points_ <<- foldMap fmtSVG (vertices p)
-               , Fill_ <<- "none"
-               , Stroke_ <<- "orange"
-               , Stroke_width_ <<- "2" ]<>
-       labelElement p
+  toElement p = elem attr <> labelElement p
+    where
+      p' = scaled p
+      elem = if isClosed p then polygon_ else polyline_
+      attr = attributes p <>
+             [ Points_ <<- foldMap fmtSVG (vertices p') ]
 
 ------------------------------------------------------------
 
@@ -148,7 +145,7 @@ labelElement f = case labelText f of
                    , Stroke_ <<- "none"
                    , Fill_ <<- "white"] <> offsetX <> offsetY 
     x :+ y = scaled (labelPosition f) + cmp d
-    d = labelOffset f <| scale (fromIntegral fontSize) <| reflect 0
+    d = labelOffset f % scale (fromIntegral fontSize) % reflect 0
     (cx, cy) = labelCorner f
     offsetX = case 0*signum cx of
                 -1 -> [ Text_anchor_ <<- "start" ]
@@ -208,7 +205,7 @@ svg content =
      with (svg11_ content) [ Version_ <<- "1.1"
                            , Width_ <<- "500"
                            , Height_ <<- "500"
-                           , Style_ <<- "background : #444;" ]
+                           , Style_ <<- "background : #444;"]
 
 chart :: String -> Group -> IO ()
 chart name gr = writeFile name $ prettyText contents

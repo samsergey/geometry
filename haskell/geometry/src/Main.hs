@@ -3,26 +3,12 @@ module Main where
 
 import Geometry
 
-p = group [ aRay
-            <| scale 20
-            <| along (asDeg x)
-            <| label "a"
-          | x <- [0,30..150] ]
+pt = aLabel "A" % at' (4,5)
+t = aTriangle % scale 8 % scaleX 1.5
+c = circle' 4 (6,-6) % label "c"
+l = aLine % at' (-3, 5) % along' 100 % dotted % white
+ct' = (t <+> c) % reflectAt l
 
-
-l = aLine
-    <| scale 20
-    <| along (asDeg 30)
-    <| label "A"
-    <| lparam 0.9
-
-pt = aLabel "A" <| at' (4,5)
---lb = aLabel "Text" <| at' (-4,4)
---c = circle' 3 (1, 2) <| label "c"
---t = aTriangle <| scale 8
---l = line p (center c) <| label "a"
---l2 = group [ aLine <| at' (20, y) <| along (asDeg 15)
---           | y <- [-20..20]]
 
 main :: IO ()
-main = chart "test.svg" $ p <+> pt
+main = chart "test.svg" $ t <+> c <+> l <+> ct'

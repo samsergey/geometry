@@ -5,14 +5,14 @@ import Data.Complex
 import Data.Foldable
 import Data.List.Extra
 import Data.Monoid
-import Data.Fixed (mod')
+import Data.Fixed
 
 import Base
 import Line
 
 data Polygon = Polygon { polyOptions :: Options
                        , polyClosed :: Bool
-                       , vertices :: [CN] }
+                       , vertices :: ![CN] }
 
 mkPolygon :: Affine a => [a] -> Polygon
 mkPolygon pts = Polygon mempty True $ cmp <$> pts
@@ -20,20 +20,21 @@ mkPolygon pts = Polygon mempty True $ cmp <$> pts
 mkPolyline :: Affine a => [a] -> Polygon
 mkPolyline pts = Polygon mempty False $ cmp <$> pts
 
+closePoly :: Polygon -> Polygon
 closePoly p = p {polyClosed = True }
 
 segments :: Polygon -> [Line]
-segments p = mkSegment <$> zip vs (tail vs)
+segments p = mkSegment <$> zip (vertices p) (tail vs)
   where vs = if isClosed p
-             then vertices p
-             else cycle (vertices p)
+             then cycle (vertices p)
+             else vertices p
 
 vertex :: Polygon -> Int -> CN
 vertex p i = vs !! j
   where vs = vertices p
-        j = if (isClosed p)
-            then (i `mod` length vs)
-            else ((0 `max` i) `min` length vs)
+        j = if isClosed p
+            then i `mod` length vs
+            else (0 `max` i) `min` length vs
 
 
 instance Show Polygon where
@@ -42,7 +43,7 @@ instance Show Polygon where
           n = if length vs < 5
               then unwords $ show . coord <$> vs
               else "-" <> show (length vs) <> "-"
-          t = if isClosed p then "Polyline" else "Polygon"
+          t = if isClosed p then "Polygon" else "Polyline"
 
 
 instance Eq Polygon where
@@ -78,7 +79,7 @@ instance Curve Polygon where
     where res | any (`isContaining` pt) (segments p) = OnCurve
               | isClosed p && odd (length (intersections r p)) = Inside
               | otherwise   = Outside
-          r = Ray mempty (cmp pt, cmp pt + 1)
+          r = mkRay (cmp pt, cmp pt + 1)
 
   unit p = sum $ unit <$> segments p
 
@@ -100,6 +101,12 @@ instance Figure Polygon where
                else 0
 
   labelDefaults = mempty
+
+  styleDefaults _ = Style
+    { getStroke = pure "orange"
+    , getFill = pure "none"
+    , getDashing = mempty
+    , getStrokeWidth = pure "2" }
 
 instance Intersections Line Polygon where
   intersections = flip intersections

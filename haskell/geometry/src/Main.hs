@@ -15,7 +15,8 @@ l = aLine
     <| along (asDeg 30)
     <| label "A"
     <| lparam 0.9
-    
+
+pt = aLabel "A" <| at' (4,5)
 --lb = aLabel "Text" <| at' (-4,4)
 --c = circle' 3 (1, 2) <| label "c"
 --t = aTriangle <| scale 8
@@ -24,4 +25,4 @@ l = aLine
 --           | y <- [-20..20]]
 
 main :: IO ()
-main = chart "test.svg" $ p
+main = chart "test.svg" $ p <+> pt

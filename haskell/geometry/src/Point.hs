@@ -5,68 +5,97 @@ import Data.Maybe
 
 import Base
 
-data PointType = Point | Label | Tick
-  deriving (Show, Eq)
+------------------------------------------------------------
 
-data APoint = APoint { pointType :: PointType
-                     , pointOptions :: Options
-                     , xy :: CN }
+class PointC a where
+  pointOptions :: a -> Options
+  xy :: a -> CN
 
-mkPoint, mkLabel, mkTick :: Affine a => a -> APoint
-mkPoint = APoint Point mempty . cmp
-mkLabel = APoint Label mempty . cmp
-mkTick = APoint Tick mempty . cmp
+------------------------------------------------------------
 
+data Point = Point Options CN
 
-instance Eq APoint where
-  p1 == p2 = cmp p1 ~== cmp p2
+mkPoint p = Point mempty (cmp p)
 
-
-instance Trans APoint where
-  transform t p = p { xy = (transformCN t (xy p)) }
-
-
-instance Affine APoint where
-  cmp = xy
-  fromCN = APoint Point mempty
-
-
-instance Show APoint where
-  show p = concat ["<", show (pointType p), sl, " (", sx, " ", sy, ")>"]
+instance Show Point where
+  show p = concat ["<Point (", sx, " ", sy, ")>"]
     where sx = show $ getX p
           sy = show $ getY p
-          sl = "" `fromMaybe` labelText p
 
+instance Eq Point where
+  p1 == p2 = xy p1 ~== xy p2
 
-instance Figure APoint where
+instance PointC Point where
+  xy (Point _ p) = p
+  pointOptions (Point  o _) = o
 
+instance Trans Point where
+  transform t p = Point (pointOptions p) (transformCN t (xy p))
+
+instance Affine Point where
+  cmp = xy
+  fromCN = Point mempty
+
+instance Figure Point where
   isTrivial _ = False
-
   isSimilar _ _ = True
-
-  refPoint = cmp
-
+  refPoint = xy
   options = pointOptions
+  setOptions o' (Point o p) = Point (o <> o') p
 
-  setOptions o p = p { pointOptions = pointOptions p <> o }
+  labelDefaults p = LabelSettings
+    { getLabel = mempty
+    , getLabelPosition = pure $ xy p
+    , getLabelOffset = pure (0, 1)
+    , getLabelCorner = pure (0, 0)
+    , getLabelAngle = pure 0 }
 
-  labelDefaults p =
-    LabelSettings { getLabel = mempty
-                  , getLabelPosition = pure $ refPoint p
-                  , getLabelOffset = case pointType p of
-                      Label -> pure (0,0)
-                      Point -> pure (0,1)
-                      Tick ->  pure (0,1)
-                  , getLabelCorner = pure (0, 0)
-                  , getLabelAngle = pure 0 }
+  styleDefaults _ = Style
+    { getStroke = pure "#444"
+    , getFill = pure "red"
+    , getDashing = mempty
+    , getStrokeWidth = pure "1" }
 
-  styleDefaults p = case pointType p of
-    Point -> Style { getStroke = pure "#444"
-                   , getFill = pure "red"
-                   , getDashing = mempty
-                   , getStrokeWidth = pure "1" }
-    Tick -> Style { getStroke = pure "#444"
-                   , getFill = mempty
-                   , getDashing = mempty
-                   , getStrokeWidth = pure "1" }
-    Label -> mempty
+------------------------------------------------------------
+
+data Label = Label Options CN
+
+mkLabel p = Label mempty (cmp p)
+
+instance Show Label where
+  show p = concat ["<Label (", sx, " ", sy, ")>"]
+    where sx = show $ getX p
+          sy = show $ getY p
+
+instance Eq Label where
+  p1 == p2 = xy p1 ~== xy p2
+
+instance PointC Label where
+  xy (Label  _ p) = p
+  pointOptions (Label  o _) = o
+
+instance Trans Label where
+  transform t p = Label (pointOptions p) (transformCN t (xy p))
+
+instance Affine Label where
+  cmp = xy
+  fromCN = Label mempty
+
+instance Figure Label where
+  isTrivial _ = False
+  isSimilar _ _ = True
+  refPoint = xy
+  options = pointOptions
+  setOptions o' (Label o p) = Label (o <> o') p
+
+  labelDefaults p = LabelSettings
+    { getLabel = mempty
+    , getLabelPosition = pure $ xy p
+    , getLabelOffset = pure (0, 0)
+    , getLabelCorner = pure (0, 0)
+    , getLabelAngle = pure 0 }
+
+  styleDefaults _ = mempty
+
+------------------------------------------------------------
+

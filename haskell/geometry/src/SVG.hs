@@ -71,18 +71,18 @@ attributes = attribute getStroke Stroke_ <>
 
 ------------------------------------------------------------
 
-             
 instance SVGable Point 
 instance ToElement Point where
-  toElement p = pt <> labelElement p
+  toElement p = el <> labelElement p
     where
-      pt = case p of
-        Label _ _ -> mempty
-        Point _ _ -> circle_ $ [ Cx_ <<- fmtSVG (getX $ scaled p)
-                               , Cy_ <<- fmtSVG (getY $ scaled p)
-                               , R_ <<- "3" ] <>
-                     attributes p
-      
+      el = circle_ $ [ Cx_ <<- fmtSVG (getX $ scaled p)
+                     , Cy_ <<- fmtSVG (getY $ scaled p)
+                     , R_ <<- "3" ] <> attributes p
+
+instance SVGable Label 
+instance ToElement Label where
+  toElement p = labelElement p
+
 ------------------------------------------------------------
 
 instance SVGable Circle 
@@ -122,9 +122,8 @@ instance SVGable Line where
 
 instance SVGable Polygon
 instance ToElement Polygon where
-  toElement p = let element = case p of
-                                Polyline _ _ -> polyline_
-                                Polygon _ _ -> polygon_
+  toElement p =
+    let element = if isClosed p then polyline_ else polygon_
     in element [ Points_ <<- foldMap fmtSVG (vertices p)
                , Fill_ <<- "none"
                , Stroke_ <<- "orange"

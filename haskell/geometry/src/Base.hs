@@ -1,8 +1,7 @@
 {-# Language UndecidableInstances #-}
 {-# Language FlexibleInstances #-}
 {-# Language MultiParamTypeClasses #-}
-{-# language DeriveAnyClass #-}
-
+{-# language DeriveFunctor #-}
 module Base where
 
 import Data.Fixed (mod')
@@ -355,119 +354,14 @@ isIntersecting a b = not . null $ intersections a b
 
 ------------------------------------------------------------
 
-data LabelSettings = LabelSettings
-  { getLabel :: Last String
-  , getLabelCorner :: Last (Int, Int)
-  , getLabelOffset :: Last XY
-  , getLabelPosition :: Last CN
-  , getLabelAngle :: Last Angular} deriving (Show)
-
-
-instance Semigroup LabelSettings where
-  l1 <> l2 = LabelSettings
-    { getLabel = getLabel l1 <> getLabel l2
-    , getLabelCorner = getLabelCorner l1 <> getLabelCorner l2
-    , getLabelOffset = getLabelOffset l1 <> getLabelOffset l2
-    , getLabelPosition = getLabelPosition l1 <> getLabelPosition l2
-    , getLabelAngle = getLabelAngle l1 <> getLabelAngle l2 }
-
-instance Monoid LabelSettings where
-  mempty = LabelSettings mempty mempty mempty mempty mempty
-
-getLabelOption op = fromJust . getMaybeLabelOption op
-getMaybeLabelOption op = getLast . op . (labelDefaults <> labelSettings)
-
-------------------------------------------------------------
-
-data Style = Style
-  { getStroke :: Last String
-  , getFill :: Last String
-  , getDashing :: Last String
-  , getStrokeWidth :: Last String } deriving (Show)
-
-instance Semigroup Style where
-  l1 <> l2 = Style
-    { getStroke = getStroke l1 <> getStroke l2
-    , getFill = getFill l1 <> getFill l2
-    , getDashing = getDashing l1 <> getDashing l2
-    , getStrokeWidth = getStrokeWidth l1 <> getStrokeWidth l2 }
-
-instance Monoid Style where
-  mempty = Style mempty mempty mempty mempty
-
-getStyleOption op
-  = getLast . op . (styleDefaults <> style)
-  
-------------------------------------------------------------
-
-type Options = (LabelSettings, Style)
-
 class (Eq a, Trans a) => Figure a where
-  {-# MINIMAL isTrivial, refPoint, labelDefaults
-            , options, setOptions #-}
+  {-# MINIMAL isTrivial, refPoint #-}
   
   isTrivial :: a -> Bool
   refPoint :: a -> CN
-  options :: a -> Options
-  setOptions :: Options -> a -> a
-
-  setLabel :: LabelSettings -> a -> a
-  setLabel lb = setOptions (lb, mempty)
-
-  setStyle :: Style -> a -> a
-  setStyle s = setOptions (mempty, s)
-  
-  labelSettings :: a -> LabelSettings
-  labelSettings = fst . options
-
-  style :: a -> Style
-  style = snd . options
 
   isSimilar :: a -> a -> Bool
   isSimilar = (==)
   
   isNontrivial :: a -> Bool
   isNontrivial x = not (isTrivial x)
-
-  styleDefaults :: a -> Style
-  styleDefaults _ = mempty
-
-  labelDefaults :: a -> LabelSettings
-  labelDefaults _ = mempty
-
-  labelText :: a -> Maybe String
-  labelText = getMaybeLabelOption getLabel
-
-  labelPosition :: a -> CN
-  labelPosition = getLabelOption getLabelPosition
-  
-  labelOffset :: a -> XY
-  labelOffset = getLabelOption getLabelOffset
-  
-  labelCorner :: a -> (Int, Int)
-  labelCorner f = let (x, y) = labelOffset f
-                  in (signum (round x), signum (round y))
-
-  labelAngle :: a -> Angular
-  labelAngle = getLabelOption getLabelAngle
-
-
-label :: Figure a => String -> a -> a
-label l f = setLabel ld f
-  where ld = (labelSettings f) { getLabel = pure l}
-
-
-loffs :: Figure a => XY -> a -> a
-loffs o f = setLabel ld f
-  where ld = (labelSettings f) { getLabelOffset = pure o}
-
-
-lpos :: (Affine p, Figure a) => p -> a -> a
-lpos x f = setLabel ld f
-  where ld = (labelSettings f) { getLabelPosition = pure (cmp x) }
-
-
-lparam :: (Curve a, Figure a) => Double -> a -> a
-lparam x f = setLabel ld f
-  where ld = (labelSettings f) { getLabelPosition = pure (f .@ x) }
-  

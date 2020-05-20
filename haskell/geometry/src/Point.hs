@@ -4,40 +4,43 @@ import Data.Complex
 import Data.Bool
 
 import Base
+import Decorations
 
-data Point = Point { pointOptions :: Options
-                   , visible :: Bool
-                   , xy :: !CN }
+data Point = Point {xy :: !CN}
 
-mkPoint p = Point mempty True (cmp p)
-mkLabel p = Point mempty False (cmp p)
+mkPoint :: Affine a => a -> Point
+mkPoint = Point . cmp
 
 instance Show Point where
   show p = concat ["<Point (", sx, " ", sy, ")>"]
     where sx = show $ getX p
           sy = show $ getY p
 
+
 instance Eq Point where
   p1 == p2 = xy p1 ~== xy p2
 
+
 instance Trans Point where
-  transform t p = p { xy = transformCN t $ xy p }
+  transform t (Point p) = Point $ transformCN t p 
+
 
 instance Affine Point where
   cmp = xy
-  fromCN = mkPoint
+  fromCN = Point
+
 
 instance Figure Point where
   isTrivial _ = False
   isSimilar _ _ = True
   refPoint = xy
-  options = pointOptions
-  setOptions o' p = p {pointOptions = pointOptions p <> o' }
 
+
+instance Decorated Point where
   labelDefaults p = LabelSettings
     { getLabel = mempty
     , getLabelPosition = pure $ xy p
-    , getLabelOffset = pure $ bool (0,0) (0,1) $ visible p
+    , getLabelOffset = pure (0, 1)
     , getLabelCorner = pure (0, 0)
     , getLabelAngle = pure 0 }
 

@@ -8,11 +8,10 @@ import Base
 data Circle = Circle { radius :: !Double
                      , center :: !CN
                      , orientation :: !Double
-                     , phaseShift :: !Double
-                     , circleOptions :: Options }
+                     , phaseShift :: !Double }
 
 trivialCircle :: Circle
-trivialCircle = Circle 1 0 1 0 mempty
+trivialCircle = Circle 1 0 1 0
 
 mkCircle :: Double -> CN -> Circle
 mkCircle r c = trivialCircle {radius = r, center = c }
@@ -38,8 +37,7 @@ instance Eq Circle where
 
 
 instance Trans Circle where
-  transform t cir = (mkCircle2 c p) { orientation = w
-                                    , circleOptions = circleOptions cir }
+  transform t cir = (mkCircle2 c p) { orientation = w }
     where c = transformCN t (center cir)
           p = transformCN t (cir.@ 0)
           p' = transformCN t (cir.@ 0.25)
@@ -68,24 +66,7 @@ instance Curve Circle where
 
 
 instance Figure Circle where
-  options = circleOptions
-  setOptions o p = p { circleOptions = circleOptions p <> o }
-
-  labelDefaults c = LabelSettings
-    { getLabel = mempty
-    , getLabelPosition = pure $ c .@ 0
-    , getLabelOffset = pure $ coord $ normal c 0.1 
-    , getLabelCorner = pure (-1,0)
-    , getLabelAngle = pure 0 }
-
   isTrivial Circle{..} = radius <= 0
-
   isSimilar c1 c2 = radius c1 ~== radius c2
-
   refPoint = center
 
-  styleDefaults _ = Style
-    { getStroke = pure "orange"
-    , getFill = pure "none"
-    , getDashing = mempty
-    , getStrokeWidth = pure "2" }

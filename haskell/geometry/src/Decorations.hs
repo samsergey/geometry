@@ -36,28 +36,40 @@ data Style = Style
   { getStroke :: Last String
   , getFill :: Last String
   , getDashing :: Last String
-  , getStrokeWidth :: Last String
-  , isVisible :: Last Bool } deriving (Show)
+  , getStrokeWidth :: Last String } deriving (Show)
 
 instance Semigroup Style where
   l1 <> l2 = Style
     { getStroke = getStroke l1 <> getStroke l2
     , getFill = getFill l1 <> getFill l2
     , getDashing = getDashing l1 <> getDashing l2
-    , getStrokeWidth = getStrokeWidth l1 <> getStrokeWidth l2
-    , isVisible = isVisible l1 <> isVisible l2}
+    , getStrokeWidth = getStrokeWidth l1 <> getStrokeWidth l2}
 
 instance Monoid Style where
-  mempty = Style mempty mempty mempty mempty mempty
+  mempty = Style mempty mempty mempty mempty
 
 getStyleOption op
   = getLast . op . (styleDefaults <> style)
   
 ------------------------------------------------------------
-
 type Options = (LabelSettings, Style)
 
-class Decorated a where
+newtype Decorated a = Decorated (Options, a)
+  deriving Functor
+
+instance Applicative Decorated where
+  pure p = Decorated (mempty, p)
+  (<*>) = ap
+
+instance Monad Decorated where
+  Decorated (d, x) >>= f =
+    let Decorated (d', y) = f x
+    in Decorated (d <> d', y)
+
+fromDecorated (Decorated (_, x)) = x
+
+
+class Decor a where
   options :: a -> Options
   options p = (labelDefaults p, styleDefaults p)
 
@@ -71,104 +83,106 @@ class Decorated a where
   styleDefaults _ = mempty
 
 
-setLabel :: Decorated a => LabelSettings -> a -> a
+setLabel :: Decor a => LabelSettings -> a -> a
 setLabel lb = setOptions (lb, mempty)
 
-setStyle :: Decorated a => Style -> a -> a
+setStyle :: Decor a => Style -> a -> a
 setStyle s = setOptions (mempty, s)
   
-labelSettings :: Decorated a => a -> LabelSettings
+labelSettings :: Decor a => a -> LabelSettings
 labelSettings = fst . options
 
-style :: Decorated a => a -> Style
+style :: Decor a => a -> Style
 style = snd . options
 
-labelText :: Decorated a => a -> Maybe String
+labelText :: Decor a => a -> Maybe String
 labelText = getMaybeLabelOption getLabel
 
-labelPosition :: Decorated a => a -> CN
+labelPosition :: Decor a => a -> CN
 labelPosition = getLabelOption getLabelPosition
   
-labelOffset :: Decorated a => a -> XY
+labelOffset :: Decor a => a -> XY
 labelOffset = getLabelOption getLabelOffset
   
-labelCorner :: Decorated a => a -> (Int, Int)
+labelCorner :: Decor a => a -> (Int, Int)
 labelCorner f = let (x, y) = labelOffset f
                   in (signum (round x), signum (round y))
 
-labelAngle :: Decorated a => a -> Angular
+labelAngle :: Decor a => a -> Angular
 labelAngle = getLabelOption getLabelAngle
 
--- invisible :: Decorated a => a -> a
--- invisible f = setStyle s f
---   where s = (style f) { isVisible = pure False }
-
-label :: Decorated a => String -> a -> a
-label s d = setLabel o d
+label :: Decor a => String -> a -> Decorated a
+label s d = setLabel o (pure d)
    where o = (labelSettings d) { getLabel = pure s }
 
--- loffs :: Decorated a => XY -> a -> Decoration a
--- loffs o f = setLabel ld f
---    where ld = (labelSettings f) { getLabelOffset = pure o}
+loffs :: Decor a => XY -> a -> Decorated a
+loffs o f = setLabel ld (pure f)
+   where ld = (labelSettings f) { getLabelOffset = pure o}
 
--- lpos :: (Affine p, Decorated a) => p -> a -> Decoration a
--- lpos x f = setLabel ld f
---    where ld = (labelSettings f) { getLabelPosition = pure (cmp x) }
+lpos :: (Affine p, Decor a) => p -> a -> Decorated a
+lpos x f = setLabel ld (pure f)
+   where ld = (labelSettings f) { getLabelPosition = pure (cmp x) }
 
--- lparam :: (Curve a, Figure a) => Double -> a -> a
--- lparam x f = setLabel ld f
---   where ld = (labelSettings f) { getLabelPosition = pure (f .@ x) }
+lparam :: (Curve a, Decor a) => Double -> a -> Decorated a
+lparam x f = lpos (f .@ x) f
   
 ------------------------------------------------------------
   
-newtype Decoration a = Decoration (Options, a)
-  deriving Functor
+instance Decor (Decorated a) where
+  options (Decorated (o, _)) = o
+  setOptions o' f = Decorated (o', id) <*> f
 
-instance Applicative Decoration where
-  pure p = Decoration (mempty, p)
-  (<*>) = ap
-
-instance Monad Decoration where
-  Decoration (d, x) >>= f =
-    let Decoration (d', y) = f x
-    in Decoration (d <> d', y)
-
-
-fromDecoration (Decoration (_, x)) = x
-
-
-instance Decorated (Decoration a) where
-  options (Decoration (o, _)) = o
-  setOptions o' f = Decoration (o', id) <*> f
-
-
-instance Show a => Show (Decoration a) where
-  show f = l <> show (fromDecoration f)
+instance Show a => Show (Decorated a) where
+  show f = l <> show (fromDecorated f)
     where l = fromMaybe mempty $ (<> ":") <$> labelText f
 
+instance Eq a => Eq (Decorated a) where
+  d1 == d2 = fromDecorated d1 == fromDecorated d2
 
-instance Eq a => Eq (Decoration a) where
-  d1 == d2 = fromDecoration d1 == fromDecoration d2
-
-
-instance Affine a => Affine (Decoration a) where
-  cmp = cmp . fromDecoration
+instance Affine a => Affine (Decorated a) where
+  cmp = cmp . fromDecorated
   fromCN = pure . fromCN
 
+instance Trans a => Trans (Decorated a) where
+  transform t = fmap (transform t)
 
-instance Trans a => Trans (Decoration a) where
-  transform t = liftM (transform t)
-
-
-instance Curve a => Curve (Decoration a) where
-  param = param . fromDecoration
-  locus = locus . fromDecoration
-  tangent = tangent . fromDecoration
-  isContaining = isContaining . fromDecoration
-  isEnclosing = isEnclosing . fromDecoration
-  distanceTo = distanceTo . fromDecoration
+instance Curve a => Curve (Decorated a) where
+  param = param . fromDecorated
+  locus = locus . fromDecorated
+  tangent = tangent . fromDecorated
+  isContaining = isContaining . fromDecorated
+  isEnclosing = isEnclosing . fromDecorated
+  distanceTo = distanceTo . fromDecorated
 
 
-instance Figure a => Figure (Decoration a) where
-  isTrivial = isTrivial . fromDecoration
-  refPoint = refPoint . fromDecoration
+instance Figure a => Figure (Decorated a) where
+  isTrivial = isTrivial . fromDecorated
+  refPoint = refPoint . fromDecorated
+
+------------------------------------------------------------
+
+stroke :: Decor a => String -> a -> Decorated a
+stroke s f = setStyle ld (pure f)
+  where ld = (style f) { getStroke = pure s}
+
+white :: Decor a => a -> Decorated a
+white = stroke "white"
+
+fill :: Decor a => String -> a -> Decorated a
+fill s f = setStyle ld (pure f)
+  where ld = (style f) { getFill = pure s}
+
+width :: Decor a => String -> a -> Decorated a
+width s f = setStyle ld (pure f)
+  where ld = (style f) { getStrokeWidth = pure s}
+
+thin :: Decor a => a -> Decorated a
+thin = width "1"
+
+dashed :: Decor a => a -> Decorated a
+dashed f = setStyle ld (pure f)
+  where ld = (style f) { getDashing = pure "5,5"}
+
+dotted :: Decor a => a -> Decorated a
+dotted f = setStyle ld (pure f)
+  where ld = (style f) { getDashing = pure "2,3"}

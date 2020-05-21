@@ -11,13 +11,12 @@ data Bounding = Unbound | Semibound | Bound
   deriving (Eq, Show)
 
 data Line = Line { bounding :: Bounding
-                 , lineOptions :: Options
                  , refPoints :: !(CN, CN) }
 
 trivialLine = mkLine (0,0)
-mkLine = Line Unbound mempty
-mkRay = Line Semibound mempty
-mkSegment = Line Bound mempty
+mkLine = Line Unbound
+mkRay = Line Semibound
+mkSegment = Line Bound
 
 instance Eq Line where
   l1 == l2 = bounding l1 == bounding l2 &&
@@ -49,16 +48,6 @@ instance Show Line where
           a = angle l
 
 instance Figure Line where
-  options = lineOptions
-  setOptions o p = p { lineOptions = lineOptions p <> o }
-
-  labelDefaults l =
-    LabelSettings { getLabel = mempty
-                  , getLabelPosition = pure $ l .@ 0.5
-                  , getLabelOffset = pure $ coord $ scale 1 $ normal l 0
-                  , getLabelCorner = pure (0,0)
-                  , getLabelAngle = pure 0 }
-
   isTrivial l = cmp l == 0
 
   isSimilar l1 l2
@@ -67,12 +56,6 @@ instance Figure Line where
     | otherwise = True
 
   refPoint = fst . refPoints
-
-  styleDefaults _ = Style
-    { getStroke = pure "orange"
-    , getFill = pure "none"
-    , getDashing = mempty
-    , getStrokeWidth = pure "2" }
 
 instance Affine Line where
   cmp l =  let (p1, p2) = refPoints l in normalize $ cmp p2 - cmp p1
@@ -133,9 +116,8 @@ intersectionV (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
 
 
 clipBy :: (Intersections Line c, Curve c) => Line -> c -> [Line]
-clipBy l c = filter internal $ Line Bound opts <$> zip ints (tail ints) 
+clipBy l c = filter internal $ Line Bound <$> zip ints (tail ints) 
   where
-    opts = lineOptions l
     ints = sortOn (locus l) $ intersections l c <> ends
     internal s = c `isEnclosing` (s .@ 1/2)
     ends = case bounding l of

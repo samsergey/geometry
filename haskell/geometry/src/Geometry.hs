@@ -109,28 +109,3 @@ reflectAt l = transformAt (l.@ 0) (reflect (angle l))
 
 ------------------------------------------------------------
 
-stroke :: Figure a => String -> a -> a
-stroke s f = setStyle ld f
-  where ld = (style f) { getStroke = pure s}
-
-white :: Figure a => a -> a
-white = stroke "white"
-
-fill :: Figure a => String -> a -> a
-fill s f = setStyle ld f
-  where ld = (style f) { getFill = pure s}
-
-width :: Figure a => String -> a -> a
-width s f = setStyle ld f
-  where ld = (style f) { getStrokeWidth = pure s}
-
-thin :: Figure a => a -> a
-thin = width "1"
-
-dashed :: Figure a => a -> a
-dashed f = setStyle ld f
-  where ld = (style f) { getDashing = pure "5,5"}
-
-dotted :: Figure a => a -> a
-dotted f = setStyle ld f
-  where ld = (style f) { getDashing = pure "2,3"}

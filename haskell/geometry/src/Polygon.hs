@@ -10,15 +10,14 @@ import Data.Fixed
 import Base
 import Line
 
-data Polygon = Polygon { polyOptions :: Options
-                       , polyClosed :: Bool
+data Polygon = Polygon { polyClosed :: Bool
                        , vertices :: ![CN] }
 
 mkPolygon :: Affine a => [a] -> Polygon
-mkPolygon pts = Polygon mempty True $ cmp <$> pts
+mkPolygon pts = Polygon True $ cmp <$> pts
   
 mkPolyline :: Affine a => [a] -> Polygon
-mkPolyline pts = Polygon mempty False $ cmp <$> pts
+mkPolyline pts = Polygon False $ cmp <$> pts
 
 closePoly :: Polygon -> Polygon
 closePoly p = p {polyClosed = True }
@@ -87,26 +86,12 @@ instance Curve Polygon where
 
   distanceTo p pt = minimum $ (`distanceTo` pt) <$> segments p
   
-
 instance Figure Polygon where
-  options = polyOptions
-  setOptions o p = p { polyOptions = polyOptions p <> o }
-
   isTrivial p = null $ vertices p
-
   isSimilar p1 p2 = p1 == p2
-
   refPoint p = if isNontrivial p
                then head $ vertices p
                else 0
-
-  labelDefaults = mempty
-
-  styleDefaults _ = Style
-    { getStroke = pure "orange"
-    , getFill = pure "none"
-    , getDashing = mempty
-    , getStrokeWidth = pure "2" }
 
 instance Intersections Line Polygon where
   intersections = flip intersections

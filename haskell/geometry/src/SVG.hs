@@ -17,11 +17,13 @@ import Graphics.Svg (Element, ToElement (..))
 import Graphics.Svg.Elements
 import Graphics.Svg.Attributes
 import Data.Complex
+import Data.Monoid
 import Data.Text (Text, pack, unwords)
 import Data.Text.Lazy.IO (writeFile)
 import Data.Double.Conversion.Text (toShortest, toPrecision)
 
 import Base
+import Decorations
 import Point
 import Circle
 import Polygon
@@ -33,15 +35,17 @@ paperSize = 50
 plane = mkPolygon @XY [(-1,-1), (1,-1), (1,1), (-1,1)]
         % scale (paperSize/2)
 
-showt :: Show a => a -> Text
 showt = pack . show
+------------------------------------------------------------
 
-class Show a => SVGable a where
+class SVGable a where
+  toSVG :: Options -> a -> Element
+  toSVG _ _ = mempty
+
   fmtSVG :: a -> Text
-  fmtSVG = pack . show
-  
-  preprocess :: a -> a
-  preprocess = id
+  fmtSVG = mempty
+
+
 
 instance SVGable Double where
   fmtSVG n = if n ~== 0 then "0" else toShortest n
@@ -58,82 +62,144 @@ instance SVGable XY where
 
 ------------------------------------------------------------
 
-attribute getAttr attr f =
-  case getStyleOption getAttr f of
-    Just s -> [ attr <<- pack s ]
-    Nothing -> mempty
+instance SVGable a => SVGable (Decorated a) where
+  toSVG opts d = toSVG (opts <> options d) (fromDecorated d)
 
-attributes :: Figure f => f -> [Graphics.Svg.Core.Attribute]
+attributes :: Options -> [Graphics.Svg.Core.Attribute]
 attributes = attribute getStroke Stroke_ <>
              attribute getFill Fill_ <>
              attribute getStrokeWidth Stroke_width_ <>
              attribute getDashing Stroke_dasharray_
-
+  where
+    attribute getAttr attr (_, st) = 
+      case getLast (getAttr st) of
+        Just s -> [ attr <<- pack s ]
+        Nothing -> mempty
+        
 ------------------------------------------------------------
+instance Decor Point where
+  labelDefaults p = LabelSettings
+    { getLabel = mempty
+    , getLabelPosition = pure $ cmp p
+    , getLabelOffset = pure (0, 1)
+    , getLabelCorner = pure (0, 0)
+    , getLabelAngle = pure 0 }
 
-instance SVGable Point 
-instance ToElement Point where
-  toElement p = elem <> labelElement p
+  styleDefaults _ = Style
+    { getStroke = pure "#444"
+    , getFill = pure "red"
+    , getDashing = mempty
+    , getStrokeWidth = pure "1"}
+
+instance SVGable Point where
+  toSVG opts p = circle_ attr <> labelElement opts p
     where
       p' = scaled p
-      elem = if visible p then circle_ attr else mempty
-      attr = attributes p <>
+      attr = attributes opts <>
              [ Cx_ <<- fmtSVG (getX p')
              , Cy_ <<- fmtSVG (getY p')
              , R_ <<- "3" ]
 
 ------------------------------------------------------------
 
-instance SVGable Circle 
-instance ToElement Circle where
-  toElement c = circle_ attr <> labelElement c
+instance Decor Label where
+  labelDefaults p = LabelSettings
+    { getLabel = mempty
+    , getLabelPosition = pure $ cmp p
+    , getLabelOffset = pure (0, 0)
+    , getLabelCorner = pure (0, 0)
+    , getLabelAngle = pure 0 }
+
+instance SVGable Label where
+  toSVG = labelElement
+
+------------------------------------------------------------
+instance Decor Circle where
+  labelDefaults c = LabelSettings
+    { getLabel = mempty
+    , getLabelPosition = pure $ c .@ 0
+    , getLabelOffset = pure $ coord $ normal c 0.1 
+    , getLabelCorner = pure (-1,0)
+    , getLabelAngle = pure 0 }
+    
+  styleDefaults _ = Style
+    { getStroke = pure "orange"
+    , getFill = pure "none"
+    , getDashing = mempty
+    , getStrokeWidth = pure "2" }
+
+instance SVGable Circle where
+  toSVG opts c = circle_ attr <> labelElement opts c
     where
       c' = scaled c
       (x :+ y) = center c'
-      attr =  attributes c <>
+      attr =  attributes opts <>
               [ Cx_ <<- fmtSVG x
               , Cy_ <<- fmtSVG y
               , R_ <<- fmtSVG (radius c') ]
 
 ------------------------------------------------------------
+instance Decor Line where
+  labelDefaults l = LabelSettings
+    { getLabel = mempty
+    , getLabelPosition = pure $ l .@ 0.5
+    , getLabelOffset = pure $ coord $ scale 1 $ normal l 0
+    , getLabelCorner = pure (0,0)
+    , getLabelAngle = pure 0 }
 
-instance ToElement Line where
-  toElement l = elem <> labelElement l
+  styleDefaults _ = Style
+    { getStroke = pure "orange"
+    , getFill = pure "none"
+    , getDashing = mempty
+    , getStrokeWidth = pure "2"}
+
+instance SVGable Line where
+  toSVG opts l = elem <> labelElement opts' s
     where
-      l' = scaled l
-      (a, b) = refPoints l'
-      attr = attributes l <>
+      (pos, s) = clip l
+      opts' = ((fst opts) {getLabelPosition = pos}, snd opts)
+      s' = scaled s
+      (a, b) = refPoints s'
+      attr = attributes opts <>
              [ X1_ <<- fmtSVG (getX a)
              , Y1_ <<- fmtSVG (getY a)
              , X2_ <<- fmtSVG (getX b)
              , Y2_ <<- fmtSVG (getY b) ]
-      elem = if isTrivial l then mempty else line_ attr
+      elem = if isTrivial s then mempty else line_ attr
 
-instance SVGable Line where
-  preprocess l = case bounding l of
-    Bound -> l
-    _ -> case l `clipBy` plane of
-      (s:_) -> s % lpos ((s .@ 1) - cmp s)
-      [] -> trivialLine
+      clip l = (p, s)
+        where
+          s = case l `clipBy` plane of
+               (s:_) -> s
+               [] -> trivialLine
+          p = case bounding l of
+            Bound -> getLabelPosition (fst opts)
+            _ -> pure $ (s .@ 1) - cmp s
       
 ------------------------------------------------------------
+instance Decor Polygon where
+  styleDefaults _ = Style
+    { getStroke = pure "orange"
+    , getFill = pure "none"
+    , getDashing = mempty
+    , getStrokeWidth = pure "2" }
 
-instance SVGable Polygon
-instance ToElement Polygon where
-  toElement p = elem attr <> labelElement p
+instance SVGable Polygon where
+  toSVG opts p = elem attr <> labelElement opts p
     where
       p' = scaled p
       elem = if isClosed p then polygon_ else polyline_
-      attr = attributes p <>
+      attr = attributes opts <>
              [ Points_ <<- foldMap fmtSVG (vertices p') ]
 
 ------------------------------------------------------------
 
-labelElement :: Figure f => f -> Element
-labelElement f = case labelText f of
-                   Just s -> text (toElement s)
-                   Nothing -> mempty
+labelElement :: (Decor f, Figure f) => Options -> f -> Element
+labelElement opts f = case labelText f of
+                        Just s -> text (toElement s)
+                        Nothing -> mempty
   where
+    labelOpts = fst opts
     fontSize = 16
     Just l = labelText f
     textWidth = fromIntegral $ length l
@@ -184,15 +250,9 @@ instance Show Group where
 
 
 instance SVGable Group where
-  preprocess Nil = Nil
-  preprocess (G a) = G (preprocess a)
-  preprocess (Append a b) = preprocess a <> preprocess b
-
-
-instance ToElement Group where
-    toElement Nil = mempty
-    toElement (G a) = toElement a
-    toElement (Append a b) = toElement a <> toElement b
+  toSVG opts Nil = mempty
+  toSVG opts (G a) = toSVG opts a
+  toSVG opts (Append a b) = toSVG opts a <> toSVG opts b
 
 
 group :: Groupable a => [a] -> Group
@@ -210,7 +270,7 @@ svg content =
 chart :: String -> Group -> IO ()
 chart name gr = writeFile name $ prettyText contents
   where
-    contents = svg . toElement . preprocess $ gr
+    contents = svg $ toSVG mempty gr
 
 scaled :: Trans a => a -> a
 scaled = translate (svgSize/2, svgSize/2) .

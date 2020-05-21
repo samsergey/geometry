@@ -4,9 +4,10 @@ import Data.Complex
 import Data.Bool
 
 import Base
-import Decorations
 
-data Point = Point {xy :: !CN}
+------------------------------------------------------------
+
+newtype Point = Point CN
 
 mkPoint :: Affine a => a -> Point
 mkPoint = Point . cmp
@@ -16,37 +17,45 @@ instance Show Point where
     where sx = show $ getX p
           sy = show $ getY p
 
-
 instance Eq Point where
-  p1 == p2 = xy p1 ~== xy p2
-
+  p1 == p2 = cmp p1 ~== cmp p2
 
 instance Trans Point where
   transform t (Point p) = Point $ transformCN t p 
 
-
 instance Affine Point where
-  cmp = xy
+  cmp (Point p) = p
   fromCN = Point
-
 
 instance Figure Point where
   isTrivial _ = False
   isSimilar _ _ = True
-  refPoint = xy
+  refPoint = cmp
 
+------------------------------------------------------------
 
-instance Decorated Point where
-  labelDefaults p = LabelSettings
-    { getLabel = mempty
-    , getLabelPosition = pure $ xy p
-    , getLabelOffset = pure (0, 1)
-    , getLabelCorner = pure (0, 0)
-    , getLabelAngle = pure 0 }
+newtype Label = Label CN
 
-  styleDefaults _ = Style
-    { getStroke = pure "#444"
-    , getFill = pure "red"
-    , getDashing = mempty
-    , getStrokeWidth = pure "1"
-    , isVisible = pure True}
+mkLabel :: Affine a => a -> Label
+mkLabel = Label . cmp
+
+instance Show Label where
+  show p = concat ["<Label (", sx, " ", sy, ")>"]
+    where sx = show $ getX p
+          sy = show $ getY p
+
+instance Eq Label where
+  p1 == p2 = cmp p1 ~== cmp p2
+
+instance Trans Label where
+  transform t (Label p) = Label $ transformCN t p 
+
+instance Affine Label where
+  cmp (Label p) = p
+  fromCN = Label
+
+instance Figure Label where
+  isTrivial _ = False
+  isSimilar _ _ = True
+  refPoint = cmp
+

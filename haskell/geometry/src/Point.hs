@@ -48,4 +48,5 @@ instance Decorated Point where
     { getStroke = pure "#444"
     , getFill = pure "red"
     , getDashing = mempty
-    , getStrokeWidth = pure "1" }
+    , getStrokeWidth = pure "1"
+    , isVisible = pure True}

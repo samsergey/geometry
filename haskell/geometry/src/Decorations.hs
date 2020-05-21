@@ -4,6 +4,7 @@ module Decorations where
 import Base
 import Data.Monoid
 import Data.Maybe
+import Control.Monad
 
 ------------------------------------------------------------
 
@@ -69,9 +70,6 @@ class Decorated a where
   styleDefaults :: a -> Style
   styleDefaults _ = mempty
 
---label :: Decorated a => String -> a -> Decoration a
---label s f = df {}
---  where df = Decoration (mempty, f)
 
 setLabel :: Decorated a => LabelSettings -> a -> a
 setLabel lb = setOptions (lb, mempty)
@@ -101,21 +99,21 @@ labelCorner f = let (x, y) = labelOffset f
 labelAngle :: Decorated a => a -> Angular
 labelAngle = getLabelOption getLabelAngle
 
-invisible :: Decorated a => a -> a
-invisible f = setStyle s f
-  where s = (style f) { isVisible = pure False }
+-- invisible :: Decorated a => a -> a
+-- invisible f = setStyle s f
+--   where s = (style f) { isVisible = pure False }
 
---label :: String -> a -> Decoration a
---label l f = setLabel ld f
---  where ld = (labelSettings f) { getLabel = pure l}
+label :: Decorated a => String -> a -> a
+label s d = setLabel o d
+   where o = (labelSettings d) { getLabel = pure s }
 
--- loffs :: Figure a => XY -> a -> a
+-- loffs :: Decorated a => XY -> a -> Decoration a
 -- loffs o f = setLabel ld f
---   where ld = (labelSettings f) { getLabelOffset = pure o}
+--    where ld = (labelSettings f) { getLabelOffset = pure o}
 
--- lpos :: (Affine p, Figure a) => p -> a -> a
+-- lpos :: (Affine p, Decorated a) => p -> a -> Decoration a
 -- lpos x f = setLabel ld f
---   where ld = (labelSettings f) { getLabelPosition = pure (cmp x) }
+--    where ld = (labelSettings f) { getLabelPosition = pure (cmp x) }
 
 -- lparam :: (Curve a, Figure a) => Double -> a -> a
 -- lparam x f = setLabel ld f
@@ -126,12 +124,51 @@ invisible f = setStyle s f
 newtype Decoration a = Decoration (Options, a)
   deriving Functor
 
+instance Applicative Decoration where
+  pure p = Decoration (mempty, p)
+  (<*>) = ap
+
+instance Monad Decoration where
+  Decoration (d, x) >>= f =
+    let Decoration (d', y) = f x
+    in Decoration (d <> d', y)
+
+
 fromDecoration (Decoration (_, x)) = x
+
 
 instance Decorated (Decoration a) where
   options (Decoration (o, _)) = o
-  setOptions o' (Decoration (o, f)) = Decoration (o <> o', f)
+  setOptions o' f = Decoration (o', id) <*> f
+
 
 instance Show a => Show (Decoration a) where
   show f = l <> show (fromDecoration f)
     where l = fromMaybe mempty $ (<> ":") <$> labelText f
+
+
+instance Eq a => Eq (Decoration a) where
+  d1 == d2 = fromDecoration d1 == fromDecoration d2
+
+
+instance Affine a => Affine (Decoration a) where
+  cmp = cmp . fromDecoration
+  fromCN = pure . fromCN
+
+
+instance Trans a => Trans (Decoration a) where
+  transform t = liftM (transform t)
+
+
+instance Curve a => Curve (Decoration a) where
+  param = param . fromDecoration
+  locus = locus . fromDecoration
+  tangent = tangent . fromDecoration
+  isContaining = isContaining . fromDecoration
+  isEnclosing = isEnclosing . fromDecoration
+  distanceTo = distanceTo . fromDecoration
+
+
+instance Figure a => Figure (Decoration a) where
+  isTrivial = isTrivial . fromDecoration
+  refPoint = refPoint . fromDecoration

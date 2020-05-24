@@ -2,16 +2,19 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE RecordWildCards #-}
+
 module SVG ( chart
            , paperSize, plane
            , Group (..)
            , (<+>)
            , group, attributes
            ,Element, ToElement (..)
+           ,labelElement
            ) where
 
 import Prelude hiding (writeFile, unwords)
-import Graphics.Svg.Core
+import Graphics.Svg.Core (Attribute (..))
 import Graphics.Svg (doctype, svg11_, with, prettyText, (<<-))
 import Graphics.Svg (Element, ToElement (..))
 import Graphics.Svg.Elements
@@ -32,9 +35,10 @@ import Line
 
 svgSize = 500
 paperSize = 50
-plane = mkPolygon @XY [(-1,-1), (1,-1), (1,1), (-1,1)]
-        % scale (paperSize/2)
+plane = mkPolygon [(-1,-1), (1,-1), (1,1), (-1,1) :: XY]
+        # scale (paperSize/2)
 
+showt :: Show a => a -> Text
 showt = pack . show
 ------------------------------------------------------------
 
@@ -44,8 +48,6 @@ class SVGable a where
 
   fmtSVG :: a -> Text
   fmtSVG = mempty
-
-
 
 instance SVGable Double where
   fmtSVG n = if n ~== 0 then "0" else toShortest n
@@ -65,7 +67,7 @@ instance SVGable XY where
 instance SVGable a => SVGable (Decorated a) where
   toSVG opts d = toSVG (opts <> options d) (fromDecorated d)
 
-attributes :: Options -> [Graphics.Svg.Core.Attribute]
+attributes :: Options -> [Attribute]
 attributes = attribute getStroke Stroke_ <>
              attribute getFill Fill_ <>
              attribute getStrokeWidth Stroke_width_ <>
@@ -93,9 +95,10 @@ instance Decor Point where
 
 instance SVGable Point where
   toSVG opts p = circle_ attr <> labelElement opts p
-    where
+    where    
+      opts' = options p <> opts
       p' = scaled p
-      attr = attributes opts <>
+      attr = attributes opts' <>
              [ Cx_ <<- fmtSVG (getX p')
              , Cy_ <<- fmtSVG (getY p')
              , R_ <<- "3" ]
@@ -111,7 +114,7 @@ instance Decor Label where
     , getLabelAngle = pure 0 }
 
 instance SVGable Label where
-  toSVG = labelElement
+  toSVG opts l = labelElement (options l <> opts) l
 
 ------------------------------------------------------------
 instance Decor Circle where
@@ -131,9 +134,10 @@ instance Decor Circle where
 instance SVGable Circle where
   toSVG opts c = circle_ attr <> labelElement opts c
     where
+      opts' = options c <> opts
       c' = scaled c
       (x :+ y) = center c'
-      attr =  attributes opts <>
+      attr =  attributes opts' <>
               [ Cx_ <<- fmtSVG x
               , Cy_ <<- fmtSVG y
               , R_ <<- fmtSVG (radius c') ]
@@ -154,13 +158,15 @@ instance Decor Line where
     , getStrokeWidth = pure "2"}
 
 instance SVGable Line where
-  toSVG opts l = elem <> labelElement opts' s
+  toSVG opts l = elem <> labelElement opts' os
     where
       (pos, s) = clip l
-      opts' = ((fst opts) {getLabelPosition = pos}, snd opts)
+      opts' = options l <> opts
+      opts'' = ((fst opts') {getLabelPosition = pos}, snd opts')
       s' = scaled s
+      os = Decorated (opts'', s)
       (a, b) = refPoints s'
-      attr = attributes opts <>
+      attr = attributes opts' <>
              [ X1_ <<- fmtSVG (getX a)
              , Y1_ <<- fmtSVG (getY a)
              , X2_ <<- fmtSVG (getX b)
@@ -173,7 +179,7 @@ instance SVGable Line where
                (s:_) -> s
                [] -> trivialLine
           p = case bounding l of
-            Bound -> getLabelPosition (fst opts)
+            Bound -> getLabelPosition (fst opts')
             _ -> pure $ (s .@ 1) - cmp s
       
 ------------------------------------------------------------
@@ -187,22 +193,23 @@ instance Decor Polygon where
 instance SVGable Polygon where
   toSVG opts p = elem attr <> labelElement opts p
     where
+      opts' = options p <> opts
       p' = scaled p
       elem = if isClosed p then polygon_ else polyline_
-      attr = attributes opts <>
+      attr = attributes opts' <>
              [ Points_ <<- foldMap fmtSVG (vertices p') ]
 
 ------------------------------------------------------------
 
 labelElement :: (Decor f, Figure f) => Options -> f -> Element
-labelElement opts f = case labelText f of
-                        Just s -> text (toElement s)
-                        Nothing -> mempty
+labelElement opts ff = case labelText f of
+                   Just s -> text $ toElement s
+                   Nothing -> mempty
   where
-    labelOpts = fst opts
+    f = Decorated (opts <> options ff, ff)
     fontSize = 16
-    Just l = labelText f
-    textWidth = fromIntegral $ length l
+    lb = maybe "" id $ labelText f
+    textWidth = fromIntegral $ length lb
     text = text_ $ [ X_ <<- fmtSVG x
                    , Y_ <<- fmtSVG y
                    , Font_size_ <<- showt fontSize
@@ -211,7 +218,7 @@ labelElement opts f = case labelText f of
                    , Stroke_ <<- "none"
                    , Fill_ <<- "white"] <> offsetX <> offsetY 
     x :+ y = scaled (labelPosition f) + cmp d
-    d = labelOffset f % scale (fromIntegral fontSize) % reflect 0
+    d = (labelOffset f) # scale (fromIntegral fontSize) # reflect 0
     (cx, cy) = labelCorner f
     offsetX = case 0*signum cx of
                 -1 -> [ Text_anchor_ <<- "start" ]
@@ -224,33 +231,45 @@ labelElement opts f = case labelText f of
 
 ------------------------------------------------------------
 
-type Groupable a = (SVGable a, ToElement a, Show a, Trans a)
+type Groupable a = (SVGable a, Show a, Trans a)
+
+data EmptyFig = EmptyFig deriving Show
+
+instance Trans EmptyFig where
+  transform t EmptyFig = EmptyFig
+
+instance Affine EmptyFig where
+  cmp EmptyFig = 0
+  fromCN _ = EmptyFig
+
+instance SVGable EmptyFig where
+  toSVG _ EmptyFig = mempty
+
 
 data Group where 
-    Nil :: Group
     G :: Groupable a => a -> Group
     Append :: Group -> Group -> Group
 
-instance Semigroup Group where (<>) = Append
-instance Monoid Group where mempty = Nil
 
-infixr 5 <+>
-(<+>) a b = G a <> G b
+instance Semigroup Group where (<>) = Append
+
+instance Monoid Group where mempty = G EmptyFig
+
+infixl 5 <+>
+(<+>) :: (Groupable a, Groupable b) => a -> b -> Group
+a <+> b = G a <> G b
 
 instance Trans Group where
-    transform t Nil = Nil
-    transform t (G f) = G $ transform t f 
-    transform t (Append x xs) = Append (transform t x) (transform t xs)
+  transform t (G f) = G $ transform t f 
+  transform t (Append x xs) = Append (transform t x) (transform t xs)
 
 
 instance Show Group where
-    show Nil = mempty
-    show (G a) = show a
-    show (Append x xs) = show x <> show xs
+  show (G a) = show a
+  show (Append x xs) = show x <> show xs
 
 
 instance SVGable Group where
-  toSVG opts Nil = mempty
   toSVG opts (G a) = toSVG opts a
   toSVG opts (Append a b) = toSVG opts a <> toSVG opts b
 

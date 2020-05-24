@@ -1,10 +1,13 @@
 {-# language DeriveFunctor #-}
+{-# language FlexibleInstances #-}
+{-# language OverloadedStrings #-}
 module Decorations where
 
 import Base
 import Data.Monoid
 import Data.Maybe
 import Control.Monad
+import Data.String( IsString(..) )
 
 ------------------------------------------------------------
 
@@ -111,21 +114,6 @@ labelCorner f = let (x, y) = labelOffset f
 labelAngle :: Decor a => a -> Angular
 labelAngle = getLabelOption getLabelAngle
 
-label :: Decor a => String -> a -> Decorated a
-label s d = setLabel o (pure d)
-   where o = (labelSettings d) { getLabel = pure s }
-
-loffs :: Decor a => XY -> a -> Decorated a
-loffs o f = setLabel ld (pure f)
-   where ld = (labelSettings f) { getLabelOffset = pure o}
-
-lpos :: (Affine p, Decor a) => p -> a -> Decorated a
-lpos x f = setLabel ld (pure f)
-   where ld = (labelSettings f) { getLabelPosition = pure (cmp x) }
-
-lparam :: (Curve a, Decor a) => Double -> a -> Decorated a
-lparam x f = lpos (f .@ x) f
-  
 ------------------------------------------------------------
   
 instance Decor (Decorated a) where
@@ -160,29 +148,67 @@ instance Figure a => Figure (Decorated a) where
   refPoint = refPoint . fromDecorated
 
 ------------------------------------------------------------
+newtype Decorator a = Decorator (a -> Decorated a)
 
-stroke :: Decor a => String -> a -> Decorated a
-stroke s f = setStyle ld (pure f)
-  where ld = (style f) { getStroke = pure s}
+instance Semigroup (Decorator a) where
+  Decorator a <> Decorator b = Decorator (a >=> b)
+  
+instance Monoid (Decorator a) where
+  mempty = Decorator $ \a -> Decorated (mempty, a)
 
-white :: Decor a => a -> Decorated a
+instance Decor a => IsString (Decorator a) where
+  fromString = label
+
+infixl 5 #:
+(#:) :: Decor a => a -> Decorator a -> Decorated a
+a #: (Decorator d) = d a
+
+stroke :: Decor a => String -> Decorator a
+stroke s = Decorator $ \f ->
+  let ld = (style f) { getStroke = pure s}
+  in setStyle ld (pure f)
+
+white :: Decor a => Decorator a
 white = stroke "white"
 
-fill :: Decor a => String -> a -> Decorated a
-fill s f = setStyle ld (pure f)
-  where ld = (style f) { getFill = pure s}
+fill :: Decor a => String -> Decorator a
+fill s = Decorator $ \f ->
+  let ld = (style f) { getFill = pure s}
+  in setStyle ld (pure f)
 
-width :: Decor a => String -> a -> Decorated a
-width s f = setStyle ld (pure f)
-  where ld = (style f) { getStrokeWidth = pure s}
+width :: Decor a => String -> Decorator a
+width s = Decorator $ \f ->
+  let ld = (style f) { getStrokeWidth = pure s}
+  in setStyle ld (pure f)
 
-thin :: Decor a => a -> Decorated a
+thin :: Decor a => Decorator a
 thin = width "1"
 
-dashed :: Decor a => a -> Decorated a
-dashed f = setStyle ld (pure f)
-  where ld = (style f) { getDashing = pure "5,5"}
+dashed :: Decor a => Decorator a
+dashed = Decorator $ \f ->
+  let ld = (style f) { getDashing = pure "5,5"}
+  in setStyle ld (pure f)
 
-dotted :: Decor a => a -> Decorated a
-dotted f = setStyle ld (pure f)
-  where ld = (style f) { getDashing = pure "2,3"}
+dotted :: Decor a => Decorator a
+dotted = Decorator $ \f ->
+  let ld = (style f) { getDashing = pure "2,3"}
+  in setStyle ld (pure f)
+
+label :: Decor a => String -> Decorator a
+label s = Decorator $ \d -> 
+   let o = (labelSettings d) { getLabel = pure s }
+   in setLabel o (pure d)
+
+loffs :: Decor a => XY -> Decorator a
+loffs o = Decorator $ \f -> 
+   let ld = (labelSettings f) { getLabelOffset = pure o}
+   in setLabel ld (pure f)
+
+lpos :: (Affine p, Decor a) => p -> Decorator a
+lpos x = Decorator $ \f ->
+   let ld = (labelSettings f) { getLabelPosition = pure (cmp x) }
+   in setLabel ld (pure f)
+
+lparam :: (Curve a, Decor a) => Double -> Decorator a
+lparam x = Decorator $ \f -> f #: lpos (f .@ x)
+  

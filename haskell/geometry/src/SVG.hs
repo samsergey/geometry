@@ -125,7 +125,7 @@ instance SVGable Label where
 instance Decor Circle where
   labelDefaults c = LabelSettings
     { getLabel = mempty
-    , getLabelPosition = pure $ c .@ 0
+    , getLabelPosition = pure $ c @-> 0
     , getLabelOffset = pure $ coord $ normal c 0.1 
     , getLabelCorner = pure (-1,0)
     , getLabelAngle = pure 0 }
@@ -151,7 +151,7 @@ instance SVGable Circle where
 instance Decor Line where
   labelDefaults l = LabelSettings
     { getLabel = mempty
-    , getLabelPosition = pure $ l .@ 0.5
+    , getLabelPosition = pure $ l @-> 0.5
     , getLabelOffset = pure $ coord $ scale 1 $ normal l 0
     , getLabelCorner = pure (0,0)
     , getLabelAngle = pure 0 }
@@ -185,7 +185,7 @@ instance SVGable Line where
                [] -> trivialLine
           p = case bounding l of
             Bound -> getLabelPosition (fst opts')
-            _ -> pure $ (s .@ 1) - cmp s
+            _ -> pure $ (s @-> 1) - cmp s
       
 ------------------------------------------------------------
 instance Decor Polygon where

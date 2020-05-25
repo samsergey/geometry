@@ -31,8 +31,8 @@ module Base
   , rotate, rotateAt, reflect, reflectAt
   -- ** Curves
   , Curve (..), PointLocation (..)
+  , (->@), (->@?), (@->), (@->?)
   , start
-  , (.@), (@.), (.?), (?.)
   -- ** Intersections of curves
   , Intersections (..)
   -- ** Figures
@@ -263,13 +263,13 @@ along :: (Figure a, Affine a) => Double -> a -> a
 along d = along' (asDeg d)
 
 reflectAt :: (Curve l, Affine l, Trans a) => l -> a -> a
-reflectAt l = transformAt (l.@ 0) (reflect (angle l))
+reflectAt l = transformAt (start l) (reflect (angle l))
 
 ------------------------------------------------------------
 -- | Class representing points in 2d affine space.
 -- Instances may be points, coordinates, complex numbers, 2d-vectors.
 class Affine a where
-  {-# MINIMAL (asCmp | asCoord), (cmp | coord) #-}
+  {-# MINIMAL (asCmp, cmp) | (asCoord, coord) #-}
 
   -- | Constructs an affine point from a complex number.
   asCmp :: CN -> a
@@ -371,25 +371,20 @@ instance Affine XY where
 
 instance Affine Angular where
   cmp a = mkPolar 1 (rad a)
-  asCmp = asCmp . normalize
+  asCmp = Angular . phase
 
 ------------------------------------------------------------
 
--- | The type representing the relation `belongs to` between a point and a curve.
+-- | The type representing the relation 'belongs to' between a point and a curve.
 data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 
 -- | Class representing a curve parameterized by a real number.
 -- For finite curves parameter runs from 0 to 1, where 0 is a start
 -- and 1 is the end of the curve. The length scale is given by `unit`
 -- function.
-infix 8 .@
-infix 8 @.
-infix 8 .?
-infix 8 ?.
-  
-class Curve a where
-  {-# MINIMAL ((.@) | (.?)),
-              ((@.) | (?.)),
+class Curve c where
+  {-# MINIMAL (param | paramMaybe),
+              (project | projectMaybe),
               (normal | tangent),
               distanceTo,
               (location | (isContaining, isEnclosing)) #-}
@@ -397,71 +392,89 @@ class Curve a where
   -- | Returns a point on a curve for given parameter.
   -- If parameter value is out of range [0, 1] for a finite curves
   -- the closest boundary value is returned.
-  -- Use `(.?)` for more explicit parameterization.
-  (.@) :: a -> Double -> CN
-  (.@) c x = fromMaybe boundary $ (.?) c x
-    where boundary = if (x < 0) then 0 else 1
+  -- Use `paramMaybe` for more explicit parameterization.
+  param :: c -> Double -> CN
+  param c x = fromMaybe 0 $ paramMaybe c x
+--    where boundary = if x < 0 then param c 0 else param c 1
 
   -- | Returns a point on a curve for given parameter, or Nothing
   -- if parameter runs out of the range defined for a curve.
-  (.?) :: a -> Double -> Maybe CN
-  (.?) c x =
+  paramMaybe :: c -> Double -> Maybe CN
+  paramMaybe c x =
     let p = param c x
     in if c `isContaining` p then Just p else Nothing                  
 
   -- | Returns a parameter, corresponding to a normal point projection on a curve.
   -- if normal projection doesn't exist returns the parameter of the closest point.
-  -- Use `(?.)` for more explicit projection.
-  (@.) :: Affine p => a -> p -> Double
-  (@.) c p =  fromMaybe closest $ (?.) c p
-    where closest = minimumOn (\x -> distance p (c.@x)) [0, 1]
+  -- Use `projectMaybe` for more explicit projection.
+  project :: Affine p => c -> p -> Double
+  project c p =  fromMaybe closest $ projectMaybe c p
+    where d0 = distance p (param c 0)
+          d1 = distance p (param c 1)
+          closest = if (d0 < d1) then 0 else 1
 
   -- | Returns a parameter for a point on a curve, or nothing
   -- if parameter could not be found.
-  (?.) :: Affine p => a -> p -> Maybe Double
-  (?.) c p = 
-    let x = (@.) c p
+  projectMaybe :: Affine p => c -> p -> Maybe Double
+  projectMaybe c p = 
+    let x = project c p
     in if c `isContaining` param c x
        then Just x
        else Nothing                  
 
-  -- | The internal length unit of the curve
-  -- , which maps the parameter to the length of the curve.
-  unit :: a -> Double
+  -- | The internal length unit of the curve,
+  --  which maps the parameter to the length of the curve.
+  unit :: c -> Double
   unit _ = 1
 
   -- | The distance between a curve and a point.
-  distanceTo :: Affine p => a -> p -> Double
+  distanceTo :: Affine p => c -> p -> Double
 
   -- | The tangent direction for a given parameter on the curve.
-  tangent :: a -> Double -> Angular
+  tangent :: c -> Double -> Angular
   tangent f t = normal f t + 90
 
   -- | The normal direction for a given parameter on the curve.
-  normal :: a -> Double -> Angular
+  normal :: c -> Double -> Angular
   normal f t = 90 + tangent f t
 
   -- | Is set `True` if the curve is closed.
-  isClosed :: a -> Bool
+  isClosed :: c -> Bool
   isClosed _ = False
 
   -- | Returns the location of a point with respect to the curve.
-  location :: Affine p => p -> a -> PointLocation
+  location :: Affine p => p -> c -> PointLocation
   location p c | isContaining c p = OnCurve
                | isClosed c && isEnclosing c p = Inside
                | otherwise = Outside
 
   -- | Returns `True` if point belongs to the curve.
-  isContaining :: Affine p => a -> p -> Bool
+  isContaining :: Affine p => c -> p -> Bool
   isContaining c p = location p c == OnCurve
 
   -- | Returns `True` if point belongs to the area bound by closed curve.
-  isEnclosing :: Affine p => a -> p -> Bool
+  isEnclosing :: Affine p => c -> p -> Bool
   isEnclosing c p = location p c == Inside 
+
+infix 8 @->
+(@->) ::  Curve c => c -> Double -> CN
+(@->) = param
+
+infix 8 @->?
+(@->?) :: Curve c => c -> Double -> Maybe CN
+(@->?) = paramMaybe
+
+infix 8 ->@
+(->@) :: (Curve c, Affine p) => p -> c -> Double
+(->@) = flip project
+
+infix 8 ->@?
+(->@?) :: (Curve c, Affine p) => p -> c -> Maybe Double
+(->@?) = flip projectMaybe
 
 
 start :: Curve a => a -> CN
-start c = c .@ 0
+start c = param c 0
     
 ------------------------------------------------------------
 

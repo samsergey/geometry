@@ -136,7 +136,7 @@ instance Trans a => Trans (Decorated a) where
 
 instance Curve a => Curve (Decorated a) where
   param = param . fromDecorated
-  locus = locus . fromDecorated
+  project = project . fromDecorated
   tangent = tangent . fromDecorated
   isContaining = isContaining . fromDecorated
   isEnclosing = isEnclosing . fromDecorated
@@ -210,5 +210,5 @@ lpos x = Decorator $ \f ->
    in setLabel ld (pure f)
 
 lparam :: (Curve a, Decor a) => Double -> Decorator a
-lparam x = Decorator $ \f -> f #: lpos (f .@ x)
+lparam x = Decorator $ \f -> f #: lpos (f @-> x)
   

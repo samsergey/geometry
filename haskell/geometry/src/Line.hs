@@ -4,6 +4,7 @@ module Line where
 
 import Data.Complex
 import Data.List
+import Data.Maybe
 
 import Base
 
@@ -43,8 +44,8 @@ instance Show Line where
     Semibound -> unwords [ "<Ray"
                      , "(" <> show x1 <> "," <> show y1 <> "),"
                      , show a <> ">"]
-    where (x1, y1) = coord (l .@ 0)
-          (x2, y2) = coord (l .@ 1)
+    where (x1, y1) = coord (l @-> 0)
+          (x2, y2) = coord (l @-> 1)
           a = angle l
 
 instance Figure Line where
@@ -64,8 +65,8 @@ instance Affine Line where
 
 instance Trans Line where
   transform t l = l { refPoints = (p1, p2) }
-    where p1 = transformCN t $ l .@ 0
-          p2 = transformCN t $ l .@ 1
+    where p1 = transformCN t $ l @-> 0
+          p2 = transformCN t $ l @-> 1
   
 
 instance Curve Line where
@@ -73,28 +74,30 @@ instance Curve Line where
 
   param l t = let (p1, p2) = refPoints l in scaleAt p1 t p2
 
-  locus l p | isTrivial l = 0
-            | otherwise = let p1 = fst $ refPoints l
-                              v = cmp p - cmp p1
-                          in (v `dot` cmp l) / unit l
+  projectMaybe l p
+    | isTrivial l = Nothing
+    | otherwise =
+        let p1 = fst $ refPoints l
+            v = cmp p - cmp p1
+            res = (v `dot` cmp l) / unit l
+        in case bounding l of
+             Unbound -> Just res
+             Semibound -> if 0 ~<= res then Just res else Nothing
+             Bound -> if 0 ~<= res && res ~<= 1 then Just res else Nothing
 
   isClosed _ = False
   isEnclosing _ _ = False
 
-  isContaining l p = case bounding l of
-    Unbound   -> res
-    Semibound -> cmp p ~== start l || (res && 0 <= x)
-    Bound     -> cmp p ~== start l || (res && 0 <= x && x ~<= 1)
-    where p1 = refPoint l
-          x = p @. l
-          res = l `isCollinear` azimuth p1 p
+  isContaining l p = let p1 = refPoint l
+                         res = l `isCollinear` azimuth p1 p
+                     in res && isJust (p ->@? l)
 
   tangent l _ = angle l
 
-  distanceTo l p = case p ?. l of
-    Just x -> p `distance` (l .@ x)
-    Nothing -> (p `distance` (l .@ 0)) `min`
-               (p `distance` (l .@ 1))
+  distanceTo l p = case p ->@? l of
+    Just x -> p `distance` (l @-> x)
+    Nothing -> (p `distance` (l @-> 0)) `min`
+               (p `distance` (l @-> 1))
 
 
 instance Intersections Line Line where
@@ -118,10 +121,10 @@ intersectionV (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
 clipBy :: (Intersections Line c, Curve c) => Line -> c -> [Line]
 clipBy l c = filter internal $ Line Bound <$> zip ints (tail ints) 
   where
-    ints = sortOn (locus l) $ intersections l c <> ends
-    internal s = c `isEnclosing` (s .@ 1/2)
+    ints = sortOn (project l) $ intersections l c <> ends
+    internal s = c `isEnclosing` (s @-> 1/2)
     ends = case bounding l of
-             Bound -> [l .@ 0, l .@ 1]
-             Semibound -> [l .@ 0]
+             Bound -> [l @-> 0, l @-> 1]
+             Semibound -> [l @-> 0]
              Unbound -> []
 

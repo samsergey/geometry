@@ -55,18 +55,18 @@ instance Trans Polygon where
 
 
 instance Curve Polygon where
-  maybeParam p t = if isClosed p
+  paramMaybe p t = if isClosed p
                    then interpolation (t `mod'` unit p)
                    else interpolation t
     where
       interpolation x = param' <$> find interval tbl
         where
           interval ((a, b), _) = a ~<= x && x ~<= b
-          param' ((a, b), s) = s .@ ((x - a)/(b-a))
+          param' ((a, b), s) = s @-> ((x - a)/(b-a))
           tbl = zip (zip ds (tail ds)) $ segments p
           ds = scanl (+) 0 $ unit <$> segments p
 
-  locus p pt = x0 + pt @. s
+  project p pt = x0 + pt ->@ s
     where
       ss = segments p
       ds = scanl (+) 0 $ unit <$> ss

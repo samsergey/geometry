@@ -31,7 +31,7 @@ point' :: Affine a => a -> Point
 point' p = mkPoint (cmp p)
 
 pointOn :: Curve a => a -> Double -> Point
-pointOn c t = mkPoint (c.@ t)
+pointOn c t = mkPoint (c @-> t)
 
 aPoint :: Point
 aPoint = origin

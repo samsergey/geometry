@@ -1,8 +1,36 @@
 {-# Language UndecidableInstances #-}
 {-# Language FlexibleInstances #-}
 {-# Language MultiParamTypeClasses #-}
-{-# language DeriveFunctor #-}
-module Base where
+
+module Base
+  ( -- * Types
+    CN
+  , XY
+  -- ** Directed values
+  , Angular
+  -- ** Angular isomorphisms
+  , deg, asDeg
+  , rad, asRad
+  , turns, asTurns
+  -- ** Linear transformations
+  , TMatrix
+  , rotateT, reflectT, translateT, scaleT
+  -- * Classes
+  -- ** Points in affine space
+  , Affine (..)
+  -- *** Predicates
+  , isOrthogonal, isCollinear, isOpposite, isZero
+  -- *** Vector and point operations
+  , dot, det, cross, norm, distance, angle, normalize, columns
+  -- ** Linear transformations
+  , Trans (..)
+  , transformCN, transformXY
+  -- ** Fuzzy equality
+  , AlmostEq
+  -- *** Fuzzy inequalities
+  , (~<=), (~>=)
+  )
+where
 
 import Data.Fixed (mod')
 import Data.Complex
@@ -12,23 +40,32 @@ import Data.Monoid
 import Data.Maybe
 
 ------------------------------------------------------------
-
+-- | Type alias for a complex number.
 type CN = Complex Double
+
+-- | Type alias for a coordinate representation.
 type XY = (Double, Double)
 
 ------------------------------------------------------------
 
+-- | Flipped application used for right chaining of transformations.
 infixl 5 #
 (#) = flip ($)
+
+both f (a,b) = (f a, f b)
 
 ------------------------------------------------------------
 
 infix 4 ~==
 
+-- | Type class for values for which equality could be stated
+-- with some known tolerance.
 class AlmostEq a where
+  -- | The equality operator.
   (~==) :: a -> a -> Bool
 
 instance AlmostEq Int where a ~== b = a == b
+
 instance AlmostEq Integer where  a ~== b = a == b
 
 instance AlmostEq Double where
@@ -44,22 +81,43 @@ instance (AlmostEq a) => AlmostEq [a] where
   as ~== bs = and $ zipWith (~==) as bs
 
 infix 4 ~<=
+-- | The less or almost equal relation.
+(~<=) :: (AlmostEq a, Ord a) => a -> a -> Bool
 a ~<= b = a ~== b || a < b
 
 infix 4 ~>=
+-- | The greater or almost equal relation.
+(~>=) :: (AlmostEq a, Ord a) => a -> a -> Bool
 a ~>= b = a ~== b || a > b
 
 ------------------------------------------------------------
 
+-- | The representation of a directed value isomorphic either to an angle
+-- or to a complex number or coordinates.
 newtype Angular = Angular Double
 
+-- | Constructs a directed value from an angle given in radians.
+asRad :: Double -> Angular
 asRad = Angular . (`mod'` (2*pi))
+
+-- | Returns a representation of a directed value as an angle in radians.
+rad :: Angular -> Double
+rad (Angular a) = a  `mod'` (2*pi)
+
+-- | Constructs a directed value from an angle given in degrees.
+asDeg :: Double -> Angular
 asDeg a = asRad $ a / 180*pi
-asCmp a = asRad $ phase a
+
+-- | Returns a representation of a directed value as an angle in degrees.
+deg :: Angular -> Double
+deg (Angular a) = (a * 180 / pi) `mod'` 360
+
+-- | Constructs a directed value from a number of turns.
+asTurns :: Double -> Angular
 asTurns a = asRad $ a*2*pi
 
-deg (Angular a) = (a * 180 / pi) `mod'` 360
-rad (Angular a) = a  `mod'` (2*pi)
+-- | Returns a representation of a directed value as a number of turns.
+turns :: Angular -> Double
 turns (Angular a) = (a / (2*pi))  `mod'` 1
 
 instance Show Angular where
@@ -80,80 +138,19 @@ instance Num Angular where
   signum = withAngular signum
 
 withAngular op a = asRad $ op (rad a)
+
 withAngular2 op a b = asRad (rad a `op` rad b)
 
 ------------------------------------------------------------
 
-both f (a,b) = (f a, f b)
-
-------------------------------------------------------------
-
+-- | The representation of a linear transformation matrix.
 type TMatrix = ((Double, Double, Double),(Double, Double, Double))
 
+-- | Class for objects which could be transformed linearly.
 class Trans a where
   {-# MINIMAL transform #-}
+  -- | The general linear transformation.
   transform :: TMatrix -> a -> a
-
-rotateT :: Double -> TMatrix
-rotateT a = ((cos a, -(sin a), 0), (sin a, cos a, 0))
-
-reflectT :: Double -> TMatrix
-reflectT a = ((cos (2*a), sin (2*a), 0), (sin (2*a), -(cos (2*a)), 0))
-
-translateT :: CN -> TMatrix
-translateT (dx :+ dy) = ((1, 0, dx), (0, 1, dy))
-
-scaleT :: Double -> Double -> TMatrix
-scaleT x y = ((x, 0, 0), (0, y, 0))
-
-transformCN :: TMatrix -> CN -> CN
-transformCN t = cmp . transformXY t . coord
-
-transformXY :: TMatrix -> XY -> XY
-transformXY ((a11, a12, sx), (a21, a22, sy)) (x, y) =
-    (a12*y + a11*x + sx, a22*y + a21*x + sy)
-
-
-
-transformAt :: (Trans a, Affine p) => p -> (a -> a) -> a -> a
-transformAt p t = translate xy . t . translate (-xy)
-  where xy = cmp p
-  
-translate :: (Trans a, Affine p) => p -> a -> a
-translate = transform . translateT . cmp
-
-scale :: Trans a => Double -> a -> a
-scale s = transform (scaleT s s)
-
-scaleX :: Trans a => Double -> a -> a
-scaleX s = transform (scaleT s 1)
-
-scaleY :: Trans a => Double -> a -> a
-scaleY s = transform (scaleT 1 s)
-
-scaleAt :: (Trans a, Affine p) => p -> Double -> a -> a
-scaleAt p s = transformAt p (scale s)
-
-scaleXAt :: (Trans a, Affine p) => p -> Double -> a -> a
-scaleXAt p s = transformAt p (scaleX s)
-
-scaleYAt :: (Trans a, Affine p) => p -> Double -> a -> a
-scaleYAt p s = transformAt p (scaleY s)
-
-rotate :: Trans a => Angular -> a -> a
-rotate = transform . rotateT . rad
-
-rotateAt :: (Trans a, Affine p) => p -> Angular -> a -> a
-rotateAt p a = transformAt p (rotate a)
-         
-reflect :: Trans a => Angular -> a -> a
-reflect d = transform $ reflectT $ rad d
-
-superpose :: (Trans a, Affine p1, Affine p2) => p1 -> p2 -> a -> a
-superpose p1 p2 = translate (cmp p2 - cmp p1)
-
-
-------------------------------------------------------------
 
 instance Trans CN where
   transform t = cmp . transformXY t . coord
@@ -163,80 +160,218 @@ instance Trans XY where
 
 instance Trans Angular where
   transform t  = asCmp . cmp . transformXY t . coord
- 
+
+-- | The rotation matrix.
+rotateT :: Double -> TMatrix
+rotateT a = ((cos a, -(sin a), 0), (sin a, cos a, 0))
+
+-- | The reflection matrix.
+reflectT :: Double -> TMatrix
+reflectT a = ((cos (2*a), sin (2*a), 0), (sin (2*a), -(cos (2*a)), 0))
+
+-- | The translation matrix.
+translateT :: CN -> TMatrix
+translateT (dx :+ dy) = ((1, 0, dx), (0, 1, dy))
+
+-- | The scaling matrix.
+scaleT :: Double -> Double -> TMatrix
+scaleT x y = ((x, 0, 0), (0, y, 0))
+
+-- | The transformation of a complex number. Used in class implementations.
+transformCN :: TMatrix -> CN -> CN
+transformCN t = cmp . transformXY t . coord
+
+-- | The transformation of coordinates. Used in class implementations.
+transformXY :: TMatrix -> XY -> XY
+transformXY ((a11, a12, sx), (a21, a22, sy)) (x, y) =
+    (a12*y + a11*x + sx, a22*y + a21*x + sy)
+
+
 ------------------------------------------------------------
-
+-- | Class representing points in 2d affine space.
+-- Instances may be points, coordinates, complex numbers, 2d-vectors.
 class Affine a where
-  {-# MINIMAL (fromCN | fromCoord), (cmp | coord) #-}
+  {-# MINIMAL (asCmp | asCoord), (cmp | coord) #-}
 
-  fromCN :: CN -> a
-  fromCN = fromCoord . coord
+  -- | Constructs an affine point from a complex number.
+  asCmp :: CN -> a
+  asCmp = asCoord . coord
 
-  fromCoord :: XY -> a
-  fromCoord = fromCN . cmp
-
-  getX :: a -> Double
-  getX = fst . coord
-  
-  getY :: a -> Double
-  getY = snd . coord
-    
+  -- | Returns a representation of an afine point as a complex number.
   cmp :: a -> CN
   cmp p = let (x, y) = coord p in x :+ y
-  
+
+  -- | Constructs an affine point from a coordinates.
+  asCoord :: XY -> a
+  asCoord = asCmp . cmp
+
+  -- | Returns a representation of an afine point as a coordinate.
   coord :: a -> XY
   coord p = let x :+ y = cmp p in (x, y)
 
+  -- | Returns x-coordinate of an afine point.
+  getX :: a -> Double
+  getX = fst . coord
+
+  -- | Returns y-coordinate of an afine point.
+  getY :: a -> Double
+  getY = snd . coord
+    
+-- | Returns True if two points represent orthogonal vectors.
+isOrthogonal :: (Affine a, Affine b) => a -> b -> Bool
+isOrthogonal  a b = cmp a `dot` cmp b ~== 0
+
+-- | Returns True if two points represent collinear vectors.
+isCollinear :: (Affine a, Affine b) => a -> b -> Bool
+isCollinear a b = cmp a `cross` cmp b ~== 0
+
+-- | Returns True if two points represent collinear opposite vectors.
+isOpposite :: (Affine a, Affine b) => a -> b -> Bool
+isOpposite a b = cmp a + cmp b ~== 0
+
+-- | Returns True if the vector is trivial or a point is equal to the origin.
+isZero :: Affine a => a -> Bool
+isZero a = cmp a ~== 0
+
+-- | The ngle between tho two points
+azimuth :: (Affine a, Affine b) => a -> b -> Angular
+azimuth p1 p2 = asCmp (cmp p2 - cmp p1)
+
+-- | The dot product of two points.
 dot :: (Affine a, Affine b) => a -> b -> Double
 dot a b = let (xa, ya) = coord a
               (xb, yb) = coord b
               in xa*xb + ya*yb
 
-isOrthogonal :: (Affine a, Affine b) => a -> b -> Bool
-isOrthogonal  a b = cmp a `dot` cmp b ~== 0
-
-isOpposite :: (Affine a, Affine b) => a -> b -> Bool
-isOpposite a b = cmp a + cmp b ~== 0
-
-isCollinear :: (Affine a, Affine b) => a -> b -> Bool
-isCollinear a b = cmp a `cross` cmp b ~== 0
-
-azimuth :: (Affine a, Affine b) => a -> b -> Angular
-azimuth p1 p2 = asCmp (cmp p2 - cmp p1)
-
+-- | Determinant of a matrix, composed of two vector rows.
+-- Equivalent to `cross`.
 det :: (Affine a, Affine b) => (a, b) -> Double
 det (a, b) = let (xa, ya) = coord a
                  (xb, yb) = coord b
              in xa*yb - ya*xb
 
+-- | Z-component of a cross product of two vectors.
+-- Equivalent to `det`.
 cross :: (Affine a, Affine b) => a -> b -> Double
 cross a b = det (a, b)
 
+-- | The norm of a vector, or a distance from a point to the origin.
 norm :: Affine a => a -> Double
 norm = magnitude . cmp
 
+-- | The distance between tho points,
+-- or a norm of the difference between two vectors.
 distance :: (Affine a, Affine b) => a -> b -> Double
 distance a b = magnitude (cmp a - cmp b)
 
+-- | The normalized vector, or a projection of a point on a unit circle.
 normalize :: Affine a => a -> a
 normalize v
   | cmp v == 0 = v
-  | otherwise = fromCN $ (1/norm v :+ 0) * cmp v
+  | otherwise = asCmp $ (1/norm v :+ 0) * cmp v
 
 roundUp :: Affine a => Double -> a -> a
-roundUp d = fromCoord . (\(x,y) -> (rounding x, rounding y)) . coord
+roundUp d = asCoord . (\(x,y) -> (rounding x, rounding y)) . coord
   where rounding x = fromIntegral (ceiling (x /d)) * d
 
-isZero :: Affine a => a -> Bool
-isZero a = cmp a ~== 0
-
+-- | The direction of the vector or a point.
 angle :: Affine a => a -> Angular
 angle = asCmp . cmp
 
-transpose :: Affine a => (a, a) -> (a, a)
-transpose (a, b) = ( fromCoord (getX a, getX b)
-                   , fromCoord (getY a, getY b))
+-- | The matrix, composed of two vector columns.
+columns :: Affine a => (a, a) -> (a, a)
+columns (a, b) = ( asCoord (getX a, getX b)
+                 , asCoord (getY a, getY b))
 
+instance Affine CN where
+  cmp = id
+  asCmp = id
+
+instance Affine XY where
+  coord = id
+  asCoord = id
+
+instance Affine Angular where
+  cmp a = mkPolar 1 (rad a)
+  asCmp = asCmp . normalize
+
+------------------------------------------------------------
+
+-- | The type representing the relation `belongs to` between a point and a curve.
+data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
+
+-- | Class representing a curve parameterized by a real number.
+-- For finite curves parameter runs from 0 to 1, where 0 is a start
+-- and 1 is the end of the curve. The length scale is given by `unit`
+-- function.
+class Curve a where
+  {-# MINIMAL (param | maybeParam),
+              (locus | maybeLocus),
+              (normal | tangent),
+              distanceTo,
+              (location | (isContaining, isEnclosing)) #-}
+
+  -- | Returns a point on a curve for given parameter.
+  param :: a -> Double -> CN
+  param c x = fromMaybe 0 $ maybeParam c x
+
+  -- | Returns a point on a curve for given parameter, or nothing
+  -- if parameter runs out of the range defined for a curve.
+  maybeParam :: a -> Double -> Maybe CN
+  maybeParam c x =
+    let p = param c x
+    in if c `isContaining` p then Just p else Nothing                  
+
+  -- | Returns a parameter, corresponding to a point on a curve.
+  locus :: Affine p => a -> p -> Double
+  locus c p =  fromMaybe 0 $ maybeLocus c p 
+
+  -- | Returns a parameter for a point on a curve, or nothing
+  -- if parameter could not be found.
+  maybeLocus :: Affine p => a -> p -> Maybe Double
+  maybeLocus c p = 
+    let x = locus c p
+    in if c `isContaining` param c x
+       then Just x
+       else Nothing                  
+
+  -- | The internal length unit of the curve
+  -- , which maps the parameter to the length of the curve.
+  unit :: a -> Double
+  unit _ = 1
+
+  -- | The distance between a curve and a point.
+  distanceTo :: Affine p => a -> p -> Double
+
+  -- | The tangent direction for a given parameter on the curve.
+  tangent :: a -> Double -> Angular
+  tangent f t = normal f t + 90
+
+  -- | The normal direction for a givem parameter on the curve.
+  normal :: a -> Double -> Angular
+  normal f t = 90 + tangent f t
+
+  -- | Is set `True` if the curve is closed.
+  isClosed :: a -> Bool
+  isClosed _ = False
+
+  -- | Returns the location of a point with respect to the curve.
+  location :: Affine p => p -> a -> PointLocation
+  location p c | isContaining c p = OnCurve
+               | isClosed c && isEnclosing c p = Inside
+               | otherwise = Outside
+
+  -- | Returns `True` if point belongs to the curve.
+  isContaining :: Affine p => a -> p -> Bool
+  isContaining c p = location p c == OnCurve
+
+  -- | Returns `True` if point belongs to the area bound by closed curve.
+  isEnclosing :: Affine p => a -> p -> Bool
+  isEnclosing c p = location p c == Inside 
+
+
+start :: Curve a => a -> CN
+start c = c .@ 0
     
 infix 8 .@
 (.@) :: Curve a => a -> Double -> CN
@@ -253,80 +388,6 @@ c .? x = maybeParam c x
 infix 8 ?.
 (?.) :: (Curve a, Affine p) => p -> a -> Maybe Double
 p ?. c  = maybeLocus c p
-
-------------------------------------------------------------
-
-instance Affine CN where
-  cmp = id
-  fromCN = id
-
-
-instance Affine XY where
-  coord = id
-  fromCoord = id
-
-
-instance Affine Angular where
-  cmp a = mkPolar 1 (rad a)
-  fromCN = asCmp . normalize
-
-------------------------------------------------------------
-
-data Location = Inside | Outside | OnCurve deriving (Show, Eq)
-
-class Curve a where
-  {-# MINIMAL (param | maybeParam),
-              (locus | maybeLocus),
-              (normal | tangent),
-              distanceTo,
-              (location | (isContaining, isEnclosing)) #-}
-  
-  param :: a -> Double -> CN
-  param c x = fromMaybe 0 $ maybeParam c x
-
-  maybeParam :: a -> Double -> Maybe CN
-  maybeParam c x =
-    let p = param c x
-    in if c `isContaining` p then Just p else Nothing                  
-
-  locus :: Affine p => a -> p -> Double
-  locus c p =  fromMaybe 0 $ maybeLocus c p 
-
-  maybeLocus :: Affine p => a -> p -> Maybe Double
-  maybeLocus c p = 
-    let x = locus c p
-    in if c `isContaining` param c x
-       then Just x
-       else Nothing                  
-
-  distanceTo :: Affine p => a -> p -> Double
-    
-  unit :: a -> Double
-  unit _ = 1
-
-  tangent :: a -> Double -> Angular
-  tangent f t = normal f t + 90
-  
-  normal :: a -> Double -> Angular
-  normal f t = 90 + tangent f t
-
-  isClosed :: a -> Bool
-  isClosed _ = False
-  
-  location :: Affine p => p -> a -> Location
-  location p c | isContaining c p = OnCurve
-               | isClosed c && isEnclosing c p = Inside
-               | otherwise = Outside
-  
-  isContaining :: Affine p => a -> p -> Bool
-  isContaining c p = location p c == OnCurve
-  
-  isEnclosing :: Affine p => a -> p -> Bool
-  isEnclosing c p = location p c == Inside 
-
-start :: Curve a => a -> CN
-start c = c .@ 0
-
 
 ------------------------------------------------------------
 

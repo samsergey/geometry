@@ -2,7 +2,6 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module SVG ( chart
            , paperSize, plane
@@ -32,9 +31,15 @@ import Circle
 import Polygon
 import Line
 
-
+-- |The actual size of the svg image
+svgSize :: Double
 svgSize = 500
-paperSize = 50
+
+-- |The virtual size of the chart paper
+svgSize :: Double
+svgSize = 50
+
+-- |The curve bounding the visible paper
 plane = mkPolygon [(-1,-1), (1,-1), (1,1), (-1,1) :: XY]
         # scale (paperSize/2)
 

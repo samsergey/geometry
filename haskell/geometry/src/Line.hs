@@ -1,6 +1,16 @@
 {-# Language MultiParamTypeClasses #-}
 {-# Language FlexibleContexts #-}
-module Line where
+{-# LANGUAGE ConstraintKinds #-}
+module Line
+  (-- * Types
+    Bounding (..)
+  , Line (..)
+  , Linear
+  -- * Constructors
+  , trivialLine, mkSegment, mkRay, mkLine
+  -- * Functions
+  , extendAs, clipBy
+  ) where
 
 import Data.Complex
 import Data.List
@@ -8,21 +18,49 @@ import Data.Maybe
 
 import Base
 
-data Bounding = Unbound | Semibound | Bound
+-- | The type of line
+data Bounding = Unbound    -- ^ a straight line
+              | Semibound  -- ^ a ray
+              | Bound      -- ^ a segment
   deriving (Eq, Show)
 
+-- | The straight line of a given type, passing through two given points.
+-- The first point sets the `Figure`s' refference point and a starting point of a line.
+-- The distance between refference points `p1` and `p2` sets the 'unit' and internal scale,
+-- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
 data Line = Line { bounding :: Bounding
                  , refPoints :: !(CN, CN) }
 
+-- | Constrain for a linear object
+type Linear l = (Affine l, Curve l, Trans l, Figure l)
+
+-- | The trivial line with coinsiding refference points.
 trivialLine = mkLine (0,0)
+
+-- | The basic line constructor 
 mkLine = Line Unbound
+
+-- | The basic ray constructor
 mkRay = Line Semibound
+
+-- | The basic segment constructor
 mkSegment = Line Bound
 
 instance Eq Line where
   l1 == l2 = bounding l1 == bounding l2 &&
              refPoints l1 ~== refPoints l2
 
+-- | The extension of a line with the same refference points.
+--
+-- >>> mkSegment (0, 1) `extendAs` Semibound
+-- <Ray (0.0,0.0), 0.0°>
+--
+-- >>> mkSegment (0, 1) `extendAs` Unbound
+-- <Line (0.0,0.0), 0.0°>
+--
+-- >>> mkRay (0, 1) `extendAs` Unbound
+-- <Line (0.0,0.0), 0.0°>
+-- 
 l `extendAs` b =
   let res = l { bounding = b }
   in case bounding l of
@@ -88,6 +126,10 @@ instance Curve Line where
   isClosed _ = False
   isEnclosing _ _ = False
 
+  isFinite l = case bounding l of
+    Bound -> True
+    _ -> False
+
   isContaining l p = let p1 = refPoint l
                          res = l `isCollinear` azimuth p1 p
                      in res && isJust (p ->@? l)
@@ -117,7 +159,8 @@ intersectionV (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
     d1 = (v1x*y1 - v1y*x1) / d0
     d2 = (v2x*y2 - v2y*x2) / d0
 
-
+-- | Returns a list of segments as a result of clipping the line
+-- by a closed curve.
 clipBy :: (Intersections Line c, Curve c) => Line -> c -> [Line]
 clipBy l c = filter internal $ Line Bound <$> zip ints (tail ints) 
   where

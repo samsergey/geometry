@@ -2,23 +2,21 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="500" width="500" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="151.96078431372547" text-anchor="middle" y="250">A
+  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="153.84615384615387" text-anchor="middle" y="250">A
   </text>
-  <polygon points="250,250 367.6470588235294,250 308.82352941176475,182.07643891886755 " stroke="orange" stroke-width="2" fill="none"/>
-  <circle stroke="orange" stroke-width="2" fill="none" cy="308.8235294117647" r="39.215686274509835" cx="308.8235294117647"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="360.9834875962737" text-anchor="middle" y="299.4189653750851">c
+  <polygon points="250,250 365.38461538461536,250 307.69230769230774,183.38266124735088 " stroke="orange" stroke-width="2" fill="none"/>
+  <circle stroke="orange" stroke-width="2" fill="none" cy="307.6923076923077" r="38.46153846153845" cx="307.6923076923077"/>
+  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="359.0981180638453" text-anchor="middle" y="298.2877436556281">c
   </text>
-  <line x2="186.0143175081442" y1="495.0980392156863" stroke="white" stroke-width="2" fill="none" y2="4.901960784313701" stroke-dasharray="2,3" x1="272.44911197307783"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="187.71675062252584" text-anchor="middle" y="-1.4430612449783666">a
+  <line x2="384.6153846153845" y1="384.61538461538476" stroke="white" stroke-width="2" fill="none" y2="9.615384615384613" stroke-dasharray="2,3" x1="9.615384615384613"/>
+  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="347.1153846153845" text-anchor="middle" y="31.115384615384613">a
   </text>
-  <polygon points="209.7159103359864,257.10317190104456 99.16383730235006,297.3408358217114 131.20864772300956,213.39473473593688 " stroke="orange" stroke-width="2" fill="none"/>
-  <circle stroke="orange" stroke-width="2" fill="none" cy="332.49804037819615" r="39.215686274509814" cx="174.55870577950165"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="122.32782763327643" text-anchor="middle" y="341.5003973253464">c
+  <polygon points="144.23076923076923,144.23076923076928 144.23076923076917,28.846153846153925 210.8481079834183,86.53846153846155 " stroke="orange" stroke-width="2" fill="none"/>
+  <circle stroke="orange" stroke-width="2" fill="none" cy="86.5384615384616" r="38.461538461538446" cx="86.53846153846149"/>
+  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="47.810457132790376" text-anchor="middle" y="51.450787927507996">c
   </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="200.98039215686273" r="3" cx="387.2549019607843"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="387.2549019607843" text-anchor="middle" y="184.98039215686273">B
+  <circle stroke="#444" stroke-width="1" fill="red" cy="201.92307692307693" r="3" cx="384.61538461538464"/>
+  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="384.61538461538464" text-anchor="middle" y="185.92307692307693">B
   </text>
-  <line x2="328.4313725490196" y1="210.7843137254902" stroke="orange" stroke-width="2" fill="none" y2="122.54901960784312" x1="279.4117647058824"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="289.9350522095064" text-anchor="middle" y="158.89637976780855">s
-  </text>
+  <line x2="350.61986628910824" y1="201.92307692307693" stroke="orange" stroke-width="2" fill="none" y2="167.92755859680062" x1="384.61538461538464"/>
 </svg>

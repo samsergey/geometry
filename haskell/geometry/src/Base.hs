@@ -7,7 +7,7 @@ module Base
     CN
   , XY
   -- ** Directed values
-  , Angular
+  , Angular (..)
   -- ** Angular isomorphisms
   , deg, asDeg
   , rad, asRad
@@ -26,7 +26,7 @@ module Base
   , Trans (..)
   , transformCN, transformXY, transformAt
   -- *** transformations
-  , translate, superpose, at', at, along', along
+  , translate, superpose
   , scale, scaleX, scaleY, scaleAt, scaleXAt,scaleYAt
   , rotate, rotateAt, reflect, reflectAt
   -- ** Curves
@@ -250,18 +250,6 @@ rotateAt p a = transformAt p (rotate a)
 reflect :: Trans a => Angular -> a -> a
 reflect d = transform $ reflectT $ rad d
 
-at' :: (Affine p, Figure a) => p -> a -> a
-at' p fig = superpose (refPoint fig) p fig
-
-at :: Figure a => XY -> a -> a
-at = at'
-
-along' :: (Figure f, Affine v, Affine f) => v -> f -> f
-along' v l = rotateAt (refPoint l) (angle v - angle l) l
-
-along :: (Figure a, Affine a) => Double -> a -> a
-along d = along' (asDeg d)
-
 reflectAt :: (Curve l, Affine l, Trans a) => l -> a -> a
 reflectAt l = transformAt (start l) (reflect (angle l))
 
@@ -382,6 +370,13 @@ data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 -- For finite curves parameter runs from 0 to 1, where 0 is a start
 -- and 1 is the end of the curve. The length scale is given by `unit`
 -- function.
+--
+-- All implementations must obay isomorphisms laws:
+--
+-- prop>  isFinite c          ==>  (project c . param c) x == x `mod'` 1
+-- prop>  not isFinite c      ==>  (project c . param c) x == x
+-- prop>  c `isContaining` p  ==>  (param c . project c) p == p
+--
 class Curve c where
   {-# MINIMAL (param | paramMaybe),
               (project | projectMaybe),
@@ -411,7 +406,7 @@ class Curve c where
   project c p =  fromMaybe closest $ projectMaybe c p
     where d0 = distance p (param c 0)
           d1 = distance p (param c 1)
-          closest = if (d0 < d1) then 0 else 1
+          closest = if d0 < d1 then 0 else 1
 
   -- | Returns a parameter for a point on a curve, or nothing
   -- if parameter could not be found.
@@ -442,6 +437,10 @@ class Curve c where
   isClosed :: c -> Bool
   isClosed _ = False
 
+  -- | Is set `True` if the curve is finite.
+  isFinite :: c -> Bool
+  isFinite _ = True
+  
   -- | Returns the location of a point with respect to the curve.
   location :: Affine p => p -> c -> PointLocation
   location p c | isContaining c p = OnCurve
@@ -457,30 +456,50 @@ class Curve c where
   isEnclosing c p = location p c == Inside 
 
 infix 8 @->
+-- | Operator for `param`
 (@->) ::  Curve c => c -> Double -> CN
 (@->) = param
 
 infix 8 @->?
+-- | Operator for `paramMaybe`
 (@->?) :: Curve c => c -> Double -> Maybe CN
 (@->?) = paramMaybe
 
 infix 8 ->@
+-- | Operator for `project` with flipped arguments:
+--
+-- prop>  p ->@ c  ==  project c p
+--  
 (->@) :: (Curve c, Affine p) => p -> c -> Double
 (->@) = flip project
 
 infix 8 ->@?
+-- | Operator for `projectMaybe` with flipped arguments:
+--
+-- prop>  p ->@? c  ==  projectMaybe c p
+-- 
 (->@?) :: (Curve c, Affine p) => p -> c -> Maybe Double
 (->@?) = flip projectMaybe
 
+-- | Point on the curve, parameterized by length.
+paramL :: Curve c => c -> Double -> CN
+paramL c l = param c (l / unit c)
 
+-- | Projection on a curve, parameterized by length.
+projectL :: (Affine p, Curve c) => c -> p -> Double
+projectL c p = project c p * unit c
+
+-- | The starting point on the curve. 
 start :: Curve a => a -> CN
 start c = param c 0
     
 ------------------------------------------------------------
-
+-- | Class provides `intersections` function returning a list (possible empty)
+-- of intersection points (co-dimension 1).
 class (Curve a, Curve b) => Intersections a b where
   intersections :: a -> b -> [CN]
 
+-- | Returns `True` if tho curves have intersection points.
 isIntersecting :: Intersections a b => a -> b -> Bool
 isIntersecting a b = not . null $ intersections a b
 
@@ -502,14 +521,21 @@ isIntersecting a b = not . null $ intersections a b
 
 ------------------------------------------------------------
 
+-- | Class representing the interface for a figure on a chart
 class (Eq a, Trans a) => Figure a where
   {-# MINIMAL isTrivial, refPoint #-}
-  
-  isTrivial :: a -> Bool
-  refPoint :: a -> CN
 
-  isSimilar :: a -> a -> Bool
-  isSimilar = (==)
-  
+  -- | Returns `True` is figure is trivial in a certain sence.
+  isTrivial :: a -> Bool
+
+  -- | Returns `True` is figure is not trivial in a certain sence.
   isNontrivial :: a -> Bool
   isNontrivial x = not (isTrivial x)
+
+  -- | Returns a refference point using for superposing and figure locataion.
+  refPoint :: a -> CN
+
+  -- | The geometric similarity relation.
+  isSimilar :: a -> a -> Bool
+  isSimilar = (==)
+

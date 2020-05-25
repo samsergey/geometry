@@ -3,13 +3,14 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ConstraintKinds #-}
 
-module SVG ( chart
-           , paperSize, plane
-           , Group (..)
-           , (<+>)
-           , group, attributes
-           ,Element, ToElement (..)
-           ,labelElement
+module SVG ( -- * Classes
+             Group (..)
+           , (<+>), group
+           , SVGable (..)
+           -- * Functions
+           , showSVG
+           -- * Parameters and constants
+           , svgSize, paperSize, plane
            ) where
 
 import Prelude hiding (writeFile, unwords)
@@ -20,6 +21,7 @@ import Graphics.Svg.Elements
 import Graphics.Svg.Attributes
 import Data.Complex
 import Data.Monoid
+import Data.Maybe
 import Data.Text (Text, pack, unwords)
 import Data.Text.Lazy.IO (writeFile)
 import Data.Double.Conversion.Text (toShortest, toPrecision)
@@ -85,7 +87,7 @@ attributes = attribute getStroke Stroke_ <>
         
 ------------------------------------------------------------
 instance Decor Point where
-  labelDefaults p = LabelSettings
+  labelDefaults p = Labeling
     { getLabel = mempty
     , getLabelPosition = pure $ cmp p
     , getLabelOffset = pure (0, 1)
@@ -111,7 +113,7 @@ instance SVGable Point where
 ------------------------------------------------------------
 
 instance Decor Label where
-  labelDefaults p = LabelSettings
+  labelDefaults p = Labeling
     { getLabel = mempty
     , getLabelPosition = pure $ cmp p
     , getLabelOffset = pure (0, 0)
@@ -123,7 +125,7 @@ instance SVGable Label where
 
 ------------------------------------------------------------
 instance Decor Circle where
-  labelDefaults c = LabelSettings
+  labelDefaults c = Labeling
     { getLabel = mempty
     , getLabelPosition = pure $ c @-> 0
     , getLabelOffset = pure $ coord $ normal c 0.1 
@@ -149,7 +151,7 @@ instance SVGable Circle where
 
 ------------------------------------------------------------
 instance Decor Line where
-  labelDefaults l = LabelSettings
+  labelDefaults l = Labeling
     { getLabel = mempty
     , getLabelPosition = pure $ l @-> 0.5
     , getLabelOffset = pure $ coord $ scale 1 $ normal l 0
@@ -185,7 +187,7 @@ instance SVGable Line where
                [] -> trivialLine
           p = case bounding l of
             Bound -> getLabelPosition (fst opts')
-            _ -> pure $ (s @-> 1) - cmp s
+            _ -> pure $ (s @-> 0.9) + cmp (scaled (normal s 0)) - cmp s
       
 ------------------------------------------------------------
 instance Decor Polygon where
@@ -213,7 +215,7 @@ labelElement opts ff = case labelText f of
   where
     f = Decorated (opts <> options ff, ff)
     fontSize = 16
-    lb = maybe "" id $ labelText f
+    lb = fromMaybe "" $ labelText f
     textWidth = fromIntegral $ length lb
     text = text_ $ [ X_ <<- fmtSVG x
                    , Y_ <<- fmtSVG y
@@ -223,7 +225,7 @@ labelElement opts ff = case labelText f of
                    , Stroke_ <<- "none"
                    , Fill_ <<- "white"] <> offsetX <> offsetY 
     x :+ y = scaled (labelPosition f) + cmp d
-    d = (labelOffset f) # scale (fromIntegral fontSize) # reflect 0
+    d = labelOffset f # scale (fromIntegral fontSize) # reflect 0
     (cx, cy) = labelCorner f
     offsetX = case 0*signum cx of
                 -1 -> [ Text_anchor_ <<- "start" ]
@@ -235,9 +237,10 @@ labelElement opts ff = case labelText f of
                 -1 -> [ Dy_ <<- showt (fontSize - 2) ]
 
 ------------------------------------------------------------
-
+-- | Constrain for an object that could be included to a group.
 type Groupable a = (SVGable a, Show a, Trans a)
 
+-- | The empty figure.
 data EmptyFig = EmptyFig deriving Show
 
 instance Trans EmptyFig where
@@ -250,7 +253,7 @@ instance Affine EmptyFig where
 instance SVGable EmptyFig where
   toSVG _ EmptyFig = mempty
 
-
+-- | The group of inhomogeneous Groupable objects.
 data Group where 
     G :: Groupable a => a -> Group
     Append :: Group -> Group -> Group
@@ -261,6 +264,7 @@ instance Semigroup Group where (<>) = Append
 instance Monoid Group where mempty = G EmptyFig
 
 infixl 5 <+>
+-- | The appending operator for groupable objects.
 (<+>) :: (Groupable a, Groupable b) => a -> b -> Group
 a <+> b = G a <> G b
 
@@ -278,7 +282,7 @@ instance SVGable Group where
   toSVG opts (G a) = toSVG opts a
   toSVG opts (Append a b) = toSVG opts a <> toSVG opts b
 
-
+-- | Returns a group of homogeneous list of objects.
 group :: Groupable a => [a] -> Group
 group = foldMap G
 
@@ -291,14 +295,13 @@ svg content =
                            , Height_ <<- "500"
                            , Style_ <<- "background : #444;"]
 
-chart :: String -> Group -> IO ()
-chart name gr = writeFile name $ prettyText contents
+-- | Creates a SVG contents for geometric objects.
+showSVG gr = prettyText contents
   where
     contents = svg $ toSVG mempty gr
 
+
 scaled :: Trans a => a -> a
 scaled = translate (svgSize/2, svgSize/2) .
-         scale (svgSize/(paperSize + 1)) .
+         scale (svgSize/(paperSize + 2)) .
          reflect 0 
-
-

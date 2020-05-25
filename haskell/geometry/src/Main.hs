@@ -14,12 +14,12 @@ c = circle 4 (6,-6) #: "c"
 
 l = aLine
     #: "a" <> dotted <> white
-    # at (-3, 5) . along 100 
+    # at (-3, 8) # along 45
 
 ct' = (t <+> c) # reflectAt l
 
-s = segment (3,4) (8,13) #: "s"
+s = aSegment # scale 5 # at' pt # perpendicularTo l
 
 main :: IO ()
-main = chart "test.svg" $ lb <+> t <+> c <+> l <+> ct' <+> pt <+> s
+main = writeSVG "test.svg" $ lb <+> t <+> c <+> l <+> ct' <+> pt  <+> s
 

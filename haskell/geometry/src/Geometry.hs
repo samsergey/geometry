@@ -1,15 +1,38 @@
 {-# language TypeApplications #-}
-module Geometry ( module Base
-                , module Point
-                , module Line
-                , module Circle
-                , module Polygon
-                , module SVG
-                , module Geometry
-                , module Decorations
-                ) where
+{-# language OverloadedStrings #-}
+module Geometry (
+  -- * Reexports modules
+    module Base
+  , module Point
+  , module Line
+  , module Circle
+  , module Polygon
+  , module Decorations
+  -- * Main interface
+  , writeSVG, showSVG, (<+>), group
+  -- * Constructors for affine geometric objects
+  , aPoint, aLabel
+  , aLine, aRay, aSegment
+  , aCircle
+  , aSquare, aRectangle, aTriangle
+  -- * Constructors for exact objects
+  , origin, oX, oY
+  , point, pointOn
+  , circle
+  , line, ray, segment
+  , parametricPoly, polarPoly, regularPoly
+  -- * Modificators
+  , at, along, through
+  , perpendicularTo
+  -- * General versions of conctructors and modifiers
+  , point', line', ray', segment'
+  , circle'
+  , at', along', through',
+  ) where
 
+import Prelude hiding (writeFile)
 import Data.Complex
+import Data.Text.Lazy.IO (writeFile)
 
 import Base
 import Point
@@ -23,6 +46,11 @@ import SVG
 
 origin :: Point
 origin = mkPoint (0 :: CN)
+
+oX = aLine
+oY = oX # rotate 90
+
+------------------------------------------------------------
 
 point :: XY -> Point
 point = point'
@@ -42,8 +70,7 @@ aLabel s = mkLabel origin #: label s
 ------------------------------------------------------------
 
 circle' :: Affine a => Double -> a -> Circle
-circle' r p = mkCircle2 c $ c + (r :+ 0)
-  where c = cmp p
+circle' r p = mkCircleRC r (cmp p)
 
 circle :: Double -> XY -> Circle
 circle = circle'
@@ -77,6 +104,41 @@ aLine = aSegment `extendAs` Unbound
 aRay = aSegment `extendAs` Semibound
 
 ------------------------------------------------------------
+at' :: (Affine p, Figure a) => p -> a -> a
+at' p fig = superpose (refPoint fig) p fig
+
+at :: Figure a => XY -> a -> a
+at = at'
+
+along' :: (Figure f, Affine v, Affine f) => v -> f -> f
+along' v l = rotateAt (refPoint l) (angle v - angle l) l
+
+along :: (Figure a, Affine a) => Double -> a -> a
+along d = along' (asDeg d)
+
+
+-- | Turns and extends the line so that it passes through a given point.
+through' :: (Affine p, Linear l) => p -> l -> l
+through' p l = l
+               # along' (azimuth p0 p)
+               # scaleAt p0 (distance p0 p / unit l)
+  where p0 = start l
+
+-- | A coordinated version of `through'.
+through :: Linear l => XY -> l -> l
+through = through'
+
+-- | Turns the line so that it becomes perpendicular to a given one, pointing towards it.
+perpendicularTo :: Linear l => Line -> l -> l
+perpendicularTo l2 l = l # along' d
+  where
+    s = start l
+    s' = s # reflectAt l2
+    d = if l2 `isContaining` s
+        then normal l2 0
+        else angle $ ray' s s'
+
+------------------------------------------------------------
 
 parametricPoly :: (Double -> XY) -> [Double] -> Polygon
 parametricPoly f range =
@@ -103,3 +165,5 @@ aTriangle = mkPolygon @XY [ (0,0), (1,0)
                           , (cos (pi/3), sin (pi/3))]
 
 
+writeSVG :: SVGable a => FilePath -> a -> IO ()
+writeSVG name g = writeFile name $ showSVG g

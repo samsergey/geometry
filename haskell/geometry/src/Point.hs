@@ -1,4 +1,9 @@
-module Point where
+module Point
+  (-- * Types
+    Point (..), Label (..)
+    -- * Constructors
+  , mkPoint, mkLabel
+  ) where
 
 import Data.Complex
 import Data.Bool
@@ -7,8 +12,10 @@ import Base
 
 ------------------------------------------------------------
 
+-- | The type representing a point.
 newtype Point = Point CN
 
+-- | The general point constructor.
 mkPoint :: Affine a => a -> Point
 mkPoint = Point . cmp
 
@@ -34,8 +41,10 @@ instance Figure Point where
 
 ------------------------------------------------------------
 
+-- | The type representing a label.
 newtype Label = Label CN
 
+-- | The general label constructor (the label test is set by `label` decorator).
 mkLabel :: Affine a => a -> Label
 mkLabel = Label . cmp
 

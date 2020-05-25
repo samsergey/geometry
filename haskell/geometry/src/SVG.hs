@@ -36,8 +36,8 @@ svgSize :: Double
 svgSize = 500
 
 -- |The virtual size of the chart paper
-svgSize :: Double
-svgSize = 50
+paperSize :: Double
+paperSize = 50
 
 -- |The curve bounding the visible paper
 plane = mkPolygon [(-1,-1), (1,-1), (1,1), (-1,1) :: XY]
@@ -245,7 +245,7 @@ instance Trans EmptyFig where
 
 instance Affine EmptyFig where
   cmp EmptyFig = 0
-  fromCN _ = EmptyFig
+  asCmp _ = EmptyFig
 
 instance SVGable EmptyFig where
   toSVG _ EmptyFig = mempty

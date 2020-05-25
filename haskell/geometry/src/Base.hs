@@ -21,20 +21,35 @@ module Base
   -- *** Predicates
   , isOrthogonal, isCollinear, isOpposite, isZero
   -- *** Vector and point operations
-  , dot, det, cross, norm, distance, angle, normalize, columns
+  , dot, det, cross, norm, distance, angle, normalize, columns, azimuth
   -- ** Linear transformations
   , Trans (..)
-  , transformCN, transformXY
+  , transformCN, transformXY, transformAt
+  -- *** transformations
+  , translate, superpose, at', at, along', along
+  , scale, scaleX, scaleY, scaleAt, scaleXAt,scaleYAt
+  , rotate, rotateAt, reflect, reflectAt
+  -- ** Curves
+  , Curve (..), PointLocation (..)
+  , start
+  , (.@), (@.), (.?), (?.)
+  -- ** Intersections of curves
+  , Intersections (..)
+  -- ** Figures
+  , Figure (..)
   -- ** Fuzzy equality
   , AlmostEq
   -- *** Fuzzy inequalities
-  , (~<=), (~>=)
+  , (~<=), (~>=), (~==)
+  -- * Misc
+  , (#)
   )
 where
 
 import Data.Fixed (mod')
 import Data.Complex
 import Data.List
+import Data.List.Extra
 import Control.Applicative
 import Data.Monoid
 import Data.Maybe
@@ -186,6 +201,69 @@ transformXY :: TMatrix -> XY -> XY
 transformXY ((a11, a12, sx), (a21, a22, sy)) (x, y) =
     (a12*y + a11*x + sx, a22*y + a21*x + sy)
 
+-- | The transformation with shifted origin.
+transformAt :: (Trans a, Affine p) => p -> (a -> a) -> a -> a
+transformAt p t = translate xy . t . translate (-xy)
+  where xy = cmp p
+
+-- | The translation of an object.
+translate :: (Trans a, Affine p) => p -> a -> a
+translate = transform . translateT . cmp
+
+-- | The translation leading to a superposition of tho points.
+superpose :: (Trans a, Affine p1, Affine p2) => p1 -> p2 -> a -> a
+superpose p1 p2 = translate (cmp p2 - cmp p1)
+
+-- | The isotropic scaling of an object.
+scale :: Trans a => Double -> a -> a
+scale s = transform (scaleT s s)
+
+-- | The scaling of an object in x-direction.
+scaleX :: Trans a => Double -> a -> a
+scaleX s = transform (scaleT s 1)
+
+-- | The scaling of an object in y-direction.
+scaleY :: Trans a => Double -> a -> a
+scaleY s = transform (scaleT 1 s)
+
+-- | The isotropic scaling of an object against a given point.
+scaleAt :: (Trans a, Affine p) => p -> Double -> a -> a
+scaleAt p s = transformAt p (scale s)
+
+-- | The isotropic scaling of an object in x-direction against a given point.
+scaleXAt :: (Trans a, Affine p) => p -> Double -> a -> a
+scaleXAt p s = transformAt p (scaleX s)
+
+-- | The isotropic scaling of an object in y-direction against a given point.
+scaleYAt :: (Trans a, Affine p) => p -> Double -> a -> a
+scaleYAt p s = transformAt p (scaleY s)
+
+-- | The rotation of an object against the origin.
+rotate :: Trans a => Angular -> a -> a
+rotate = transform . rotateT . rad
+
+-- | The rotation of an object against a given point.
+rotateAt :: (Trans a, Affine p) => p -> Angular -> a -> a
+rotateAt p a = transformAt p (rotate a)
+
+-- | The reflection of an object against the direction passing through the origin.
+reflect :: Trans a => Angular -> a -> a
+reflect d = transform $ reflectT $ rad d
+
+at' :: (Affine p, Figure a) => p -> a -> a
+at' p fig = superpose (refPoint fig) p fig
+
+at :: Figure a => XY -> a -> a
+at = at'
+
+along' :: (Figure f, Affine v, Affine f) => v -> f -> f
+along' v l = rotateAt (refPoint l) (angle v - angle l) l
+
+along :: (Figure a, Affine a) => Double -> a -> a
+along d = along' (asDeg d)
+
+reflectAt :: (Curve l, Affine l, Trans a) => l -> a -> a
+reflectAt l = transformAt (l.@ 0) (reflect (angle l))
 
 ------------------------------------------------------------
 -- | Class representing points in 2d affine space.
@@ -304,33 +382,45 @@ data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 -- For finite curves parameter runs from 0 to 1, where 0 is a start
 -- and 1 is the end of the curve. The length scale is given by `unit`
 -- function.
+infix 8 .@
+infix 8 @.
+infix 8 .?
+infix 8 ?.
+  
 class Curve a where
-  {-# MINIMAL (param | maybeParam),
-              (locus | maybeLocus),
+  {-# MINIMAL ((.@) | (.?)),
+              ((@.) | (?.)),
               (normal | tangent),
               distanceTo,
               (location | (isContaining, isEnclosing)) #-}
 
   -- | Returns a point on a curve for given parameter.
-  param :: a -> Double -> CN
-  param c x = fromMaybe 0 $ maybeParam c x
+  -- If parameter value is out of range [0, 1] for a finite curves
+  -- the closest boundary value is returned.
+  -- Use `(.?)` for more explicit parameterization.
+  (.@) :: a -> Double -> CN
+  (.@) c x = fromMaybe boundary $ (.?) c x
+    where boundary = if (x < 0) then 0 else 1
 
-  -- | Returns a point on a curve for given parameter, or nothing
+  -- | Returns a point on a curve for given parameter, or Nothing
   -- if parameter runs out of the range defined for a curve.
-  maybeParam :: a -> Double -> Maybe CN
-  maybeParam c x =
+  (.?) :: a -> Double -> Maybe CN
+  (.?) c x =
     let p = param c x
     in if c `isContaining` p then Just p else Nothing                  
 
-  -- | Returns a parameter, corresponding to a point on a curve.
-  locus :: Affine p => a -> p -> Double
-  locus c p =  fromMaybe 0 $ maybeLocus c p 
+  -- | Returns a parameter, corresponding to a normal point projection on a curve.
+  -- if normal projection doesn't exist returns the parameter of the closest point.
+  -- Use `(?.)` for more explicit projection.
+  (@.) :: Affine p => a -> p -> Double
+  (@.) c p =  fromMaybe closest $ (?.) c p
+    where closest = minimumOn (\x -> distance p (c.@x)) [0, 1]
 
   -- | Returns a parameter for a point on a curve, or nothing
   -- if parameter could not be found.
-  maybeLocus :: Affine p => a -> p -> Maybe Double
-  maybeLocus c p = 
-    let x = locus c p
+  (?.) :: Affine p => a -> p -> Maybe Double
+  (?.) c p = 
+    let x = (@.) c p
     in if c `isContaining` param c x
        then Just x
        else Nothing                  
@@ -347,7 +437,7 @@ class Curve a where
   tangent :: a -> Double -> Angular
   tangent f t = normal f t + 90
 
-  -- | The normal direction for a givem parameter on the curve.
+  -- | The normal direction for a given parameter on the curve.
   normal :: a -> Double -> Angular
   normal f t = 90 + tangent f t
 
@@ -373,22 +463,6 @@ class Curve a where
 start :: Curve a => a -> CN
 start c = c .@ 0
     
-infix 8 .@
-(.@) :: Curve a => a -> Double -> CN
-c .@ x = param c x
-
-infix 8 @.
-(@.) :: (Curve a, Affine p) => p -> a -> Double
-p @. c  = locus c p
-
-infix 8 .?
-(.?) :: Curve a => a -> Double -> Maybe CN
-c .? x = maybeParam c x
-
-infix 8 ?.
-(?.) :: (Curve a, Affine p) => p -> a -> Maybe Double
-p ?. c  = maybeLocus c p
-
 ------------------------------------------------------------
 
 class (Curve a, Curve b) => Intersections a b where

@@ -129,7 +129,7 @@ instance Eq a => Eq (Decorated a) where
 
 instance Affine a => Affine (Decorated a) where
   cmp = cmp . fromDecorated
-  fromCN = pure . fromCN
+  asCmp = pure . asCmp
 
 instance Trans a => Trans (Decorated a) where
   transform t = fmap (transform t)

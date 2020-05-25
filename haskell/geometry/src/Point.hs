@@ -25,7 +25,7 @@ instance Trans Point where
 
 instance Affine Point where
   cmp (Point p) = p
-  fromCN = Point
+  asCmp = Point
 
 instance Figure Point where
   isTrivial _ = False
@@ -52,7 +52,7 @@ instance Trans Label where
 
 instance Affine Label where
   cmp (Label p) = p
-  fromCN = Label
+  asCmp = Label
 
 instance Figure Label where
   isTrivial _ = False

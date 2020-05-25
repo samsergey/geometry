@@ -59,7 +59,7 @@ instance Figure Line where
 
 instance Affine Line where
   cmp l =  let (p1, p2) = refPoints l in normalize $ cmp p2 - cmp p1
-  fromCN p = mkLine (0, p)
+  asCmp p = mkLine (0, p)
 
 
 instance Trans Line where

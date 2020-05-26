@@ -1,4 +1,6 @@
 {-# language MultiParamTypeClasses #-}
+{-# language FlexibleInstances #-}
+
 module Polygon where
 
 import Data.Complex
@@ -10,8 +12,16 @@ import Data.Fixed
 import Base
 import Line
 
-data Polygon = Polygon { polyClosed :: Bool
-                       , vertices :: ![CN] }
+class Curve p => Polygonal p where
+  vertices :: p -> [CN]
+  polyClosed :: p -> Bool
+
+data Polygon = Polygon Bool ![CN]
+
+instance Polygonal Polygon where
+  vertices (Polygon _ vs) = vs
+  polyClosed (Polygon c _) = c
+  
 
 mkPolygon :: Affine a => [a] -> Polygon
 mkPolygon pts = Polygon True $ cmp <$> pts
@@ -20,15 +30,15 @@ mkPolyline :: Affine a => [a] -> Polygon
 mkPolyline pts = Polygon False $ cmp <$> pts
 
 closePoly :: Polygon -> Polygon
-closePoly p = p {polyClosed = True }
+closePoly p = Polygon True (vertices p)
 
-segments :: Polygon -> [Line]
+segments :: Polygonal p => p -> [Line]
 segments p = mkSegment <$> zip (vertices p) (tail vs)
   where vs = if isClosed p
              then cycle (vertices p)
              else vertices p
 
-vertex :: Polygon -> Int -> CN
+vertex :: Polygonal p => p -> Int -> CN
 vertex p i = vs !! j
   where vs = vertices p
         j = if isClosed p
@@ -51,7 +61,7 @@ instance Eq Polygon where
 
 
 instance Trans Polygon where
-  transform t p = p {vertices = transform t <$> vertices p }
+  transform t (Polygon c vs) = Polygon c $ transform t <$> vs
 
 
 instance Curve Polygon where

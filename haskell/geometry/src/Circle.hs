@@ -1,9 +1,7 @@
 {-# Language RecordWildCards #-}
 module Circle
-  (-- * Types
-    Circle (..)
-    -- ** Parameters
-  , center, radius, orientation
+  (-- * Types and classes
+    Circle (..), Circular (..)
     -- * Constructors
   , trivialCircle, mkCircle, mkCircleRC
   ) where
@@ -12,24 +10,31 @@ import Data.Complex
 
 import Base
 
+-- | Class for circle and decorated circle
+class Curve c => Circular c where
+  -- | Center of the circle.
+  center :: c -> CN
+  -- | Radius of the circle
+  radius :: c -> Double
+  -- | Orientation of the circle
+  orientation :: c -> Double
+  -- | The angle of the starting point.
+  phaseShift :: c -> Angular
+  -- | The radius-vector for a given parameter
+  radiusVector :: c -> Double -> XY
+  radiusVector c x = coord $ azimuth (center c) (start c)
+
 -- | Represents a circle with given center, passing through given point.
 data Circle = Circle
               CN -- ^ center,
               CN -- ^ starting point,
               Double -- ^ orientation poitive -- CW, negative -- CCW.
 
--- | Center of the circle.
-center (Circle c _ _) =  c
-
--- | Radius of the circle
-radius (Circle c p _) = distance c p  
-
--- | Orientation of the circle
-orientation (Circle _ _ o) = o
-
--- | The angle of the starting point.
-phaseShift :: Circle -> Angular
-phaseShift (Circle c p o) = asRad (signum o) * azimuth c p
+instance Circular Circle where
+  center (Circle c _ _) =  c
+  radius (Circle c p _) = distance c p  
+  orientation (Circle _ _ o) = o
+  phaseShift (Circle c p o) = asRad (signum o) * azimuth c p
 
 -- | The trivial circle with zero radius.
 trivialCircle :: Circle

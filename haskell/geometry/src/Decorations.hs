@@ -1,6 +1,8 @@
 {-# language DeriveFunctor #-}
 {-# language FlexibleInstances #-}
 {-# language OverloadedStrings #-}
+{-# language MultiParamTypeClasses #-}
+
 module Decorations
   ( -- * Classes
     Decor (..)
@@ -17,12 +19,14 @@ module Decorations
   )
 where
 
-import Base
 import Data.Monoid
 import Data.Maybe
 import Control.Monad
 import Data.String( IsString(..) )
 
+import Base
+import Circle
+import Polygon
 
 -- | The alias for a tuple of decoration records
 type Options = (Labeling, Style)
@@ -170,10 +174,25 @@ instance Curve a => Curve (Decorated a) where
   isEnclosing = isEnclosing . fromDecorated
   distanceTo = distanceTo . fromDecorated
 
-
 instance Figure a => Figure (Decorated a) where
   isTrivial = isTrivial . fromDecorated
   refPoint = refPoint . fromDecorated
+g
+instance Circular a => Circular (Decorated a) where
+  radius = radius . fromDecorated
+  center = center . fromDecorated
+  phaseShift = phaseShift . fromDecorated
+  orientation = orientation . fromDecorated
+
+instance Polygonal a => Polygonal (Decorated a) where
+  vertices = vertices . fromDecorated
+  polyClosed = polyClosed . fromDecorated
+
+instance Intersections a b => Intersections a (Decorated b) where
+  intersections x d = intersections x (fromDecorated d)
+
+instance Intersections a b => Intersections (Decorated a) b where
+  intersections d x = intersections (fromDecorated d) x
 
 ------------------------------------------------------------
 -- | A wrapped decoration function with monoidal properties,

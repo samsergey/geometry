@@ -129,7 +129,7 @@ through :: Linear l => XY -> l -> l
 through = through'
 
 -- | Turns the line so that it becomes perpendicular to a given one, pointing towards it.
-perpendicularTo :: Linear l => Line -> l -> l
+perpendicularTo :: (Linear l', Linear l) => l' -> l -> l
 perpendicularTo l2 l = l # along' d
   where
     s = start l

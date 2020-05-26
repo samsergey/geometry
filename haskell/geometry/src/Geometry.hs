@@ -23,8 +23,8 @@ module Geometry (
   , parametricPoly, polarPoly, regularPoly
   -- * Modificators
   , at, along, through
-  , perpendicularTo
-  -- * General versions of conctructors and modifiers
+  , normalTo
+  -- * General versions of conctructors and modifiersg
   , point', line', ray', segment'
   , circle'
   , at', along', through',
@@ -60,6 +60,10 @@ point' p = mkPoint (cmp p)
 
 pointOn :: Curve a => a -> Double -> Point
 pointOn c t = mkPoint (c @-> t)
+
+-- | Returns a point on the curve which is s normal projection of the given point on the curve.
+projectOn :: (Curve c, Affine p) => p -> c -> Point
+projectOn p c = pointOn c (p ->@ c)
 
 aPoint :: Point
 aPoint = origin
@@ -116,7 +120,6 @@ along' v l = rotateAt (refPoint l) (angle v - angle l) l
 along :: (Figure a, Affine a) => Double -> a -> a
 along d = along' (asDeg d)
 
-
 -- | Turns and extends the line so that it passes through a given point.
 through' :: (Affine p, Linear l) => p -> l -> l
 through' p l = l
@@ -128,15 +131,13 @@ through' p l = l
 through :: Linear l => XY -> l -> l
 through = through'
 
--- | Turns the line so that it becomes perpendicular to a given one, pointing towards it.
-perpendicularTo :: (Linear l', Linear l) => l' -> l -> l
-perpendicularTo l2 l = l # along' d
-  where
-    s = start l
-    s' = s # reflectAt l2
-    d = if l2 `isContaining` s
-        then normal l2 0
-        else angle $ ray' s s'
+-- | Turns the line so that it becomes normal to a given curve, pointing towards a curve.
+normalTo :: (Curve c, Linear l) => c -> l -> l
+normalTo c l =
+  if c `isContaining` s
+  then l # (along' $ normal c (s ->@ c))
+  else l # (along' $ ray' s (s `projectOn` c))
+  where s = start l 
 
 ------------------------------------------------------------
 

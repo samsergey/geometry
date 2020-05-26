@@ -18,5 +18,5 @@
   <circle stroke="#444" stroke-width="1" fill="red" cy="201.92307692307693" r="3" cx="384.61538461538464"/>
   <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="384.61538461538464" text-anchor="middle" y="185.92307692307693">B
   </text>
-  <line x2="350.61986628910824" y1="201.92307692307693" stroke="orange" stroke-width="1" fill="none" y2="167.92755859680062" x1="384.61538461538464"/>
+  <line x2="367.052636811781" y1="271.1132109117249" stroke="orange" stroke-width="2" fill="none" y2="490.38461538461536" x1="295.8070386778866"/>
 </svg>

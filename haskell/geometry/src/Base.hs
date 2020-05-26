@@ -32,7 +32,7 @@ module Base
   -- ** Curves
   , Curve (..), PointLocation (..)
   , (->@), (->@?), (@->), (@->?)
-  , start
+  , start, paramL, projectL, projection
   -- ** Intersections of curves
   , Intersections (..)
   -- ** Figures
@@ -250,7 +250,7 @@ rotateAt p a = transformAt p (rotate a)
 reflect :: Trans a => Angular -> a -> a
 reflect d = transform $ reflectT $ rad d
 
-reflectAt :: (Curve l, Affine l, Trans a) => l -> a -> a
+--reflectAt :: (Curve l, Affine l, Trans a) => l -> a -> a
 reflectAt l = transformAt (start l) (reflect (angle l))
 
 ------------------------------------------------------------
@@ -423,7 +423,7 @@ class Curve c where
   unit _ = 1
 
   -- | The distance between a curve and a point.
-  distanceTo :: Affine p => c -> p -> Double
+  distanceTo :: Affine p => p -> c -> Double
 
   -- | The tangent direction for a given parameter on the curve.
   tangent :: c -> Double -> Angular

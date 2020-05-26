@@ -172,12 +172,12 @@ instance Curve a => Curve (Decorated a) where
   tangent = tangent . fromDecorated
   isContaining = isContaining . fromDecorated
   isEnclosing = isEnclosing . fromDecorated
-  distanceTo = distanceTo . fromDecorated
+  distanceTo pt = distanceTo pt . fromDecorated
 
 instance Figure a => Figure (Decorated a) where
   isTrivial = isTrivial . fromDecorated
   refPoint = refPoint . fromDecorated
-g
+
 instance Circular a => Circular (Decorated a) where
   radius = radius . fromDecorated
   center = center . fromDecorated

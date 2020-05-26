@@ -18,8 +18,8 @@ l = aLine
 
 ct' = (t <+> c) # reflectAt l
 
-s = aSegment # scale 5 # at' pt # perpendicularTo l
+s = aRay # at' (pointOn c 0.3) # normalTo c
 
 main :: IO ()
-main = writeSVG "test.svg" $ lb <+> t <+> c <+> l <+> ct' <+> pt  <+> s
+main = writeSVG "test.svg" $ lb <+> t <+> c <+> l <+> ct' <+> pt <+> s
 

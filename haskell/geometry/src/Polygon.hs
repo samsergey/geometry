@@ -76,11 +76,11 @@ instance Curve Polygon where
           tbl = zip (zip ds (tail ds)) $ segments p
           ds = scanl (+) 0 $ unit <$> segments p
 
-  project p pt = x0 + pt ->@ s
+  project p pt = x0 + projectL s pt
     where
       ss = segments p
       ds = scanl (+) 0 $ unit <$> ss
-      (x0, s) = minimumOn (\(_,s) -> s `distanceTo` pt) $ zip ds ss
+      (x0, s) = minimumOn (\(_,s) -> distanceTo pt s) $ zip ds ss
 
   isClosed = polyClosed
 
@@ -92,9 +92,11 @@ instance Curve Polygon where
 
   unit p = sum $ unit <$> segments p
 
-  tangent p t = undefined
+  tangent p t = azimuth (p @-> t - dt) (p @-> t + dt)
+    where dt = 1e-5
 
-  distanceTo p pt = minimum $ (`distanceTo` pt) <$> segments p
+  distanceTo pt p = minimum $ distanceTo pt <$> segments p
+
   
 instance Figure Polygon where
   isTrivial p = null $ vertices p

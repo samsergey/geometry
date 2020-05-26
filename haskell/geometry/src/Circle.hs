@@ -88,7 +88,7 @@ instance Curve Circle where
   unit _ = 2 * pi
   normal c t = asCmp (c @-> t - center c)
   tangent c t = normal c t + asDeg (orientation c * 90)
-  distanceTo c p = abs (center c `distance` p - radius c)
+  distanceTo p c = abs (center c `distance` p - radius c)
 
 
 instance Figure Circle where

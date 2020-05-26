@@ -36,7 +36,7 @@ module Base
   -- ** Intersections of curves
   , Intersections (..)
   -- ** Figures
-  , Figure (..)п
+  , Figure (..)
   -- ** Fuzzy equality
   , AlmostEq
   -- *** Fuzzy inequalities

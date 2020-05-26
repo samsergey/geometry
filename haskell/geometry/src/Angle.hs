@@ -3,11 +3,14 @@ module Angle where
 import Base
 
 ------------------------------------------------------------
-
+-- | Type representing angle on the chart
 data Angle = Angle CN Angular Angular
   deriving Eq
 
+-- | The angle value
 angleValue (Angle p s e) = e - s
+
+setValue v (Angle p s _) = Angle p s (s + v)
 
 angleStart (Angle _ s _) = s
 
@@ -21,6 +24,11 @@ instance Show Angle where
           sy = show $ getY $ refPoint an
 
 
+instance Affine Angle where
+  cmp = cmp . angleStart
+  asCmp x = Angle 0 0 (asCmp x)
+  
+
 instance Trans Angle where
   transform t (Angle p s e) = Angle p' s' e'
     where p' = transform t p
@@ -31,4 +39,4 @@ instance Trans Angle where
 instance Figure Angle where
   refPoint (Angle p _ _) = p
   isTrivial a = angleValue a ~== 0
-  
+  a1 `isSimilar` a2 = angleValue a1 ~== angleValue a2

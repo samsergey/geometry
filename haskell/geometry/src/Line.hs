@@ -144,6 +144,7 @@ instance Curve Line where
 
 instance Intersections Line Line where
   intersections l1 l2
+    | l1 `isCollinear` l2 = []
     | isTrivial l1 = filter (isContaining l2) [refPoint l1]
     | isTrivial l2 = filter (isContaining l1) [refPoint l2]
     | otherwise = 

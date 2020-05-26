@@ -22,6 +22,8 @@ instance Polygonal Polygon where
   vertices (Polygon _ vs) = vs
   polyClosed (Polygon c _) = c
   
+trivialPolygon :: Polygon
+trivialPolygon = Polygon True []
 
 mkPolygon :: Affine a => [a] -> Polygon
 mkPolygon pts = Polygon True $ cmp <$> pts
@@ -58,6 +60,12 @@ instance Show Polygon where
 instance Eq Polygon where
   p1 == p2 = isClosed p1 == isClosed p2 &&
              vertices p1 ~== vertices p2
+
+instance Affine Polygon where
+  cmp p = case segments p of
+            [] -> 0
+            (x:_) -> cmp x
+  asCmp x = mkPolyline [0, x]
 
 
 instance Trans Polygon where
@@ -99,7 +107,7 @@ instance Curve Polygon where
 
   
 instance Figure Polygon where
-  isTrivial p = null $ vertices p
+  isTrivial p = length (vertices p) < 2
   isSimilar p1 p2 = p1 == p2
   refPoint p = if isNontrivial p
                then head $ vertices p

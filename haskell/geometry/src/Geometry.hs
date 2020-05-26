@@ -12,7 +12,7 @@ module Geometry (
   -- * Main interface
   , writeSVG, showSVG, (<+>), group
   -- * Constructors for affine geometric objects
-  , aPoint, aLabel
+  , aPoint, aLabel, anAngle
   , aLine, aRay, aSegment
   , aCircle
   , aSquare, aRectangle, aTriangle
@@ -22,9 +22,11 @@ module Geometry (
   , circle
   , line, ray, segment
   , parametricPoly, polarPoly, regularPoly
+  , trangle2a
   -- * Modificators
-  , at, along, through
+  , at, on, along, through
   , normalTo
+  , angleBetween
   -- * General versions of conctructors and modifiersg
   , point', line', ray', segment'
   , circle'
@@ -124,7 +126,11 @@ aRay = aSegment `extendAs` Semibound
 
 ------------------------------------------------------------
 
-anAngle d = Angle 0 0 d
+anAngle = Angle 0 0
+
+angleBetween l1 l2 = anAngle (angle l2 - angle l1)
+                     # at' (start l1)
+                     # along' l1
 
 ------------------------------------------------------------
 at' :: (Affine p, Figure a) => p -> a -> a
@@ -138,6 +144,11 @@ along' v l = rotateAt (refPoint l) (angle v - angle l) l
 
 along :: (Figure a, Affine a) => Double -> a -> a
 along d = along' (asDeg d)
+
+-- | Locates an affine object on a given curve at
+-- given parameter and aligns it along a tangent to a curve.
+on :: (Figure a, Affine a, Curve c) => c -> Double -> a -> a
+on c x = along' (tangent c x) . at' (c @-> x)
 
 -- | Turns and extends the line so that it passes through a given point.
 through' :: (Affine p, Linear l) => p -> l -> l
@@ -160,15 +171,18 @@ normalTo c l =
 
 ------------------------------------------------------------
 
+-- | Constructs a parametric graph as a `Polyline`.
 parametricPoly :: (Double -> XY) -> [Double] -> Polygon
 parametricPoly f range =
   mkPolyline [ x :+ y | t <- range , let (x,y) = f t ]
 
+-- | Constructs a polar graph as a `Polyline`.
 polarPoly :: (Double -> Double) -> [Double] -> Polygon
 polarPoly rho range =
   mkPolyline [ mkPolar (rho phi) phi | x <- range
                                      , let phi = 2*pi*x ]
 
+-- | Constructs a regular polygon with given number of sides, enscribed in a unit circle.
 regularPoly :: Int -> Polygon
 regularPoly n' = rotate 90 $ closePoly $
                  polarPoly (const 1) [0,1/n..1-1/n]
@@ -187,7 +201,16 @@ aTriangle :: Polygon
 aTriangle = mkPolygon @XY [ (0,0), (1,0)
                           , (cos (pi/3), sin (pi/3))]
 
+-- | Returns a triangle with base 1 and two given angles.
+trangle2a :: Angular -> Angular -> Polygon
+trangle2a a1 a2 = case intersections r1 r2 of
+                    [p] -> mkPolygon [(0,0), (1,0), coord p]
+                    [] -> trivialPolygon
+  where r1 = aRay # along' a1
+        r2 = aRay # at (1,0) # along' (180 - a2)
+
 ------------------------------------------------------------
 
+-- | Creates SVG for an SVGable object and writes a file with a given name.
 writeSVG :: SVGable a => FilePath -> a -> IO ()
 writeSVG name g = writeFile name $ showSVG g

@@ -203,7 +203,9 @@ instance Decor Polygon where
     , getStrokeWidth = pure "2" }
 
 instance SVGable Polygon where
-  toSVG opts p = elem attr <> labelElement opts p
+  toSVG opts p
+    | isTrivial p = labelElement opts p
+    | otherwise = elem attr <> labelElement opts p
     where
       opts' = options p <> opts
       p' = scaled p
@@ -226,12 +228,12 @@ instance SVGable Angle where
       opts' = options an <> opts
       poly = scaleAt p 3 $ mkPolyline [e, p, s]
       arc = mkPolyline [ p + scale 2 (cmp (asRad x))
-                       | x <- [ rad (angleStart an)
-                              , rad (angleStart an) + 0.01
-                              .. rad (angleEnd an)]]
+                       | x <- [ a1, a1 + 0.05 .. a2]]
       p = refPoint an
       s = p + cmp (angleStart an)
       e = p + cmp (angleEnd   an)
+      a1 = rad (angleStart an) `min` rad (angleEnd an)
+      a2 = rad (angleStart an) `max` rad (angleEnd an)
 
 ------------------------------------------------------------
 

@@ -18,13 +18,14 @@ l = aLine
     #: "a" <> dotted <> white
     # at (-3, 8) # along 45
 
-ct' = (t <+> c) # reflectAt l
+ct' = (t <+> c) # reflectAt l 
 
-s = aRay # at' (pointOn c 0.3) # normalTo c
+s = aRay # at' pt # normalTo l
 
-an = Angle (2 :+ 3) 10 50
+an = angleBetween s l
+        
+t1 = regularPoly 25 # scale 1 # on l 0
 
 main :: IO ()
-main = writeSVG "test.svg" $ (lb <+> t <+> c <+>
-                              l <+> ct' <+> pt <+> an)
+main = writeSVG "test.svg" (t1 <+> l)
 

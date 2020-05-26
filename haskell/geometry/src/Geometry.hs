@@ -1,5 +1,5 @@
 {-# language TypeApplications #-}
-{-# language OverloadedStrings #-}
+
 module Geometry (
   -- * Reexports modules
     module Base
@@ -7,6 +7,7 @@ module Geometry (
   , module Line
   , module Circle
   , module Polygon
+  , module Angle
   , module Decorations
   -- * Main interface
   , writeSVG, showSVG, (<+>), group
@@ -39,25 +40,32 @@ import Point
 import Circle
 import Line
 import Polygon
+import Angle
 import Decorations
 import SVG
  
 ------------------------------------------------------------
-
+-- | The origin point
 origin :: Point
 origin = mkPoint (0 :: CN)
 
-oX = aLine
-oY = oX # rotate 90
+-- | The x-axis
+oX = aLine #: thin
+
+-- | The y-axis
+oY = oX # rotate 90 #: thin
 
 ------------------------------------------------------------
 
+-- | The constructor for a point with given coordinates.
 point :: XY -> Point
 point = point'
 
+-- | The constructor for a point with given affine coordinates.
 point' :: Affine a => a -> Point
 point' p = mkPoint (cmp p)
 
+-- | The point on a given curve.
 pointOn :: Curve a => a -> Double -> Point
 pointOn c t = mkPoint (c @-> t)
 
@@ -65,9 +73,11 @@ pointOn c t = mkPoint (c @-> t)
 projectOn :: (Curve c, Affine p) => p -> c -> Point
 projectOn p c = pointOn c (p ->@ c)
 
+-- | The template for a point.
 aPoint :: Point
 aPoint = origin
 
+-- | The template for a label.
 aLabel :: String -> Decorated Label
 aLabel s = mkLabel origin #: label s
 
@@ -79,6 +89,7 @@ circle' r p = mkCircleRC r (cmp p)
 circle :: Double -> XY -> Circle
 circle = circle'
 
+-- | The template for a circle.
 aCircle :: Circle
 aCircle = circle' 1 origin
 
@@ -102,10 +113,18 @@ ray' p1 p2 = mkRay (cmp p1, cmp p2)
 ray :: XY -> XY -> Line
 ray = ray'
 
-aSegment, aLine, aRay :: Line
+-- | The template for a segment.
 aSegment = segment' origin ((1,0) :: XY)
+
+-- | The template for a line.
 aLine = aSegment `extendAs` Unbound
+
+-- | The template for a ray.
 aRay = aSegment `extendAs` Semibound
+
+------------------------------------------------------------
+
+anAngle d = Angle 0 0 d
 
 ------------------------------------------------------------
 at' :: (Affine p, Figure a) => p -> a -> a
@@ -135,8 +154,8 @@ through = through'
 normalTo :: (Curve c, Linear l) => c -> l -> l
 normalTo c l =
   if c `isContaining` s
-  then l # (along' $ normal c (s ->@ c))
-  else l # (along' $ ray' s (s `projectOn` c))
+  then l # along' (normal c (s ->@ c))
+  else l # along' (ray' s (s `projectOn` c))
   where s = start l 
 
 ------------------------------------------------------------
@@ -155,16 +174,20 @@ regularPoly n' = rotate 90 $ closePoly $
                  polarPoly (const 1) [0,1/n..1-1/n]
   where n = fromIntegral n'
 
+-- | The template for a square.
 aSquare :: Polygon
 aSquare = mkPolygon @XY [(0,0),(1,0),(1,1),(0,1)]
 
+-- | The template for a Rectangle.
 aRectangle :: Double -> Double -> Polygon
 aRectangle a b = aSquare # scaleX a # scaleY b
 
+-- | The template for a triangle.
 aTriangle :: Polygon
 aTriangle = mkPolygon @XY [ (0,0), (1,0)
                           , (cos (pi/3), sin (pi/3))]
 
+------------------------------------------------------------
 
 writeSVG :: SVGable a => FilePath -> a -> IO ()
 writeSVG name g = writeFile name $ showSVG g

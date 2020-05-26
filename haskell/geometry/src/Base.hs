@@ -32,11 +32,11 @@ module Base
   -- ** Curves
   , Curve (..), PointLocation (..)
   , (->@), (->@?), (@->), (@->?)
-  , start, paramL, projectL, projection
+  , start, paramL, projectL
   -- ** Intersections of curves
   , Intersections (..)
   -- ** Figures
-  , Figure (..)
+  , Figure (..)п
   -- ** Fuzzy equality
   , AlmostEq
   -- *** Fuzzy inequalities

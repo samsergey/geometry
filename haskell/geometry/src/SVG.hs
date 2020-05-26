@@ -32,6 +32,7 @@ import Point
 import Circle
 import Polygon
 import Line
+import Angle
 
 -- |The actual size of the svg image
 svgSize :: Double
@@ -86,6 +87,7 @@ attributes = attribute getStroke Stroke_ <>
         Nothing -> mempty
         
 ------------------------------------------------------------
+
 instance Decor Point where
   labelDefaults p = Labeling
     { getLabel = mempty
@@ -124,6 +126,7 @@ instance SVGable Label where
   toSVG opts l = labelElement (options l <> opts) l
 
 ------------------------------------------------------------
+
 instance Decor Circle where
   labelDefaults c = Labeling
     { getLabel = mempty
@@ -150,6 +153,7 @@ instance SVGable Circle where
               , R_ <<- fmtSVG (radius c') ]
 
 ------------------------------------------------------------
+
 instance Decor Line where
   labelDefaults l = Labeling
     { getLabel = mempty
@@ -190,6 +194,7 @@ instance SVGable Line where
             _ -> pure $ (s @-> 0.9) + cmp (scaled (normal s 0)) - cmp s
       
 ------------------------------------------------------------
+
 instance Decor Polygon where
   styleDefaults _ = Style
     { getStroke = pure "orange"
@@ -205,6 +210,28 @@ instance SVGable Polygon where
       elem = if isClosed p then polygon_ else polyline_
       attr = attributes opts' <>
              [ Points_ <<- foldMap fmtSVG (vertices p') ]
+
+------------------------------------------------------------
+
+instance Decor Angle where
+  styleDefaults _ = Style
+    { getStroke = pure "white"
+    , getFill = pure "none"
+    , getDashing = mempty
+    , getStrokeWidth = pure "1.25" }
+    
+instance SVGable Angle where
+  toSVG opts an = toSVG opts' (poly <+> arc) 
+    where
+      opts' = options an <> opts
+      poly = scaleAt p 3 $ mkPolyline [e, p, s]
+      arc = mkPolyline [ p + scale 2 (cmp (asRad x))
+                       | x <- [ rad (angleStart an)
+                              , rad (angleStart an) + 0.01
+                              .. rad (angleEnd an)]]
+      p = refPoint an
+      s = p + cmp (angleStart an)
+      e = p + cmp (angleEnd   an)
 
 ------------------------------------------------------------
 

@@ -4,12 +4,14 @@ module Main where
 
 import Geometry
 
+import Data.Complex
+
 pt = point (14,5) #: "B"
 
 lb = aLabel "A" # at (-10,0)
 
 t = aTriangle # scale 8 . scaleX 1.5
-    
+
 c = circle 4 (6,-6) #: "c"
 
 l = aLine
@@ -20,6 +22,9 @@ ct' = (t <+> c) # reflectAt l
 
 s = aRay # at' (pointOn c 0.3) # normalTo c
 
+an = Angle (2 :+ 3) 10 50
+
 main :: IO ()
-main = writeSVG "test.svg" $ lb <+> t <+> c <+> l <+> ct' <+> pt <+> s
+main = writeSVG "test.svg" $ (lb <+> t <+> c <+>
+                              l <+> ct' <+> pt <+> an)
 

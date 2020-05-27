@@ -11,27 +11,29 @@ module Geometry (
   , module Decorations
   -- * Main interface
   , writeSVG, showSVG, (<+>), group
-  -- * Constructors for affine geometric objects
-  , aPoint, aLabel, anAngle
-  , aLine, aRay, aSegment
-  , aCircle
-  , aSquare, aRectangle, aTriangle
-  -- * Constructors for exact objects
-  , origin, oX, oY
-  , point, pointOn
-  , circle
-  , line, ray, segment
-  , parametricPoly, polarPoly, regularPoly
-  , trangle2a
-  -- * Modificators
-  , at, on, along, through
-  , normalTo
+  -- * Constructors for geometric objects
+  -- ** Point constructors
+  , origin
+  , aPoint, aLabel
+  , point, point'
+  , pointOn, projectOn
+  -- ** Line constructors
+  , aLine, aRay, aSegment, oX, oY
+  , line, line', ray, ray', segment, segment'
+  -- ** Angle constructors
+  , anAngle
   , angleBetween
-  -- * General versions of conctructors and modifiersg
-  , point', line', ray', segment'
-  , circle'
-  , at', along', through',
-  ) where
+  , adjacent, vertical, complementary
+  -- ** Polygon constructors
+  , aTriangle, triangle2a
+  , aSquare, aRectangle
+  , parametricPoly, polarPoly, regularPoly
+  -- ** Circle constructors
+  , aCircle, circle, circle'
+  -- * Modificators
+  , at, at', along, along', through, through'
+  , on, normalTo
+ ) where
 
 import Prelude hiding (writeFile)
 import Data.Complex
@@ -116,21 +118,37 @@ ray :: XY -> XY -> Line
 ray = ray'
 
 -- | The template for a segment.
+aSegment :: Line
 aSegment = segment' origin ((1,0) :: XY)
 
 -- | The template for a line.
+aLine :: Line
 aLine = aSegment `extendAs` Unbound
 
 -- | The template for a ray.
+aRay :: Line
 aRay = aSegment `extendAs` Semibound
 
 ------------------------------------------------------------
 
+-- | The template for an angle with given value
+anAngle :: Angular -> Angle
 anAngle = Angle 0 0
 
+-- | Returns the angle equal to the angle between thwo lines, located on the first one.
+angleBetween :: Linear l => l -> l -> Angle
 angleBetween l1 l2 = anAngle (angle l2 - angle l1)
                      # at' (start l1)
                      # along' l1
+
+adjacent :: Angle -> Angle
+adjacent (Angle p s e) = Angle p e (s + 180)
+
+vertical :: Angle -> Angle
+vertical a = rotate 180 a
+
+complementary :: Angle -> Angle
+complementary (Angle p s e) = Angle p e s
 
 ------------------------------------------------------------
 at' :: (Affine p, Figure a) => p -> a -> a
@@ -157,7 +175,7 @@ through' p l = l
                # scaleAt p0 (distance p0 p / unit l)
   where p0 = start l
 
--- | A coordinated version of `through'.
+-- | A coordinated version of `through`.
 through :: Linear l => XY -> l -> l
 through = through'
 
@@ -202,8 +220,8 @@ aTriangle = mkPolygon @XY [ (0,0), (1,0)
                           , (cos (pi/3), sin (pi/3))]
 
 -- | Returns a triangle with base 1 and two given angles.
-trangle2a :: Angular -> Angular -> Polygon
-trangle2a a1 a2 = case intersections r1 r2 of
+triangle2a :: Angular -> Angular -> Polygon
+triangle2a a1 a2 = case intersections r1 r2 of
                     [p] -> mkPolygon [(0,0), (1,0), coord p]
                     [] -> trivialPolygon
   where r1 = aRay # along' a1
@@ -211,6 +229,6 @@ trangle2a a1 a2 = case intersections r1 r2 of
 
 ------------------------------------------------------------
 
--- | Creates SVG for an SVGable object and writes a file with a given name.
+-- | Creates SVG for a SVGable object and writes to a file with a given name.
 writeSVG :: SVGable a => FilePath -> a -> IO ()
-writeSVG name g = writeFile name $ showSVG g
+writeSVG name = writeFile name . showSVG

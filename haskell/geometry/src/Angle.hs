@@ -7,13 +7,10 @@ import Base
 data Angle = Angle CN Angular Angular
   deriving Eq
 
--- | The angle value
 angleValue (Angle p s e) = e - s
-
 setValue v (Angle p s _) = Angle p s (s + v)
 
 angleStart (Angle _ s _) = s
-
 angleEnd (Angle _ _ e) = e
 
 

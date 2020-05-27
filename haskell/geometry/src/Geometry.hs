@@ -8,7 +8,7 @@ module Geometry (
   , module Circle
   , module Polygon
   , module Angle
-  , module Decorations
+  , module DecorationsM
   -- * Main interface
   , writeSVG, showSVG, (<+>), group
   -- * Constructors for geometric objects
@@ -45,7 +45,7 @@ import Circle
 import Line
 import Polygon
 import Angle
-import Decorations
+import DecorationsM
 import SVG
  
 ------------------------------------------------------------
@@ -136,7 +136,7 @@ anAngle :: Angular -> Angle
 anAngle = Angle 0 0
 
 -- | Returns the angle equal to the angle between thwo lines, located on the first one.
-angleBetween :: Linear l => l -> l -> Angle
+angleBetween :: (Linear l1,  Linear l2) => l1 -> l2 -> Angle
 angleBetween l1 l2 = anAngle (angle l2 - angle l1)
                      # at' (start l1)
                      # along' l1
@@ -163,7 +163,7 @@ along' v l = rotateAt (refPoint l) (angle v - angle l) l
 along :: (Figure a, Affine a) => Double -> a -> a
 along d = along' (asDeg d)
 
--- | Locates an affine object on a given curve at
+-- | Locates an affine object on a given curve agt
 -- given parameter and aligns it along a tangent to a curve.
 on :: (Figure a, Affine a, Curve c) => c -> Double -> a -> a
 on c x = along' (tangent c x) . at' (c @-> x)

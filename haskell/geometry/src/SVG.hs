@@ -2,7 +2,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ConstraintKinds #-}
-
+{-# LANGUAGE LambdaCase #-}
 module SVG ( -- * Classes
              Group (..)
            , (<+>), group
@@ -11,6 +11,7 @@ module SVG ( -- * Classes
            , showSVG
            -- * Parameters and constants
            , svgSize, paperSize, plane
+           , attributes
            ) where
 
 import Prelude hiding (writeFile, unwords)
@@ -27,7 +28,7 @@ import Data.Text.Lazy.IO (writeFile)
 import Data.Double.Conversion.Text (toShortest, toPrecision)
 
 import Base
-import Decorations
+import DecorationsM
 import Point
 import Circle
 import Polygon
@@ -76,31 +77,26 @@ instance SVGable a => SVGable (Decorated a) where
   toSVG opts d = toSVG (opts <> options d) (fromDecorated d)
 
 attributes :: Options -> [Attribute]
-attributes = attribute getStroke Stroke_ <>
-             attribute getFill Fill_ <>
-             attribute getStrokeWidth Stroke_width_ <>
-             attribute getDashing Stroke_dasharray_
-  where
-    attribute getAttr attr (_, st) = 
-      case getLast (getAttr st) of
-        Just s -> [ attr <<- pack s ]
-        Nothing -> mempty
-        
+attributes = mconcat fmt . getOptions
+  where fmt = [ attr optStroke Stroke_
+              , attr optFill Fill_
+              , attr optThickness Stroke_width_
+              , attr optDashing Stroke_dasharray_ ]
+
+attr :: (Option -> Maybe String) -> AttrTag -> [Option] -> [Attribute]
+attr opt a x = maybeToList $ (\s -> a <<- pack s) <$> find opt x
+  where find p = getFirst . foldMap (First . p)
 ------------------------------------------------------------
 
 instance Decor Point where
-  labelDefaults p = Labeling
-    { getLabel = mempty
-    , getLabelPosition = pure $ cmp p
-    , getLabelOffset = pure (0, 1)
-    , getLabelCorner = pure (0, 0)
-    , getLabelAngle = pure 0 }
-
-  styleDefaults _ = Style
-    { getStroke = pure "#444"
-    , getFill = pure "red"
-    , getDashing = mempty
-    , getStrokeWidth = pure "1"}
+  defaultOptions p = mkOptions
+    [ LabelPosition $ cmp p
+    , LabelOffset (0 :+ 1)
+    , LabelCorner (0, 0)
+    , LabelAngle 0
+    , Stroke "#444"
+    , Fill "red"
+    , Thickness "1" ]
 
 instance SVGable Point where
   toSVG opts p = circle_ attr <> labelElement opts p
@@ -115,12 +111,11 @@ instance SVGable Point where
 ------------------------------------------------------------
 
 instance Decor Label where
-  labelDefaults p = Labeling
-    { getLabel = mempty
-    , getLabelPosition = pure $ cmp p
-    , getLabelOffset = pure (0, 0)
-    , getLabelCorner = pure (0, 0)
-    , getLabelAngle = pure 0 }
+  defaultOptions p = mkOptions
+    [ LabelPosition $ cmp p
+    , LabelOffset 0
+    , LabelCorner (0, 0)
+    , LabelAngle 0 ]
 
 instance SVGable Label where
   toSVG opts l = labelElement (options l <> opts) l
@@ -128,18 +123,14 @@ instance SVGable Label where
 ------------------------------------------------------------
 
 instance Decor Circle where
-  labelDefaults c = Labeling
-    { getLabel = mempty
-    , getLabelPosition = pure $ c @-> 0
-    , getLabelOffset = pure $ coord $ normal c 0.1 
-    , getLabelCorner = pure (-1,0)
-    , getLabelAngle = pure 0 }
-    
-  styleDefaults _ = Style
-    { getStroke = pure "orange"
-    , getFill = pure "none"
-    , getDashing = mempty
-    , getStrokeWidth = pure "2" }
+  defaultOptions c = mkOptions
+    [ LabelPosition $ c @-> 0
+    , LabelOffset $ cmp $ normal c 0.1
+    , LabelCorner (-1,0)
+    , LabelAngle 0
+    , Stroke "orange"
+    , Fill "none"
+    , Thickness "2" ]
 
 instance SVGable Circle where
   toSVG opts c = circle_ attr <> labelElement opts c
@@ -155,52 +146,34 @@ instance SVGable Circle where
 ------------------------------------------------------------
 
 instance Decor Line where
-  labelDefaults l = Labeling
-    { getLabel = mempty
-    , getLabelPosition = pure $ l @-> 0.5
-    , getLabelOffset = pure $ coord $ scale 1 $ normal l 0
-    , getLabelCorner = pure (0,0)
-    , getLabelAngle = pure 0 }
-
-  styleDefaults _ = Style
-    { getStroke = pure "orange"
-    , getFill = pure "none"
-    , getDashing = mempty
-    , getStrokeWidth = pure "2"}
+  defaultOptions l = mkOptions
+    [ LabelPosition $ l @-> 0.5
+    , LabelOffset $ cmp $ scale 1 $ normal l 0
+    , Stroke "orange"
+    , Fill "none"
+    , Thickness "2" ]
 
 instance SVGable Line where
-  toSVG opts l = elem <> labelElement opts' os
+  toSVG opts l | bounding l == Bound = elem <> labelElement opts' l
+               | otherwise = foldMap (toSVG opts . relabel) $ l `clipBy` plane
     where
-      (pos, s) = clip l
       opts' = options l <> opts
-      opts'' = ((fst opts') {getLabelPosition = pos}, snd opts')
-      s' = scaled s
-      os = Decorated (opts'', s)
-      (a, b) = refPoints s'
+      (a, b) = refPoints $ scaled l
       attr = attributes opts' <>
-             [ X1_ <<- fmtSVG (getX a)
-             , Y1_ <<- fmtSVG (getY a)
-             , X2_ <<- fmtSVG (getX b)
-             , Y2_ <<- fmtSVG (getY b) ]
-      elem = if isTrivial s then mempty else line_ attr
-
-      clip l = (p, s)
-        where
-          s = case l `clipBy` plane of
-               (s:_) -> s
-               [] -> trivialLine
-          p = case bounding l of
-            Bound -> getLabelPosition (fst opts')
-            _ -> pure $ (s @-> 0.9) + cmp (scaled (normal s 0)) - cmp s
+        [ X1_ <<- fmtSVG (getX a)
+        , Y1_ <<- fmtSVG (getY a)
+        , X2_ <<- fmtSVG (getX b)
+        , Y2_ <<- fmtSVG (getY b) ]
+      elem = if isTrivial l then mempty else line_ attr
+      relabel s = s #: lpos ((s @-> 0.95) - cmp s)
       
 ------------------------------------------------------------
 
 instance Decor Polygon where
-  styleDefaults _ = Style
-    { getStroke = pure "orange"
-    , getFill = pure "none"
-    , getDashing = mempty
-    , getStrokeWidth = pure "2" }
+  defaultOptions _ = mkOptions
+    [ Stroke "orange"
+    , Fill "none"
+    , Thickness "2" ]
 
 instance SVGable Polygon where
   toSVG opts p
@@ -216,19 +189,22 @@ instance SVGable Polygon where
 ------------------------------------------------------------
 
 instance Decor Angle where
-  styleDefaults _ = Style
-    { getStroke = pure "white"
-    , getFill = pure "none"
-    , getDashing = mempty
-    , getStrokeWidth = pure "1.25" }
+  defaultOptions _ = mkOptions
+    [ Stroke "white"
+    , Fill "none"
+    , Thickness "1.25"
+    , MultiStroke 1]
     
 instance SVGable Angle where
-  toSVG opts an = toSVG opts' (poly <+> arc) 
+  toSVG opts an = toSVG opts' (poly <+> group arc) 
     where
       opts' = options an <> opts
+      Just ns = extractOption optMultiStroke opts'
       poly = scaleAt p 3 $ mkPolyline [e, p, s]
-      arc = mkPolyline [ p + scale 2 (cmp (asRad x))
-                       | x <- [ a1, a1 + 0.05 .. a2]]
+      arc = [ mkPolyline [ p + scale r (cmp (asRad x))
+                         | x <- [ a1, a1 + 0.05 .. a2]]
+            | i <- [1..ns]
+            ,  let r = 2 + fromIntegral i * 0.3 ]
       p = refPoint an
       s = p + cmp (angleStart an)
       e = p + cmp (angleEnd   an)
@@ -238,13 +214,18 @@ instance SVGable Angle where
 ------------------------------------------------------------
 
 labelElement :: (Decor f, Figure f) => Options -> f -> Element
-labelElement opts ff = case labelText f of
+labelElement opts ff = case lb of
                    Just s -> text $ toElement s
                    Nothing -> mempty
   where
-    f = Decorated (opts <> options ff, ff)
+    f = Decorated (options ff <> opts, ff)
+
+    lb = find optLabelText f
+    loff = fromMaybe 0 $ find optLabelOffset f
+    lpos = fromMaybe 0 $ find optLabelPosition f
+    (cx, cy) = fromMaybe (0,0) $ find optLabelCorner f
+
     fontSize = 16
-    lb = fromMaybe "" $ labelText f
     textWidth = fromIntegral $ length lb
     text = text_ $ [ X_ <<- fmtSVG x
                    , Y_ <<- fmtSVG y
@@ -252,10 +233,10 @@ labelElement opts ff = case labelText f of
                    , Font_family_ <<- "CMU Serif"
                    , Font_style_ <<- "italic"
                    , Stroke_ <<- "none"
-                   , Fill_ <<- "white"] <> offsetX <> offsetY 
-    x :+ y = scaled (labelPosition f) + cmp d
-    d = labelOffset f # scale (fromIntegral fontSize) # reflect 0
-    (cx, cy) = labelCorner f
+                   , Fill_ <<- "white"] <> offsetX <> offsetY
+    
+    x :+ y = scaled lpos + cmp d
+    d = loff # scale (fromIntegral fontSize) # reflect 0
     offsetX = case 0*signum cx of
                 -1 -> [ Text_anchor_ <<- "start" ]
                 0 -> [ Text_anchor_ <<- "middle" ]

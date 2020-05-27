@@ -5,7 +5,7 @@ module Line
   (-- * Types
     Bounding (..)
   , Line (..)
-  , Linear
+  , Linear (..)
   -- * Constructors
   , trivialLine, mkSegment, mkRay, mkLine
   -- * Functions
@@ -18,6 +18,11 @@ import Data.Maybe
 
 import Base
 
+-- | Constrain for a linear object
+class (Figure l, Affine l, Curve l, Trans l) => Linear l where
+  bounding :: l -> Bounding
+  refPoints :: l -> (CN, CN)
+
 -- | The type of line
 data Bounding = Unbound    -- ^ a straight line
               | Semibound  -- ^ a ray
@@ -28,11 +33,11 @@ data Bounding = Unbound    -- ^ a straight line
 -- The first point sets the `Figure`s' refference point and a starting point of a line.
 -- The distance between refference points `p1` and `p2` sets the 'unit' and internal scale,
 -- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
-data Line = Line { bounding :: Bounding
-                 , refPoints :: !(CN, CN) }
+data Line = Line Bounding !(CN, CN)
 
--- | Constrain for a linear object
-type Linear l = (Affine l, Curve l, Trans l, Figure l)
+instance Linear Line where
+  bounding (Line b _) = b
+  refPoints (Line _ r) = r
 
 -- | The trivial line with coinsiding refference points.
 trivialLine = mkLine (0,0)
@@ -62,7 +67,7 @@ instance Eq Line where
 -- <Line (0.0,0.0), 0.0°>
 -- 
 l `extendAs` b =
-  let res = l { bounding = b }
+  let res = Line b (refPoints l)
   in case bounding l of
        Bound -> res
        Semibound -> case b of
@@ -102,9 +107,9 @@ instance Affine Line where
 
 
 instance Trans Line where
-  transform t l = l { refPoints = (p1, p2) }
-    where p1 = transformCN t $ l @-> 0
-          p2 = transformCN t $ l @-> 1
+  transform t (Line b (p1,p2)) = Line b (p1', p2')
+    where p1' = transformCN t p1
+          p2' = transformCN t p2
   
 
 instance Curve Line where
@@ -162,7 +167,7 @@ intersectionV (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
 
 -- | Returns a list of segments as a result of clipping the line
 -- by a closed curve.
-clipBy :: (Intersections Line c, Curve c) => Line -> c -> [Line]
+clipBy :: (Linear l, Intersections l c, Curve c) => l -> c -> [Line]
 clipBy l c = filter internal $ Line Bound <$> zip ints (tail ints) 
   where
     ints = sortOn (project l) $ intersections l c <> ends

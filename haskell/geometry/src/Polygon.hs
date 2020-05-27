@@ -1,5 +1,7 @@
 {-# language MultiParamTypeClasses #-}
 {-# language FlexibleInstances #-}
+{-# language FlexibleContexts #-}
+{-# language UndecidableInstances #-}
 
 module Polygon where
 
@@ -14,7 +16,24 @@ import Line
 
 class Curve p => Polygonal p where
   vertices :: p -> [CN]
+
   polyClosed :: p -> Bool
+
+  verticesNumber :: p -> Int
+  verticesNumber p = length (vertices p)
+
+  segments :: p -> [Line]
+  segments p = mkSegment <$> zip (vertices p) (tail vs)
+    where vs = if isClosed p
+               then cycle (vertices p)
+               else vertices p
+
+  vertex :: p -> Int -> CN
+  vertex p i = vs !! j
+    where vs = vertices p
+          j = if isClosed p
+              then i `mod` length vs
+              else (0 `max` i) `min` length vs
 
 data Polygon = Polygon Bool ![CN]
 
@@ -33,19 +52,6 @@ mkPolyline pts = Polygon False $ cmp <$> pts
 
 closePoly :: Polygon -> Polygon
 closePoly p = Polygon True (vertices p)
-
-segments :: Polygonal p => p -> [Line]
-segments p = mkSegment <$> zip (vertices p) (tail vs)
-  where vs = if isClosed p
-             then cycle (vertices p)
-             else vertices p
-
-vertex :: Polygonal p => p -> Int -> CN
-vertex p i = vs !! j
-  where vs = vertices p
-        j = if isClosed p
-            then i `mod` length vs
-            else (0 `max` i) `min` length vs
 
 
 instance Show Polygon where
@@ -118,3 +124,49 @@ instance Intersections Line Polygon where
 
 instance Intersections Polygon Line where
   intersections p l = foldMap (intersections l) (segments p)
+
+------------------------------------------------------------
+
+newtype Triangle = Triangle Polygon
+  deriving Eq
+
+fromTriangle (Triangle p) = p
+mkTriangle vs = Triangle $ mkPolygon vs
+
+instance Polygonal Triangle where
+  verticesNumber _ = 3
+
+  vertices = vertices . fromTriangle
+
+  polyClosed _ = True
+
+  segments p = mkSegment <$> zip (vertices p) (tail vs)
+    where vs = cycle (vertices p)
+
+  vertex p i = vertices p !! (i `mod` 3)
+
+instance Affine Triangle where
+  cmp = cmp . fromTriangle
+  asCmp x = mkTriangle [0, x, rotate 60 x]
+
+instance Trans Triangle where
+  transform t (Triangle p) = Triangle (transform t p)
+
+instance Curve Triangle where
+  param = param . fromTriangle
+  project = project . fromTriangle
+  tangent = tangent . fromTriangle
+  isContaining = isContaining . fromTriangle
+  isEnclosing = isEnclosing . fromTriangle
+  distanceTo pt = distanceTo pt . fromTriangle
+
+instance Figure Triangle where
+  isTrivial = isTrivial . fromTriangle
+  refPoint = refPoint . fromTriangle
+
+
+instance (Curve a, Intersections a Polygon) => Intersections a Triangle where
+  intersections x t = intersections x (fromTriangle t)
+
+instance (Curve b, Intersections Polygon b) => Intersections Triangle b where
+  intersections t x = intersections (fromTriangle t) x

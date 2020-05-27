@@ -8,7 +8,7 @@ module Geometry (
   , module Circle
   , module Polygon
   , module Angle
-  , module DecorationsM
+  , module Decorations
   -- * Main interface
   , writeSVG, showSVG, (<+>), group
   -- * Constructors for geometric objects
@@ -45,7 +45,7 @@ import Circle
 import Line
 import Polygon
 import Angle
-import DecorationsM
+import Decorations
 import SVG
  
 ------------------------------------------------------------
@@ -215,9 +215,8 @@ aRectangle :: Double -> Double -> Polygon
 aRectangle a b = aSquare # scaleX a # scaleY b
 
 -- | The template for a triangle.
-aTriangle :: Polygon
-aTriangle = mkPolygon @XY [ (0,0), (1,0)
-                          , (cos (pi/3), sin (pi/3))]
+aTriangle :: Triangle
+aTriangle = asCmp 1
 
 -- | Returns a triangle with base 1 and two given angles.
 triangle2a :: Angular -> Angular -> Polygon

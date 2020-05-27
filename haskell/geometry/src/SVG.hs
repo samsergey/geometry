@@ -28,7 +28,7 @@ import Data.Text.Lazy.IO (writeFile)
 import Data.Double.Conversion.Text (toShortest, toPrecision)
 
 import Base
-import DecorationsM
+import Decorations
 import Point
 import Circle
 import Polygon
@@ -185,6 +185,14 @@ instance SVGable Polygon where
       elem = if isClosed p then polygon_ else polyline_
       attr = attributes opts' <>
              [ Points_ <<- foldMap fmtSVG (vertices p') ]
+
+------------------------------------------------------------
+
+instance Decor Triangle where
+  defaultOptions = defaultOptions . fromTriangle
+
+instance SVGable Triangle where
+  toSVG opts = toSVG opts . fromTriangle
 
 ------------------------------------------------------------
 

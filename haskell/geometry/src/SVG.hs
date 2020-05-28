@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE LambdaCase #-}
+
 module SVG ( -- * Classes
              Group (..)
            , (<+>), group
@@ -255,11 +256,10 @@ labelElement opts ff = case lb of
                 -1 -> [ Dy_ <<- showt (fontSize - 2) ]
 
 ------------------------------------------------------------
--- | Constrain for an object that could be included to a group.
-type Groupable a = (SVGable a, Show a, Trans a)
 
 -- | The empty figure.
-data EmptyFig = EmptyFig deriving Show
+data EmptyFig = EmptyFig
+  deriving (Show, Eq)
 
 instance Trans EmptyFig where
   transform t EmptyFig = EmptyFig
@@ -271,11 +271,22 @@ instance Affine EmptyFig where
 instance SVGable EmptyFig where
   toSVG _ EmptyFig = mempty
 
+instance Figure EmptyFig where
+  refPoint _ = 0
+  isTrivial _ = True
+  box = mempty
+
+------------------------------------------------------------
+-- | Constrain for an object that could be included to a group.
+type Groupable a = (SVGable a, Show a, Trans a, Figure a, Eq a)
+
 -- | The group of inhomogeneous Groupable objects.
 data Group where 
     G :: Groupable a => a -> Group
     Append :: Group -> Group -> Group
 
+instance Eq Group where
+  _ == _ = False
 
 instance Semigroup Group where (<>) = Append
 
@@ -300,6 +311,14 @@ instance SVGable Group where
   toSVG opts (G a) = toSVG opts a
   toSVG opts (Append a b) = toSVG opts a <> toSVG opts b
 
+
+instance Figure Group where
+  refPoint = bottom . left . corner
+  isTrivial _ = False
+  box (G f) = box f
+  box (Append a b) = box a <> box b
+
+  
 -- | Returns a group of homogeneous list of objects.
 group :: Groupable a => [a] -> Group
 group = foldMap G
@@ -314,12 +333,10 @@ svg content =
                            , Style_ <<- "background : #444;"]
 
 -- | Creates a SVG contents for geometric objects.
-showSVG gr = prettyText contents
+showSVG obj = prettyText contents
   where
-    contents = svg $ toSVG mempty gr
+    contents = svg $ toSVG scaled mempty obj
 
-
-scaled :: Trans a => a -> a
-scaled = translate (svgSize/2, svgSize/2) .
-         scale (svgSize/(paperSize + 2)) .
-         reflect 0 
+    scaled = translate (svgSize/2, svgSize/2) .
+             scale (svgSize/(paperSize + 2)) .
+             reflect 0 

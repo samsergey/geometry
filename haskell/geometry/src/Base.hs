@@ -36,7 +36,8 @@ module Base
   -- ** Intersections of curves
   , Intersections (..)
   -- ** Figures
-  , Figure (..)
+  , Figure (..), pointBox
+  , corner, left, right, top, bottom
   -- ** Fuzzy equality
   , AlmostEq
   -- *** Fuzzy inequalities
@@ -51,6 +52,7 @@ import Data.Complex
 import Data.List
 import Data.List.Extra
 import Control.Applicative
+import Data.Semigroup
 import Data.Monoid
 import Data.Maybe
 
@@ -505,25 +507,16 @@ isIntersecting a b = not . null $ intersections a b
 
 ------------------------------------------------------------
 
--- newtype Corner = Corner (Endo (Int, Int))
---   deriving (Semigroup, Monoid)
+type Box = ((Min Double, Max Double), (Min Double, Max Double))
 
--- lower =  Corner . Endo $ \(_, x) -> (-1, x)
--- upper =  Corner . Endo $ \(_, x) -> (1, x)
--- middleX =   Corner . Endo $ \(_, x) -> (0, x)
--- left =  Corner . Endo $ \(x, _) -> (x, -1)
--- right =  Corner . Endo $ \(x, _) -> (x, 1)
--- middleY =   Corner . Endo $ \(x, _) -> (x, 0)
--- middle = middleX <> middleY
--- corner (Corner c) = appEndo c (-1, -1)
--- cornerX = fst . corner
--- cornerY = snd . corner
+pointBox :: Affine p => p -> Box
+pointBox p = ((Min x, Max x), (Min y, Max y))
+    where (x, y) = coord p
 
-------------------------------------------------------------
-
+           
 -- | Class representing the interface for a figure on a chart
 class (Eq a, Trans a) => Figure a where
-  {-# MINIMAL isTrivial, refPoint #-}
+  {-# MINIMAL isTrivial, refPoint, box #-}
 
   -- | Returns `True` is figure is trivial in a certain sence.
   isTrivial :: a -> Bool
@@ -539,3 +532,22 @@ class (Eq a, Trans a) => Figure a where
   isSimilar :: a -> a -> Bool
   isSimilar = (==)
 
+  box :: a -> Box
+
+instance Bounded Double where
+  minBound = -1/0
+  maxBound = 1/0
+
+width :: Figure f => f -> Double
+width f = let ((Min xmin, Max xmax), _) = box f in xmax - xmin
+
+height :: Figure f => f -> Double
+height f = let (_ ,(Min ymin, Max ymax)) = box f in ymax - ymin
+
+corner f = ((xmin :+ ymin, xmin :+ ymax), (xmax :+ ymin, xmax :+ ymax))
+  where ((Min xmin, Max xmax), (Min ymin, Max ymax)) = box f
+
+left = fst
+right = snd
+bottom = fst
+top = snd

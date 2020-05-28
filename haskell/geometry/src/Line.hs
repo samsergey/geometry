@@ -101,6 +101,13 @@ instance Figure Line where
 
   refPoint = fst . refPoints
 
+  box l = case bounding l of
+            Bound -> pointBox p1 <> pointBox p2
+            Semibound -> ((pure (getX p1), mempty), (pure (getY p1), mempty))
+            Unbound -> mempty
+    where (p1,p2) = refPoints l
+    
+
 instance Affine Line where
   cmp l =  let (p1, p2) = refPoints l in normalize $ cmp p2 - cmp p1
   asCmp p = mkLine (0, p)

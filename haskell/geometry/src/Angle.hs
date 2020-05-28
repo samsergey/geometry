@@ -37,3 +37,5 @@ instance Figure Angle where
   refPoint (Angle p _ _) = p
   isTrivial a = angleValue a ~== 0
   a1 `isSimilar` a2 = angleValue a1 ~== angleValue a2
+  box (Angle p s e) = foldMap pointBox [p, p + cmp s, p + cmp e]
+           

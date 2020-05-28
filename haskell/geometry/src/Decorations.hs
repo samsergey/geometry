@@ -115,6 +115,7 @@ instance Curve a => Curve (Decorated a) where
 instance Figure a => Figure (Decorated a) where
   isTrivial = isTrivial . fromDecorated
   refPoint = refPoint . fromDecorated
+  box = box . fromDecorated
 
 instance Linear l => Linear (Decorated l) where
   bounding = bounding . fromDecorated

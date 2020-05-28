@@ -95,4 +95,7 @@ instance Figure Circle where
   isTrivial c = radius c < 0
   isSimilar c1 c2 = radius c1 ~== radius c2
   refPoint = center
-
+  box cir = foldMap pointBox pts
+    where pts = (c +) <$> [r:+0, (-r):+0, 0:+r, 0:+(-r)]
+          c = center cir
+          r = radius cir

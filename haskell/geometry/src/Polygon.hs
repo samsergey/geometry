@@ -2,6 +2,7 @@
 {-# language FlexibleInstances #-}
 {-# language FlexibleContexts #-}
 {-# language UndecidableInstances #-}
+{-# language GeneralizedNewtypeDeriving #-}
 
 module Polygon where
 
@@ -12,6 +13,7 @@ import Data.Monoid
 import Data.Fixed
 
 import Base
+import Point
 import Line
 
 class Curve p => Polygonal p where
@@ -80,8 +82,8 @@ instance Trans Polygon where
 
 instance Curve Polygon where
   paramMaybe p t = if isClosed p
-                   then interpolation (t `mod'` unit p)
-                   else interpolation t
+                   then interpolation $ (t `mod'` 1) * unit p
+                   else interpolation $ t * unit p
     where
       interpolation x = param' <$> find interval tbl
         where
@@ -90,7 +92,7 @@ instance Curve Polygon where
           tbl = zip (zip ds (tail ds)) $ segments p
           ds = scanl (+) 0 $ unit <$> segments p
 
-  project p pt = x0 + projectL s pt
+  project p pt = (x0 + projectL s pt) / unit p
     where
       ss = segments p
       ds = scanl (+) 0 $ unit <$> ss
@@ -118,6 +120,7 @@ instance Figure Polygon where
   refPoint p = if isNontrivial p
                then head $ vertices p
                else 0
+  box p = foldMap (box . mkPoint) (vertices p)
 
 instance Intersections Line Polygon where
   intersections = flip intersections
@@ -128,7 +131,7 @@ instance Intersections Polygon Line where
 ------------------------------------------------------------
 
 newtype Triangle = Triangle Polygon
-  deriving Eq
+  deriving (Figure, Curve, Trans, Eq, Show)
 
 fromTriangle (Triangle p) = p
 mkTriangle vs = Triangle $ mkPolygon vs
@@ -148,22 +151,6 @@ instance Polygonal Triangle where
 instance Affine Triangle where
   cmp = cmp . fromTriangle
   asCmp x = mkTriangle [0, x, rotate 60 x]
-
-instance Trans Triangle where
-  transform t (Triangle p) = Triangle (transform t p)
-
-instance Curve Triangle where
-  param = param . fromTriangle
-  project = project . fromTriangle
-  tangent = tangent . fromTriangle
-  isContaining = isContaining . fromTriangle
-  isEnclosing = isEnclosing . fromTriangle
-  distanceTo pt = distanceTo pt . fromTriangle
-
-instance Figure Triangle where
-  isTrivial = isTrivial . fromTriangle
-  refPoint = refPoint . fromTriangle
-
 
 instance (Curve a, Intersections a Polygon) => Intersections a Triangle where
   intersections x t = intersections x (fromTriangle t)

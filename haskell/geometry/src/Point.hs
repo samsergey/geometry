@@ -38,6 +38,8 @@ instance Figure Point where
   isTrivial _ = False
   isSimilar _ _ = True
   refPoint = cmp
+  box = pointBox
+          
 
 ------------------------------------------------------------
 
@@ -67,4 +69,5 @@ instance Figure Label where
   isTrivial _ = False
   isSimilar _ _ = True
   refPoint = cmp
+  box = pointBox
 

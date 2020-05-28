@@ -229,5 +229,5 @@ triangle2a a1 a2 = case intersections r1 r2 of
 ------------------------------------------------------------
 
 -- | Creates SVG for a SVGable object and writes to a file with a given name.
-writeSVG :: SVGable a => FilePath -> a -> IO ()
-writeSVG name = writeFile name . showSVG
+writeSVG :: (Figure a, SVGable a) => Int -> FilePath -> a -> IO ()
+writeSVG size name = writeFile name . showSVG size

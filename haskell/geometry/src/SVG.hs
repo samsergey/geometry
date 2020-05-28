@@ -313,7 +313,7 @@ instance SVGable Group where
 
 
 instance Figure Group where
-  refPoint = bottom . left . corner
+  refPoint = left . lower . corner
   isTrivial _ = False
   box (G f) = box f
   box (Append a b) = box a <> box b
@@ -325,24 +325,24 @@ group = foldMap G
 
 ------------------------------------------------------------
 
-svg content =
+svg size content =
      doctype <>
      with (svg11_ content) [ Version_ <<- "1.1"
-                           , Width_ <<- "500"
-                           , Height_ <<- "500"
+                           , Width_ <<- showt size
+                           , Height_ <<- showt size
                            , Style_ <<- "background : #444;"]
 
 -- | Creates a SVG contents for geometric objects.
-showSVG obj = prettyText contents
+showSVG size obj = prettyText contents
   where
-    contents = svg $ toSVG mempty obj
-    scaler :: Figure f => f -> f
+    contents = svg size $ toSVG mempty (scaler obj)
     scaler f = f
+               # superpose (left . upper . corner $ f) (0 :: CN)
                # reflect 0
-               # superpose (top . left . corner $ f) (0 :: CN)
-               # scale (svgSize / ((width f `max` height f) `min` paperSize))
+               # scale ((fromIntegral size - 20) / ((w `max` h) `min` paperSize))
+      where
+        w = width f
+        h = height f
 
 scaled :: Trans f => f -> f
-scaled = translate (svgSize/2, svgSize/2) .
-         scale (svgSize/(paperSize + 2)) .
-         reflect 0 
+scaled = id

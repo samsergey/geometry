@@ -38,7 +38,7 @@ module Base
   -- ** Figures
   , Figure (..), pointBox
   , height, width
-  , corner, left, right, top, bottom
+  , corner, left, right, lower, upper
   -- ** Fuzzy equality
   , AlmostEq
   -- *** Fuzzy inequalities
@@ -51,7 +51,7 @@ where
 import Data.Fixed (mod')
 import Data.Complex
 import Data.List
-import Data.List.Extra
+import Data.List.Extra (minimumOn)
 import Control.Applicative
 import Data.Semigroup
 import Data.Monoid
@@ -508,10 +508,10 @@ isIntersecting a b = not . null $ intersections a b
 
 ------------------------------------------------------------
 
-type Box = ((Min Double, Max Double), (Min Double, Max Double))
+type Box = ((Min Double, Min Double), (Max Double, Max Double))
 
 pointBox :: Affine p => p -> Box
-pointBox p = ((Min x, Max x), (Min y, Max y))
+pointBox p = ((Min x, Min y), (Max x, Max y))
     where (x, y) = coord p
 
            
@@ -540,15 +540,17 @@ instance Bounded Double where
   maxBound = 1/0
 
 width :: Figure f => f -> Double
-width f = let ((Min xmin, Max xmax), _) = box f in xmax - xmin
+width f = let ((Min xmin, Min ymin), (Max xmax, Max ymax)) = box f
+          in abs $ xmax - xmin
 
 height :: Figure f => f -> Double
-height f = let (_ ,(Min ymin, Max ymax)) = box f in ymax - ymin
+height f = let ((Min xmin, Min ymin), (Max xmax, Max ymax)) = box f
+           in abs $ ymax - ymin
 
-corner f = ((xmin :+ ymin, xmin :+ ymax), (xmax :+ ymin, xmax :+ ymax))
-  where ((Min xmin, Max xmax), (Min ymin, Max ymax)) = box f
+corner p = ((x1:+y2, x2:+y2),(x1:+y1, x2:+y1))
+    where ((Min x1,Min y1),(Max x2, Max y2)) = box p
 
-left = fst
+lower = snd
+upper = fst
 right = snd
-bottom = fst
-top = snd
+left  = fst

@@ -10,13 +10,13 @@ pt = point (14,5) #: "B"
 
 lb = aLabel "A" # at (-10,0)
 
-t = aTriangle # scale 8 . scaleX 1.5
+t = aTriangle # scaleX 1.5
 
-c = circle 4 (6,-6) #: "c"
+c = aCircle #: "c"
 
-l = aLine
-    #: "a"
-    # at (-3, 8) # along 45
+l = aSegment # scale 4
+    #: "a" <> white <> dotted
+    # at (-1, 1) # along 35
 
 ct' = (t <+> c) # reflectAt l 
 
@@ -24,7 +24,7 @@ s = aSegment # scale 8 # at' pt # normalTo l #: "s"
 
 an = angleBetween s l #: arcs 2
         
-t1 = regularPoly 5 # scale 5 # on l 0
+t1 = regularPoly 5 # on c 0
 
 main :: IO ()
-main = writeSVG "test.svg" (t1 <+> l <+> c <+> t <+> pt <+> lb <+> an)
+main = writeSVG 450 "test.svg" $ c <+> t <+> ct' <+> l

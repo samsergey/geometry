@@ -9,6 +9,7 @@ module Circle
 import Data.Complex
 
 import Base
+import Data.Semigroup
 
 -- | Class for circle and decorated circle
 class Curve c => Circular c where
@@ -95,7 +96,8 @@ instance Figure Circle where
   isTrivial c = radius c < 0
   isSimilar c1 c2 = radius c1 ~== radius c2
   refPoint = center
-  box cir = foldMap pointBox pts
-    where pts = (c +) <$> [r:+0, (-r):+0, 0:+r, 0:+(-r)]
-          c = center cir
+  box cir = ((Min x1, Min y1), (Max x2, Max x2))
+    where c = center cir
           r = radius cir
+          x1:+y1 = c-(r:+r)
+          x2:+y2 = c+(r:+r)

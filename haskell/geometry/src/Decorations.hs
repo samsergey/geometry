@@ -1,80 +1,74 @@
-{-# language DeriveFunctor #-}
+{-# language LambdaCase #-}
 {-# language FlexibleInstances #-}
 {-# language OverloadedStrings #-}
+{-# language GeneralizedNewtypeDeriving #-}
 {-# language MultiParamTypeClasses #-}
 
-module Decorations
-  ( -- * Classes
-    Decor (..)
-    -- * Records and Types
-  , Options, Labeling (..), Style (..)
-  , Decorated (..), fromDecorated
-  -- * Decorators
-  , (#:)
-  , stroke, white, fill
-  , width, thin, dotted, dashed
-  , label, loffs, lpos, lparam
-  -- * Functions
-  , labelText, labelPosition, labelOffset, labelCorner
-  )
-where
+module Decorations where
 
 import Data.Monoid
 import Data.Maybe
-import Control.Monad
 import Data.String( IsString(..) )
+import Control.Monad
 
 import Base
+import Point
+import Line
 import Circle
+import Angle
 import Polygon
 
--- | The alias for a tuple of decoration records
-type Options = (Labeling, Style)
+data Option = Stroke String
+            | Fill String
+            | Thickness String
+            | Dashing String
+            | MultiStroke Int
+            | LabelText String
+            | LabelCorner (Int, Int)
+            | LabelPosition CN
+            | LabelOffset CN
+            | LabelAngle Angular
+            | SegmentMark Int  deriving (Show)
 
--- | Record representing labeling parameters
-data Labeling = Labeling
-  { getLabel :: Last String
-  , getLabelCorner :: Last (Int, Int)
-  , getLabelOffset :: Last XY
-  , getLabelPosition :: Last CN
-  , getLabelAngle :: Last Angular} deriving (Show)
+newtype Options = Options (Dual [Option])
+  deriving (Semigroup, Monoid, Show)
 
+mkOptions = Options . Dual
+getOptions (Options (Dual os)) = os
 
-instance Semigroup Labeling where
-  l1 <> l2 = Labeling
-    { getLabel = getLabel l1 <> getLabel l2
-    , getLabelCorner = getLabelCorner l1 <> getLabelCorner l2
-    , getLabelOffset = getLabelOffset l1 <> getLabelOffset l2
-    , getLabelPosition = getLabelPosition l1 <> getLabelPosition l2
-    , getLabelAngle = getLabelAngle l1 <> getLabelAngle l2 }
+-- | The class of objects which could have decorations.
+class Decor a where
+  -- | Get the decoration data
+  options :: a -> Options
+  options = defaultOptions
 
-instance Monoid Labeling where
-  mempty = Labeling mempty mempty mempty mempty mempty
+  -- | Set the decoration data
+  setOptions :: Options -> a -> a
+  setOptions _ = id
 
-getLabelOption op = fromJust . getMaybeLabelOption op
-getMaybeLabelOption op = getLast . op . (labelDefaults <> labelSettings)
+  -- | Default labeling settings
+  defaultOptions :: a -> Options
+  defaultOptions _ = mempty
 
+find :: Decor a => (Option -> Maybe b) -> a -> Maybe b
+find p d = extractOption p $ defaultOptions d <> options d
 
--- | Record representing styling parameters
-data Style = Style
-  { getStroke :: Last String
-  , getFill :: Last String
-  , getDashing :: Last String
-  , getStrokeWidth :: Last String } deriving (Show)
+extractOption p = getFirst . foldMap (First . p) . getOptions
 
-instance Semigroup Style where
-  l1 <> l2 = Style
-    { getStroke = getStroke l1 <> getStroke l2
-    , getFill = getFill l1 <> getFill l2
-    , getDashing = getDashing l1 <> getDashing l2
-    , getStrokeWidth = getStrokeWidth l1 <> getStrokeWidth l2}
+optFill          = \case {Fill x -> Just x; _ -> Nothing }
+optStroke        = \case {Stroke x -> Just x; _ -> Nothing }
+optThickness     = \case {Thickness x -> Just x; _ -> Nothing }
+optMultiStroke   = \case {MultiStroke x -> Just x; _ -> Nothing }
+optDashing       = \case {Dashing x -> Just x; _ -> Nothing }
+optLabelText     = \case {LabelText x -> Just x; _ -> Nothing }
+optLabelPosition = \case {LabelPosition x -> Just x; _ -> Nothing }
+optLabelOffset   = \case {LabelOffset x -> Just x; _ -> Nothing }
+optLabelCorner   = \case {LabelCorner x -> Just x; _ -> Nothing }
+optLabelAngle    = \case {LabelAngle x -> Just x; _ -> Nothing }
+optSegmentMark   = \case {SegmentMark x -> Just x; _ -> Nothing }
 
-instance Monoid Style where
-  mempty = Style mempty mempty mempty mempty
+------------------------------------------------------------
 
-getStyleOption op
-  = getLast . op . (styleDefaults <> style)
-  
 -- | The transparent decoration wrapper for geometric objects.
 -- Inherits all properties of embedded object.
 newtype Decorated a = Decorated (Options, a)
@@ -92,69 +86,13 @@ instance Monad Decorated where
     let Decorated (d', y) = f x
     in Decorated (d <> d', y)
 
-
--- | The class of objects which could have decorations.
-class Decor a where
-  -- | Get the decoration data
-  options :: a -> Options
-  options p = (labelDefaults p, styleDefaults p)
-
-  -- | Set the decoration data
-  setOptions :: Options -> a -> a
-  setOptions _ = id
-
-  -- | Default labeling settings
-  labelDefaults :: a -> Labeling
-  labelDefaults _ = mempty
-
-  -- | Default styling settings
-  styleDefaults :: a -> Style
-  styleDefaults _ = mempty
-
-setLabeling :: Decor a => Labeling -> a -> a
-setLabeling lb = setOptions (lb, mempty)
-
-setStyle :: Decor a => Style -> a -> a
-setStyle s = setOptions (mempty, s)
-
--- | Returns labeling settings from a decorated object.
-labelSettings :: Decor a => a -> Labeling
-labelSettings = fst . options
-
--- | Returns styling settings from a decorated object.
-style :: Decor a => a -> Style
-style = snd . options
-
--- | Returns label text of a decorated object.
-labelText :: Decor a => a -> Maybe String
-labelText = getMaybeLabelOption getLabel
-
--- | Returns label position for a decorated object.
-labelPosition :: Decor a => a -> CN
-labelPosition = getLabelOption getLabelPosition
-
--- | Returns label offset against the label position.  
-labelOffset :: Decor a => a -> XY
-labelOffset = getLabelOption getLabelOffset
-
--- | Returns label corner used as an anchor of a text in SVG.  
-labelCorner :: Decor a => a -> (Int, Int)
-labelCorner f = let (x, y) = labelOffset f
-                  in (signum (round x), signum (round y))
-
--- | Returns label rotation angle.  
-labelAngle :: Decor a => a -> Angular
-labelAngle = getLabelOption getLabelAngle
-
-------------------------------------------------------------
-  
 instance Decor (Decorated a) where
   options (Decorated (o, _)) = o
   setOptions o' f = Decorated (o', id) <*> f
 
 instance Show a => Show (Decorated a) where
   show f = l <> show (fromDecorated f)
-    where l = fromMaybe mempty $ (<> ":") <$> labelText f
+    where l = fromMaybe mempty $ (<> ":") <$> find optLabelText f
 
 instance Eq a => Eq (Decorated a) where
   d1 == d2 = fromDecorated d1 == fromDecorated d2
@@ -178,6 +116,10 @@ instance Figure a => Figure (Decorated a) where
   isTrivial = isTrivial . fromDecorated
   refPoint = refPoint . fromDecorated
 
+instance Linear l => Linear (Decorated l) where
+  bounding = bounding . fromDecorated
+  refPoints = refPoints . fromDecorated
+
 instance Circular a => Circular (Decorated a) where
   radius = radius . fromDecorated
   center = center . fromDecorated
@@ -198,6 +140,9 @@ instance Intersections a b => Intersections (Decorated a) b where
 -- | A wrapped decoration function with monoidal properties,
 -- corresponding to decoration options.
 newtype Decorator a = Decorator (a -> Decorated a)
+
+mkDecorator opt val = Decorator $
+  \d -> setOptions (mkOptions [ opt val ]) (pure d)
 
 instance Semigroup (Decorator a) where
   Decorator a <> Decorator b = Decorator (a >=> b)
@@ -222,9 +167,7 @@ a #: (Decorator d) = d a
 
 -- | The stroke color decorator.
 stroke :: Decor a => String -> Decorator a
-stroke s = Decorator $ \f ->
-  let ld = (style f) { getStroke = pure s}
-  in setStyle ld (pure f)
+stroke = mkDecorator Stroke
 
 -- | The decorator for white lines.
 white :: Decor a => Decorator a
@@ -232,15 +175,11 @@ white = stroke "white"
 
 -- | The fill color decorator.
 fill :: Decor a => String -> Decorator a
-fill s = Decorator $ \f ->
-  let ld = (style f) { getFill = pure s}
-  in setStyle ld (pure f)
+fill = mkDecorator Fill
 
 -- | The stroke-width decorator.
 width :: Decor a => String -> Decorator a
-width s = Decorator $ \f ->
-  let ld = (style f) { getStrokeWidth = pure s}
-  in setStyle ld (pure f)
+width = mkDecorator Thickness
 
 -- | The decorator for thin lines.
 thin :: Decor a => Decorator a
@@ -248,15 +187,15 @@ thin = width "1"
 
 -- | The decorator for dashed lines.
 dashed :: Decor a => Decorator a
-dashed = Decorator $ \f ->
-  let ld = (style f) { getDashing = pure "5,5"}
-  in setStyle ld (pure f)
+dashed = mkDecorator Dashing "5,5"
 
 -- | The decorator for dotted lines.
 dotted :: Decor a => Decorator a
-dotted = Decorator $ \f ->
-  let ld = (style f) { getDashing = pure "2,3"}
-  in setStyle ld (pure f)
+dotted = mkDecorator Dashing "2,3"
+
+-- | The decorator for dotted lines.
+arcs :: Int -> Decorator Angle
+arcs = mkDecorator MultiStroke
 
 -- | The decorator for labeling objects. Could be used as overloaded string.
 --
@@ -264,23 +203,16 @@ dotted = Decorator $ \f ->
 -- A:<Point (4, 5)>
 --
 label :: Decor a => String -> Decorator a
-label s = Decorator $ \d -> 
-   let o = (labelSettings d) { getLabel = pure s }
-   in setLabeling o (pure d)
+label = mkDecorator LabelText
 
 -- | The decorator for label offset.
-loffs :: Decor a => XY -> Decorator a
-loffs o = Decorator $ \f -> 
-   let ld = (labelSettings f) { getLabelOffset = pure o}
-   in setLabeling ld (pure f)
+loffs :: Decor a => CN -> Decorator a
+loffs = mkDecorator LabelOffset
 
 -- | The decorator for label position.
-lpos :: (Affine p, Decor a) => p -> Decorator a
-lpos x = Decorator $ \f ->
-   let ld = (labelSettings f) { getLabelPosition = pure (cmp x) }
-   in setLabeling ld (pure f)
+lpos :: Decor a => CN -> Decorator a
+lpos = mkDecorator LabelPosition
 
 -- | The decorator for setting label on a curve at a given parameter value.
 lparam :: (Curve a, Decor a) => Double -> Decorator a
 lparam x = Decorator $ \f -> f #: lpos (f @-> x)
-  

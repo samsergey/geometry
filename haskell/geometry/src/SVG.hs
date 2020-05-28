@@ -335,8 +335,14 @@ svg content =
 -- | Creates a SVG contents for geometric objects.
 showSVG obj = prettyText contents
   where
-    contents = svg $ toSVG scaled mempty obj
+    contents = svg $ toSVG mempty obj
+    scaler :: Figure f => f -> f
+    scaler f = f
+               # reflect 0
+               # superpose (top . left . corner $ f) (0 :: CN)
+               # scale (svgSize / ((width f `max` height f) `min` paperSize))
 
-    scaled = translate (svgSize/2, svgSize/2) .
-             scale (svgSize/(paperSize + 2)) .
-             reflect 0 
+scaled :: Trans f => f -> f
+scaled = translate (svgSize/2, svgSize/2) .
+         scale (svgSize/(paperSize + 2)) .
+         reflect 0 

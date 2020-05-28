@@ -178,13 +178,13 @@ white = stroke "white"
 fill :: Decor a => String -> Decorator a
 fill = mkDecorator Fill
 
--- | The stroke-width decorator.
-width :: Decor a => String -> Decorator a
-width = mkDecorator Thickness
+-- | The stroke-thickness decorator.
+thickness :: Decor a => String -> Decorator a
+thickness = mkDecorator Thickness
 
 -- | The decorator for thin lines.
 thin :: Decor a => Decorator a
-thin = width "1"
+thin = thickness "1"
 
 -- | The decorator for dashed lines.
 dashed :: Decor a => Decorator a

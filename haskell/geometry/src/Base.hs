@@ -37,6 +37,7 @@ module Base
   , Intersections (..)
   -- ** Figures
   , Figure (..), pointBox
+  , height, width
   , corner, left, right, top, bottom
   -- ** Fuzzy equality
   , AlmostEq

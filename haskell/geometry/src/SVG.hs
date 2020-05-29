@@ -25,7 +25,7 @@ import Data.Complex
 import Data.Monoid
 import Data.Maybe
 import Data.Text (Text, pack, unwords)
-import Data.Text.Lazy.IO (writeFile)
+import qualified Data.Text.Lazy as LT
 import Data.Double.Conversion.Text (toShortest, toPrecision)
 
 import Base
@@ -324,6 +324,11 @@ group :: Groupable a => [a] -> Group
 group = foldMap G
 
 ------------------------------------------------------------
+type ImageSize = Int
+
+data SVGContext = SVGContext { imageSize :: ImageSize
+                             , figureBox :: Box
+                             , figureOptions :: Options }
 
 svg size content =
      doctype <>
@@ -332,10 +337,12 @@ svg size content =
                            , Height_ <<- showt size
                            , Style_ <<- "background : #444;"]
 
--- | Creates a SVG contents for geometric objects.
+-- | Creates a SVG contents for geometric objects. The first parameter sets the size of the image.
+showSVG :: (Figure a, SVGable a) => ImageSize -> a -> LT.Text
 showSVG size obj = prettyText contents
   where
-    contents = svg size $ toSVG mempty (scaler obj)
+    ctx = SVGContext size (box obj) mempty
+    contents = svg ctx $ toSVG ctx (scaler obj)
     scaler f = f
                # superpose (left . upper . corner $ f) (0 :: CN)
                # reflect 0

@@ -8,7 +8,7 @@ module Polygon where
 
 import Data.Complex
 import Data.Foldable
-import Data.List.Extra
+import Data.List.Extra (minimumOn)
 import Data.Monoid
 import Data.Fixed
 
@@ -156,4 +156,7 @@ instance (Curve a, Intersections a Polygon) => Intersections a Triangle where
   intersections x t = intersections x (fromTriangle t)
 
 instance (Curve b, Intersections Polygon b) => Intersections Triangle b where
-  intersections t x = intersections (fromTriangle t) x
+  intersections t = intersections (fromTriangle t)
+
+boxRectangle f = mkPolygon [ p4, p3, p2, p1 ]
+  where ((p4,p3),(p1,p2)) = corner f

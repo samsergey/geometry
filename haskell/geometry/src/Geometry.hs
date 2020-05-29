@@ -32,6 +32,7 @@ module Geometry (
   , aCircle, circle, circle'
   -- * Modificators
   , at, at', along, along', through, through'
+  , translate, scaleAt, scaleXAt, scaleYAt
   , on, normalTo
  ) where
 
@@ -151,6 +152,21 @@ complementary :: Angle -> Angle
 complementary (Angle p s e) = Angle p e s
 
 ------------------------------------------------------------
+translate :: Trans a => XY -> a -> a
+translate = translate'
+
+scaleAt :: Trans a => XY -> Double -> a -> a
+scaleAt = scaleAt'
+
+scaleXAt :: Trans a => XY -> Double -> a -> a
+scaleXAt = scaleXAt'
+
+scaleYAt :: Trans a => XY -> Double -> a -> a
+scaleYAt = scaleYAt'
+
+rotateAt :: Trans a => XY -> Angular -> a -> a
+rotateAt = rotateAt'
+
 at' :: (Affine p, Figure a) => p -> a -> a
 at' p fig = superpose (refPoint fig) p fig
 
@@ -158,7 +174,7 @@ at :: Figure a => XY -> a -> a
 at = at'
 
 along' :: (Figure f, Affine v, Affine f) => v -> f -> f
-along' v l = rotateAt (refPoint l) (angle v - angle l) l
+along' v l = rotateAt' (refPoint l) (angle v - angle l) l
 
 along :: (Figure a, Affine a) => Double -> a -> a
 along d = along' (asDeg d)
@@ -172,7 +188,7 @@ on c x = along' (tangent c x) . at' (c @-> x)
 through' :: (Affine p, Linear l) => p -> l -> l
 through' p l = l
                # along' (azimuth p0 p)
-               # scaleAt p0 (distance p0 p / unit l)
+               # scaleAt' p0 (distance p0 p / unit l)
   where p0 = start l
 
 -- | A coordinated version of `through`.
@@ -232,3 +248,5 @@ triangle2a a1 a2 = case intersections r1 r2 of
 -- The first parameter sets the size of the image.
 writeSVG :: (Figure a, SVGable a) => Int -> FilePath -> a -> IO ()
 writeSVG size name = writeFile name . showSVG size
+
+

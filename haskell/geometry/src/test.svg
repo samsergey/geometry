@@ -2,15 +2,10 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="450" width="450" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
-  <circle stroke="orange" stroke-width="2" fill="none" cy="325.6353791347014" r="88.21814550066313" cx="229.16184857965544"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="330.3242659903177" text-anchor="middle" y="335.03994317138097">c
-  </text>
-  <polygon points="229.16184857965544,325.6353791347014 361.4890668306501,325.6353791347014 295.32545770515276,249.23622405637528 " stroke="orange" stroke-width="2" fill="none"/>
-  <polygon points="88.21814550066311,124.34691051958606 133.47671965275538,0 182.63915483809058,88.30350522964213 " stroke="orange" stroke-width="2" fill="none"/>
-  <circle stroke="orange" stroke-width="2" fill="none" cy="124.34691051958606" r="88.21814550066307" cx="88.21814550066311"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="-5.418622977848353" text-anchor="middle" y="110.6514947095029">c
-  </text>
-  <line x2="430" y1="237.41723363403827" stroke="white" stroke-width="2" fill="none" y2="35.01783556296462" stroke-dasharray="2,3" x1="140.9437030789923"/>
-  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="294.6490745211129" text-anchor="middle" y="123.11110188987759">a
+  <circle stroke="orange" stroke-width="2" fill="none" cy="216.72955296706198" r="75.73300894322352" cx="268.53398211355295"/>
+  <polygon points="268.53398211355295,216.72955296706198 382.1334955283882,216.72955296706198 325.33373882097055,151.1428433171963 " stroke="orange" stroke-width="2" fill="none"/>
+  <circle stroke="orange" stroke-width="2" fill="none" cy="95.73300894322352" r="75.73300894322354" cx="95.73300894322354"/>[]
+  <circle stroke="#444" stroke-width="1" fill="red" cy="65.2635350806149" r="3" cx="420"/>
+  <text dy="5" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="420" text-anchor="middle" y="49.2635350806149">B
   </text>
 </svg>

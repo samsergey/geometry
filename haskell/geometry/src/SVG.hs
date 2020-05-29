@@ -2,16 +2,15 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE LambdaCase #-}
 
 module SVG ( -- * Classes
              Group (..)
            , (<+>), group
-           , SVGable (..)
+           , SVGable (..), ImageSize
            -- * Functions
            , showSVG
            -- * Parameters and constants
-           , svgSize, paperSize, plane
+           , svgSize, paperSize
            , attributes
            ) where
 
@@ -44,16 +43,12 @@ svgSize = 500
 paperSize :: Double
 paperSize = 50
 
--- |The curve bounding the visible paper
-plane = mkPolygon [(-1,-1), (1,-1), (1,1), (-1,1) :: XY]
-        # scale (paperSize/2)
-
 showt :: Show a => a -> Text
 showt = pack . show
 ------------------------------------------------------------
 
 class SVGable a where
-  toSVG :: Options -> a -> Element
+  toSVG :: SVGContext -> a -> Element
   toSVG _ _ = mempty
 
   fmtSVG :: a -> Text
@@ -75,7 +70,8 @@ instance SVGable XY where
 ------------------------------------------------------------
 
 instance SVGable a => SVGable (Decorated a) where
-  toSVG opts d = toSVG (opts <> options d) (fromDecorated d)
+  toSVG ctx d = toSVG ctx' (fromDecorated d)
+    where ctx' = updateOptions ctx (options d)
 
 attributes :: Options -> [Attribute]
 attributes = mconcat fmt . getOptions
@@ -100,13 +96,12 @@ instance Decor Point where
     , Thickness "1" ]
 
 instance SVGable Point where
-  toSVG opts p = circle_ attr <> labelElement opts p
+  toSVG ctx p = circle_ attr <> labelElement ctx p
     where    
-      opts' = options p <> opts
-      p' = scaled p
+      opts' = options p <> figureOptions ctx
       attr = attributes opts' <>
-             [ Cx_ <<- fmtSVG (getX p')
-             , Cy_ <<- fmtSVG (getY p')
+             [ Cx_ <<- fmtSVG (getX p)
+             , Cy_ <<- fmtSVG (getY p)
              , R_ <<- "3" ]
 
 ------------------------------------------------------------
@@ -119,14 +114,15 @@ instance Decor Label where
     , LabelAngle 0 ]
 
 instance SVGable Label where
-  toSVG opts l = labelElement (options l <> opts) l
+  toSVG ctx l = labelElement ctx' l
+    where ctx' = updateOptions ctx (options l)
 
 ------------------------------------------------------------
 
 instance Decor Circle where
   defaultOptions c = mkOptions
     [ LabelPosition $ c @-> 0
-    , LabelOffset $ cmp $ normal c 0.1
+    , LabelOffset $ cmp $ normal c 0
     , LabelCorner (-1,0)
     , LabelAngle 0
     , Stroke "orange"
@@ -134,32 +130,32 @@ instance Decor Circle where
     , Thickness "2" ]
 
 instance SVGable Circle where
-  toSVG opts c = circle_ attr <> labelElement opts c
+  toSVG ctx c = circle_ attr <> labelElement ctx c
     where
-      opts' = options c <> opts
-      c' = scaled c
-      (x :+ y) = center c'
-      attr =  attributes opts' <>
+      opts' = options c <> figureOptions ctx
+      (x :+ y) = center c
+      attr = attributes opts' <>
               [ Cx_ <<- fmtSVG x
               , Cy_ <<- fmtSVG y
-              , R_ <<- fmtSVG (radius c') ]
+              , R_ <<- fmtSVG (radius c) ]
 
 ------------------------------------------------------------
 
 instance Decor Line where
   defaultOptions l = mkOptions
     [ LabelPosition $ l @-> 0.5
-    , LabelOffset $ cmp $ scale 1 $ normal l 0
+    , LabelOffset $ cmp $ normal l 0
     , Stroke "orange"
     , Fill "none"
     , Thickness "2" ]
 
 instance SVGable Line where
-  toSVG opts l | bounding l == Bound = elem <> labelElement opts' l
-               | otherwise = foldMap (toSVG opts . relabel) $ l `clipBy` plane
+  toSVG ctx l | bounding l == Bound = elem <> labelElement ctx l
+              | otherwise = toElement . show $ l `clipBy` figureBox ctx -- foldMap (toSVG ctx)
+                            -- $ l `clipBy` figureBox ctx
     where
-      opts' = options l <> opts
-      (a, b) = refPoints $ scaled l
+      opts' = options l <> figureOptions ctx
+      (a, b) = refPoints l
       attr = attributes opts' <>
         [ X1_ <<- fmtSVG (getX a)
         , Y1_ <<- fmtSVG (getY a)
@@ -177,15 +173,14 @@ instance Decor Polygon where
     , Thickness "2" ]
 
 instance SVGable Polygon where
-  toSVG opts p
-    | isTrivial p = labelElement opts p
-    | otherwise = elem attr <> labelElement opts p
+  toSVG ctx p
+    | isTrivial p = labelElement ctx p
+    | otherwise = elem attr <> labelElement ctx p
     where
-      opts' = options p <> opts
-      p' = scaled p
+      opts' = options p <> figureOptions ctx
       elem = if isClosed p then polygon_ else polyline_
       attr = attributes opts' <>
-             [ Points_ <<- foldMap fmtSVG (vertices p') ]
+             [ Points_ <<- foldMap fmtSVG (vertices p) ]
 
 ------------------------------------------------------------
 
@@ -193,7 +188,7 @@ instance Decor Triangle where
   defaultOptions = defaultOptions . fromTriangle
 
 instance SVGable Triangle where
-  toSVG opts = toSVG opts . fromTriangle
+  toSVG ctx = toSVG ctx . fromTriangle
 
 ------------------------------------------------------------
 
@@ -205,11 +200,11 @@ instance Decor Angle where
     , MultiStroke 1]
     
 instance SVGable Angle where
-  toSVG opts an = toSVG opts' (poly <+> group arc) 
+  toSVG ctx an = toSVG ctx' (poly <+> group arc) 
     where
-      opts' = options an <> opts
-      Just ns = extractOption optMultiStroke opts'
-      poly = scaleAt p 3 $ mkPolyline [e, p, s]
+      ctx' = updateOptions ctx (options an)
+      Just ns = extractOption optMultiStroke (figureOptions ctx')
+      poly = scaleAt' p 3 $ mkPolyline [e, p, s]
       arc = [ mkPolyline [ p + scale r (cmp (asRad x))
                          | x <- [ a1, a1 + 0.05 .. a2]]
             | i <- [1..ns]
@@ -222,11 +217,12 @@ instance SVGable Angle where
 
 ------------------------------------------------------------
 
-labelElement :: (Decor f, Figure f) => Options -> f -> Element
-labelElement opts ff = case lb of
+labelElement :: (Decor f, Figure f) => SVGContext -> f -> Element
+labelElement ctx ff = case lb of
                    Just s -> text $ toElement s
                    Nothing -> mempty
   where
+    opts = figureOptions ctx
     f = Decorated (options ff <> opts, ff)
 
     lb = find optLabelText f
@@ -244,7 +240,7 @@ labelElement opts ff = case lb of
                    , Stroke_ <<- "none"
                    , Fill_ <<- "white"] <> offsetX <> offsetY
     
-    x :+ y = scaled lpos + cmp d
+    x :+ y = lpos + cmp d
     d = loff # scale (fromIntegral fontSize) # reflect 0
     offsetX = case 0*signum cx of
                 -1 -> [ Text_anchor_ <<- "start" ]
@@ -308,8 +304,8 @@ instance Show Group where
 
 
 instance SVGable Group where
-  toSVG opts (G a) = toSVG opts a
-  toSVG opts (Append a b) = toSVG opts a <> toSVG opts b
+  toSVG ctx (G a) = toSVG ctx a
+  toSVG ctx (Append a b) = toSVG ctx a <> toSVG ctx b
 
 
 instance Figure Group where
@@ -324,32 +320,38 @@ group :: Groupable a => [a] -> Group
 group = foldMap G
 
 ------------------------------------------------------------
+-- | Type alias for explicit image settings
 type ImageSize = Int
 
-data SVGContext = SVGContext { imageSize :: ImageSize
-                             , figureBox :: Box
-                             , figureOptions :: Options }
+data SVGContext = SVGContext
+  { imageSize :: ImageSize
+  , figureBox :: Polygon
+  , figureOptions :: Options }
 
-svg size content =
+updateOptions ctx opts = ctx {figureOptions = figureOptions ctx <> opts}
+
+svg ctx content =
      doctype <>
      with (svg11_ content) [ Version_ <<- "1.1"
-                           , Width_ <<- showt size
-                           , Height_ <<- showt size
+                           , Width_ <<- showt (imageSize ctx)
+                           , Height_ <<- showt (imageSize ctx)
                            , Style_ <<- "background : #444;"]
 
 -- | Creates a SVG contents for geometric objects. The first parameter sets the size of the image.
 showSVG :: (Figure a, SVGable a) => ImageSize -> a -> LT.Text
 showSVG size obj = prettyText contents
   where
-    ctx = SVGContext size (box obj) mempty
-    contents = svg ctx $ toSVG ctx (scaler obj)
-    scaler f = f
-               # superpose (left . upper . corner $ f) (0 :: CN)
-               # reflect 0
-               # scale ((fromIntegral size - 20) / ((w `max` h) `min` paperSize))
-      where
-        w = width f
-        h = height f
-
-scaled :: Trans f => f -> f
-scaled = id
+    contents = svg ctx $ toSVG ctx obj'
+    ctx = SVGContext size fb mempty
+    obj' = obj
+           # superpose p0 (0 :: CN)
+           # reflect 0
+           # scale ((fromIntegral size - 50) / ((w `max` h) `min` paperSize))
+           # translate' ((20, 20) :: XY)
+    fb = boxRectangle obj
+         # superpose p0 (0 :: CN)
+         # reflect 0
+         # scale ((fromIntegral size) / ((w `max` h) `min` paperSize))
+    w = width obj
+    h = height obj
+    p0 = left . upper . corner $ obj

@@ -122,7 +122,7 @@ instance Trans Line where
 instance Curve Line where
   unit l = let (p1, p2) = refPoints l in distance p1 p2
 
-  param l t = let (p1, p2) = refPoints l in scaleAt p1 t p2
+  param l t = let (p1, p2) = refPoints l in scaleAt' p1 t p2
 
   projectMaybe l p
     | isTrivial l = Nothing

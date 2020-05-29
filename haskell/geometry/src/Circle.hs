@@ -20,10 +20,10 @@ class Curve c => Circular c where
   -- | Orientation of the circle
   orientation :: c -> Double
   -- | The angle of the starting point.
-  phaseShift :: c -> Angular
+  phaseShift :: c -> Double
   -- | The radius-vector for a given parameter
   radiusVector :: c -> Double -> XY
-  radiusVector c x = coord $ azimuth (center c) (start c)
+  radiusVector c x = coord $ azimuth (center c) (c @-> x)
 
 -- | Represents a circle with given center, passing through given point.
 data Circle = Circle
@@ -35,7 +35,7 @@ instance Circular Circle where
   center (Circle c _ _) =  c
   radius (Circle c p _) = distance c p  
   orientation (Circle _ _ o) = o
-  phaseShift (Circle c p o) = asRad (signum o) * azimuth c p
+  phaseShift (Circle c p o) = signum o * turns (azimuth c p)
 
 -- | The trivial circle with zero radius.
 trivialCircle :: Circle
@@ -64,19 +64,19 @@ instance Eq Circle where
 
 
 instance Trans Circle where
-  transform t cir = Circle c p w
+  transform t cir = Circle c p 1
     where c = transformCN t (center cir)
           p = transformCN t (start cir)
           p' = transformCN t (cir @-> 0.25)
-          w = signum $ cross (p - c) (p' - c)
+          w = signum $ cross (p - c) (p' - p)
 
 
 instance Curve Circle where
   param c t =
-    center c + mkPolar (radius c) (2*pi*(orientation c)*(t + turns (phaseShift c)))
+    center c + mkPolar (radius c) (2*pi * orientation c *(t + phaseShift c))
 
   project c p =
-    orientation c * (turns (asCmp (cmp p - center c)) - turns (phaseShift c))
+    orientation c * (turns (asCmp (cmp p - center c)) - phaseShift c)
 
   isClosed = const True
 
@@ -87,7 +87,7 @@ instance Curve Circle where
           r' = distance p (center c)
 
   unit _ = 2 * pi
-  normal c t = asCmp (c @-> t - center c)
+  normal c t = azimuth (c @-> t) (center c)
   tangent c t = normal c t + asDeg (orientation c * 90)
   distanceTo p c = abs (center c `distance` p - radius c)
 
@@ -96,7 +96,7 @@ instance Figure Circle where
   isTrivial c = radius c < 0
   isSimilar c1 c2 = radius c1 ~== radius c2
   refPoint = center
-  box cir = ((Min x1, Min y1), (Max x2, Max x2))
+  box cir = ((Min x1, Min y1), (Max x2, Max y2))
     where c = center cir
           r = radius cir
           x1:+y1 = c-(r:+r)

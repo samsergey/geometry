@@ -154,7 +154,7 @@ instance SVGable Line where
               | otherwise = toElement . show $ l `clipBy` figureBox ctx -- foldMap (toSVG ctx)
                             -- $ l `clipBy` figureBox ctx
     where
-      opts' = options l <> figureOptions ctx
+      opts' = options l <> figureOptions ctxg
       (a, b) = refPoints l
       attr = attributes opts' <>
         [ X1_ <<- fmtSVG (getX a)
@@ -314,7 +314,7 @@ instance Figure Group where
   box (G f) = box f
   box (Append a b) = box a <> box b
 
-  
+ 
 -- | Returns a group of homogeneous list of objects.
 group :: Groupable a => [a] -> Group
 group = foldMap G

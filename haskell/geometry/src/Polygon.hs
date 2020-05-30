@@ -103,7 +103,7 @@ instance Curve Polygon where
   location pt p = res
     where res | any (`isContaining` pt) (segments p) = OnCurve
               | isClosed p && odd (length (intersections r p)) = Inside
-              | otherwise   = Outside
+              | otherwise = Outside
           r = mkRay (cmp pt, cmp pt + 1)
 
   unit p = sum $ unit <$> segments p

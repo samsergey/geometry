@@ -102,9 +102,9 @@ instance Figure Line where
   refPoint = fst . refPoints
 
   box l = case bounding l of
-            Bound -> pointBox p1 <> pointBox p2
-            Semibound -> ((pure (getX p1), mempty), (pure (getY p1), mempty))
-            Unbound -> mempty
+            _ -> pointBox p1 <> pointBox p2
+--            Semibound -> ((pure (getX p1), mempty), (pure (getY p1), mempty))
+--            Unbound -> mempty
     where (p1,p2) = refPoints l
     
 

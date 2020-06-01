@@ -5,7 +5,7 @@ module Line
   (-- * Types
     Bounding (..)
   , Line (..)
-  , Linear (..)
+  , IsLine (..)
   -- * Constructors
   , trivialLine, mkSegment, mkRay, mkLine
   -- * Functions
@@ -19,7 +19,7 @@ import Data.Maybe
 import Base
 
 -- | Constrain for a linear object
-class (Figure l, Affine l, Curve l, Trans l) => Linear l where
+class (Figure l, Affine l, Curve l, Trans l) => IsLine l where
   bounding :: l -> Bounding
   refPoints :: l -> (CN, CN)
 
@@ -35,7 +35,7 @@ data Bounding = Unbound    -- ^ a straight line
 -- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
 data Line = Line Bounding !(CN, CN)
 
-instance Linear Line where
+instance IsLine Line where
   bounding (Line b _) = b
   refPoints (Line _ r) = r
 
@@ -174,11 +174,11 @@ intersectionV (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
 
 -- | Returns a list of segments as a result of clipping the line
 -- by a closed curve.
-clipBy :: (Linear l, Intersections l c, Curve c) => l -> c -> [Line]
+clipBy :: (IsLine l, Intersections l c, Curve c) => l -> c -> [Line]
 clipBy l c = filter internal $ Line Bound <$> zip ints (tail ints) 
   where
     ints = sortOn (project l) $ intersections l c <> ends
-    internal s = c `isEnclosing` (s @-> 1/2)
+    internal s = c `isEnclosing` (s @-> 0.5)
     ends = case bounding l of
              Bound -> [l @-> 0, l @-> 1]
              Semibound -> [l @-> 0]

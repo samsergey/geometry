@@ -4,7 +4,23 @@
 {-# language GeneralizedNewtypeDeriving #-}
 {-# language MultiParamTypeClasses #-}
 
-module Decorations where
+module Decorations
+  ( -- * Classes
+    Decor (..)
+    -- * Types and records
+  , Options, Option(..)
+  , mkOptions, getOptions
+  , Decorated(..), fromDecorated
+  -- * Decorators
+  , Decorator(..)
+  , (#:)
+  , stroke, white, fill
+  , thickness, thin
+  , dashed, dotted
+  , arcs
+  , label, loffs, lpos, lparam
+  )
+where
 
 import Data.Monoid
 import Data.Maybe
@@ -18,6 +34,7 @@ import Circle
 import Angle
 import Polygon
 
+-- | Possible SVG options for a figure.
 data Option = Stroke String
             | Fill String
             | Thickness String
@@ -30,10 +47,13 @@ data Option = Stroke String
             | LabelAngle Angular
             | SegmentMark Int  deriving (Show)
 
+-- | Monoidal options list wrapper. Concatenates dually to a usual list.
 newtype Options = Options (Dual [Option])
   deriving (Semigroup, Monoid, Show)
 
+-- | Puts a list of options to a wrapper.
 mkOptions = Options . Dual
+-- | Extracts an option list from the `Options` wrapper.
 getOptions (Options (Dual os)) = os
 
 -- | The class of objects which could have decorations.
@@ -50,22 +70,7 @@ class Decor a where
   defaultOptions :: a -> Options
   defaultOptions _ = mempty
 
-find :: Decor a => (Option -> Maybe b) -> a -> Maybe b
-find p d = extractOption p $ defaultOptions d <> options d
 
-extractOption p = getFirst . foldMap (First . p) . getOptions
-
-optFill          = \case {Fill x -> Just x; _ -> Nothing }
-optStroke        = \case {Stroke x -> Just x; _ -> Nothing }
-optThickness     = \case {Thickness x -> Just x; _ -> Nothing }
-optMultiStroke   = \case {MultiStroke x -> Just x; _ -> Nothing }
-optDashing       = \case {Dashing x -> Just x; _ -> Nothing }
-optLabelText     = \case {LabelText x -> Just x; _ -> Nothing }
-optLabelPosition = \case {LabelPosition x -> Just x; _ -> Nothing }
-optLabelOffset   = \case {LabelOffset x -> Just x; _ -> Nothing }
-optLabelCorner   = \case {LabelCorner x -> Just x; _ -> Nothing }
-optLabelAngle    = \case {LabelAngle x -> Just x; _ -> Nothing }
-optSegmentMark   = \case {SegmentMark x -> Just x; _ -> Nothing }
 
 ------------------------------------------------------------
 
@@ -92,7 +97,11 @@ instance Decor (Decorated a) where
 
 instance Show a => Show (Decorated a) where
   show f = l <> show (fromDecorated f)
-    where l = fromMaybe mempty $ (<> ":") <$> find optLabelText f
+    where l = fromMaybe mempty $ (<> ":") <$> lab
+          lab = find optLabelText f
+          find p d = extractOption p $ defaultOptions d <> options d
+          extractOption p = getFirst . foldMap (First . p) . getOptions
+          optLabelText = \case {LabelText x -> Just x; _ -> Nothing }
 
 instance Eq a => Eq (Decorated a) where
   d1 == d2 = fromDecorated d1 == fromDecorated d2
@@ -117,19 +126,30 @@ instance Figure a => Figure (Decorated a) where
   refPoint = refPoint . fromDecorated
   box = box . fromDecorated
 
-instance Linear l => Linear (Decorated l) where
+instance IsLine l => IsLine (Decorated l) where
   bounding = bounding . fromDecorated
   refPoints = refPoints . fromDecorated
 
-instance Circular a => Circular (Decorated a) where
+instance IsCircle a => IsCircle (Decorated a) where
   radius = radius . fromDecorated
   center = center . fromDecorated
   phaseShift = phaseShift . fromDecorated
   orientation = orientation . fromDecorated
 
-instance Polygonal a => Polygonal (Decorated a) where
+instance IsPolygon a => IsPolygon (Decorated a) where
   vertices = vertices . fromDecorated
   polyClosed = polyClosed . fromDecorated
+
+instance IsAngle a => IsAngle (Decorated a) where
+  angleValue = angleValue . fromDecorated
+  setValue v = fmap (setValue v)
+  angleStart = angleStart . fromDecorated
+  angleEnd = angleEnd . fromDecorated
+
+
+instance {-# OVERLAPPING #-}
+  Intersections a b => Intersections (Decorated a) (Decorated b) where
+  intersections d x = intersections (fromDecorated d) (fromDecorated x)
 
 instance Intersections a b => Intersections a (Decorated b) where
   intersections x d = intersections x (fromDecorated d)
@@ -155,7 +175,7 @@ instance Decor a => IsString (Decorator a) where
   fromString = label
 
 infixl 5 #:
--- | The infix operator for decorator apprication.
+-- | The infix operator for decorator application.
 --
 -- >>> aPoint # at (4, 5) #: label "A"
 -- A:<Point (4.0, 5.0)>

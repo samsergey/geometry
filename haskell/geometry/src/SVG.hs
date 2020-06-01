@@ -1,17 +1,16 @@
+{-# language LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ConstraintKinds #-}
 
+-- | This module defines representation of all figures as SVG elements. as well as default style settings.
 module SVG ( -- * Classes
-             Group (..)
+             Groupable, Group (..)
            , (<+>), group
            , SVGable (..), ImageSize
            -- * Functions
            , showSVG
-           -- * Parameters and constants
-           , svgSize, paperSize
-           , attributes
            ) where
 
 import Prelude hiding (writeFile, unwords)
@@ -34,21 +33,36 @@ import Circle
 import Polygon
 import Line
 import Angle
-
--- |The actual size of the svg image
-svgSize :: Double
-svgSize = 500
-
--- |The virtual size of the chart paper
-paperSize :: Double
-paperSize = 50
+import Figures
 
 showt :: Show a => a -> Text
 showt = pack . show
+
 ------------------------------------------------------------
 
+find :: Decor a => (Option -> Maybe b) -> a -> Maybe b
+find p d = extractOption p $ defaultOptions d <> options d
+
+extractOption p = getFirst . foldMap (First . p) . getOptions
+
+optFill          = \case {Fill x -> Just x; _ -> Nothing }
+optStroke        = \case {Stroke x -> Just x; _ -> Nothing }
+optThickness     = \case {Thickness x -> Just x; _ -> Nothing }
+optMultiStroke   = \case {MultiStroke x -> Just x; _ -> Nothing }
+optDashing       = \case {Dashing x -> Just x; _ -> Nothing }
+optLabelText     = \case {LabelText x -> Just x; _ -> Nothing }
+optLabelPosition = \case {LabelPosition x -> Just x; _ -> Nothing }
+optLabelOffset   = \case {LabelOffset x -> Just x; _ -> Nothing }
+optLabelCorner   = \case {LabelCorner x -> Just x; _ -> Nothing }
+optLabelAngle    = \case {LabelAngle x -> Just x; _ -> Nothing }
+optSegmentMark   = \case {SegmentMark x -> Just x; _ -> Nothing }
+
+------------------------------------------------------------
+-- | Class for objects that could be represented as SVG elements.
+-- Differs from `Graphics.Svg.ToElement` class in adding
+-- parameter context to a main render function `toSVG`.
 class SVGable a where
-  toSVG :: SVGContext -> a -> Element
+  toSVG :: a -> SVGContext -> Element
   toSVG _ _ = mempty
 
   fmtSVG :: a -> Text
@@ -70,15 +84,16 @@ instance SVGable XY where
 ------------------------------------------------------------
 
 instance SVGable a => SVGable (Decorated a) where
-  toSVG ctx d = toSVG ctx' (fromDecorated d)
-    where ctx' = updateOptions ctx (options d)
+  toSVG d = toSVG (fromDecorated d) . updateOptions (options d)
 
-attributes :: Options -> [Attribute]
-attributes = mconcat fmt . getOptions
-  where fmt = [ attr optStroke Stroke_
-              , attr optFill Fill_
-              , attr optThickness Stroke_width_
-              , attr optDashing Stroke_dasharray_ ]
+attributes :: (Decor f, Figure f) => f -> SVGContext -> [Attribute]
+attributes f ctx = mconcat fmt $ getOptions $ opts
+  where
+    opts = options f <> figureOptions ctx
+    fmt = [ attr optStroke Stroke_
+          , attr optFill Fill_
+          , attr optThickness Stroke_width_
+          , attr optDashing Stroke_dasharray_ ]
 
 attr :: (Option -> Maybe String) -> AttrTag -> [Option] -> [Attribute]
 attr opt a x = maybeToList $ (\s -> a <<- pack s) <$> find opt x
@@ -96,13 +111,13 @@ instance Decor Point where
     , Thickness "1" ]
 
 instance SVGable Point where
-  toSVG ctx p = circle_ attr <> labelElement ctx p
+  toSVG p = circle_ . attr <> labelElement p
     where    
-      opts' = options p <> figureOptions ctx
-      attr = attributes opts' <>
-             [ Cx_ <<- fmtSVG (getX p)
-             , Cy_ <<- fmtSVG (getY p)
-             , R_ <<- "3" ]
+      attr =
+        attributes p <>
+        const [ Cx_ <<- fmtSVG (getX p)
+              , Cy_ <<- fmtSVG (getY p)
+              , R_ <<- "3" ]
 
 ------------------------------------------------------------
 
@@ -114,8 +129,7 @@ instance Decor Label where
     , LabelAngle 0 ]
 
 instance SVGable Label where
-  toSVG ctx l = labelElement ctx' l
-    where ctx' = updateOptions ctx (options l)
+  toSVG l = labelElement l . updateOptions (options l)
 
 ------------------------------------------------------------
 
@@ -130,14 +144,13 @@ instance Decor Circle where
     , Thickness "2" ]
 
 instance SVGable Circle where
-  toSVG ctx c = circle_ attr <> labelElement ctx c
+  toSVG c = circle_ . attr <> labelElement c
     where
-      opts' = options c <> figureOptions ctx
       (x :+ y) = center c
-      attr = attributes opts' <>
-              [ Cx_ <<- fmtSVG x
-              , Cy_ <<- fmtSVG y
-              , R_ <<- fmtSVG (radius c) ]
+      attr = attributes c <>
+             const [ Cx_ <<- fmtSVG x
+                   , Cy_ <<- fmtSVG y
+                   , R_ <<- fmtSVG (radius c) ]
 
 ------------------------------------------------------------
 
@@ -150,19 +163,20 @@ instance Decor Line where
     , Thickness "2" ]
 
 instance SVGable Line where
-  toSVG ctx l | bounding l == Bound = elem <> labelElement ctx l
-              | otherwise = toElement . show $ l `clipBy` figureBox ctx -- foldMap (toSVG ctx)
-                            -- $ l `clipBy` figureBox ctx
-    where
-      opts' = options l <> figureOptions ctxg
-      (a, b) = refPoints l
-      attr = attributes opts' <>
-        [ X1_ <<- fmtSVG (getX a)
-        , Y1_ <<- fmtSVG (getY a)
-        , X2_ <<- fmtSVG (getX b)
-        , Y2_ <<- fmtSVG (getY b) ]
-      elem = if isTrivial l then mempty else line_ attr
-      relabel s = s #: lpos ((s @-> 0.95) - cmp s)
+  toSVG l =
+    let (a, b) = refPoints l
+        elem = if isTrivial l then mempty else line_
+        attr = attributes l <>
+               const [ X1_ <<- fmtSVG (getX a)
+                     , Y1_ <<- fmtSVG (getY a)
+                     , X2_ <<- fmtSVG (getX b)
+                     , Y2_ <<- fmtSVG (getY b) ]
+        relabel s = s #: lpos ((s @-> 0.95) - cmp s)
+    in do
+      bx <- figureBox
+      if bounding l == Bound
+        then elem . attr <> labelElement l
+        else foldMap (toSVG . relabel) $ l `clipBy` bx
       
 ------------------------------------------------------------
 
@@ -173,14 +187,12 @@ instance Decor Polygon where
     , Thickness "2" ]
 
 instance SVGable Polygon where
-  toSVG ctx p
-    | isTrivial p = labelElement ctx p
-    | otherwise = elem attr <> labelElement ctx p
+  toSVG p | isTrivial p = labelElement p
+          | otherwise = elem . attr <> labelElement p
     where
-      opts' = options p <> figureOptions ctx
       elem = if isClosed p then polygon_ else polyline_
-      attr = attributes opts' <>
-             [ Points_ <<- foldMap fmtSVG (vertices p) ]
+      attr = attributes p <>
+             const [ Points_ <<- foldMap fmtSVG (vertices p) ]
 
 ------------------------------------------------------------
 
@@ -188,27 +200,33 @@ instance Decor Triangle where
   defaultOptions = defaultOptions . fromTriangle
 
 instance SVGable Triangle where
-  toSVG ctx = toSVG ctx . fromTriangle
+  toSVG = toSVG . fromTriangle
 
 ------------------------------------------------------------
 
 instance Decor Angle where
-  defaultOptions _ = mkOptions
+  defaultOptions an = mkOptions
     [ Stroke "white"
     , Fill "none"
-    , Thickness "1.25"
-    , MultiStroke 1]
+    , Thickness "1"
+    , MultiStroke 1
+    , LabelPosition $ refPoint an - scale 27 (cmp (bisectrisse an)) ]
     
 instance SVGable Angle where
-  toSVG ctx an = toSVG ctx' (poly <+> group arc) 
+  toSVG an ctx = toSVG (poly <+> group arc) ctx' <> labelElement an ctx'
     where
-      ctx' = updateOptions ctx (options an)
+      t = extractOption optLabelText (figureOptions ctx)
+      label = case t of
+        Just "#" -> show (angleValue an)
+        Just s -> s
+        Nothing -> ""
+      ctx' = updateOptions (options an <> mkOptions [LabelText label]) ctx
       Just ns = extractOption optMultiStroke (figureOptions ctx')
-      poly = scaleAt' p 3 $ mkPolyline [e, p, s]
+      poly = scaleAt' p 20 $ mkPolyline [e, p, s]
       arc = [ mkPolyline [ p + scale r (cmp (asRad x))
                          | x <- [ a1, a1 + 0.05 .. a2]]
             | i <- [1..ns]
-            ,  let r = 2 + fromIntegral i * 0.3 ]
+            , let r = 12 + fromIntegral i * 4 ]
       p = refPoint an
       s = p + cmp (angleStart an)
       e = p + cmp (angleEnd   an)
@@ -217,8 +235,8 @@ instance SVGable Angle where
 
 ------------------------------------------------------------
 
-labelElement :: (Decor f, Figure f) => SVGContext -> f -> Element
-labelElement ctx ff = case lb of
+labelElement :: (Decor f, Figure f) => f -> SVGContext -> Element
+labelElement ff ctx = case lb of
                    Just s -> text $ toElement s
                    Nothing -> mempty
   where
@@ -253,40 +271,21 @@ labelElement ctx ff = case lb of
 
 ------------------------------------------------------------
 
--- | The empty figure.
-data EmptyFig = EmptyFig
-  deriving (Show, Eq)
-
-instance Trans EmptyFig where
-  transform t EmptyFig = EmptyFig
-
-instance Affine EmptyFig where
-  cmp EmptyFig = 0
-  asCmp _ = EmptyFig
-
-instance SVGable EmptyFig where
-  toSVG _ EmptyFig = mempty
-
-instance Figure EmptyFig where
-  refPoint _ = 0
-  isTrivial _ = True
-  box = mempty
-
-------------------------------------------------------------
 -- | Constrain for an object that could be included to a group.
 type Groupable a = (SVGable a, Show a, Trans a, Figure a, Eq a)
 
 -- | The group of inhomogeneous Groupable objects.
-data Group where 
-    G :: Groupable a => a -> Group
-    Append :: Group -> Group -> Group
+data Group where
+  EmptyFig :: Group
+  G :: Groupable a => a -> Group
+  Append :: Group -> Group -> Group
 
 instance Eq Group where
   _ == _ = False
 
 instance Semigroup Group where (<>) = Append
 
-instance Monoid Group where mempty = G EmptyFig
+instance Monoid Group where mempty = EmptyFig
 
 infixl 5 <+>
 -- | The appending operator for groupable objects.
@@ -294,27 +293,30 @@ infixl 5 <+>
 a <+> b = G a <> G b
 
 instance Trans Group where
+  transform t EmptyFig = EmptyFig
   transform t (G f) = G $ transform t f 
   transform t (Append x xs) = Append (transform t x) (transform t xs)
 
 
 instance Show Group where
+  show EmptyFig = mempty
   show (G a) = show a
   show (Append x xs) = show x <> show xs
 
 
 instance SVGable Group where
-  toSVG ctx (G a) = toSVG ctx a
-  toSVG ctx (Append a b) = toSVG ctx a <> toSVG ctx b
+  toSVG EmptyFig = mempty
+  toSVG (G a) = toSVG a
+  toSVG (Append a b) = toSVG a <> toSVG b
 
 
 instance Figure Group where
   refPoint = left . lower . corner
   isTrivial _ = False
+  box EmptyFig = mempty
   box (G f) = box f
   box (Append a b) = box a <> box b
-
- 
+  
 -- | Returns a group of homogeneous list of objects.
 group :: Groupable a => [a] -> Group
 group = foldMap G
@@ -328,20 +330,22 @@ data SVGContext = SVGContext
   , figureBox :: Polygon
   , figureOptions :: Options }
 
-updateOptions ctx opts = ctx {figureOptions = figureOptions ctx <> opts}
+updateOptions :: Options -> SVGContext -> SVGContext
+updateOptions opts ctx = ctx {figureOptions = figureOptions ctx <> opts}
 
-svg ctx content =
-     doctype <>
-     with (svg11_ content) [ Version_ <<- "1.1"
-                           , Width_ <<- showt (imageSize ctx)
-                           , Height_ <<- showt (imageSize ctx)
-                           , Style_ <<- "background : #444;"]
+wrapSVG :: Element -> SVGContext -> Element
+wrapSVG content ctx =
+  doctype <>
+  with (svg11_ content) [ Version_ <<- "1.1"
+                        , Width_ <<- showt (imageSize ctx)
+                        , Height_ <<- showt (imageSize ctx)
+                        , Style_ <<- "background : #444;" ]
 
--- | Creates a SVG contents for geometric objects. The first parameter sets the size of the image.
+-- | Creates a SVG contents for geometric objects.
 showSVG :: (Figure a, SVGable a) => ImageSize -> a -> LT.Text
-showSVG size obj = prettyText contents
+showSVG size obj = prettyText (contents ctx)
   where
-    contents = svg ctx $ toSVG ctx obj'
+    contents = toSVG obj' >>= wrapSVG
     ctx = SVGContext size fb mempty
     obj' = obj
            # superpose p0 (0 :: CN)
@@ -351,7 +355,9 @@ showSVG size obj = prettyText contents
     fb = boxRectangle obj
          # superpose p0 (0 :: CN)
          # reflect 0
-         # scale ((fromIntegral size) / ((w `max` h) `min` paperSize))
+         # scale ((fromIntegral size - 4) / ((w `max` h) `min` paperSize))
+         # translate' ((2, 2) :: XY)
+    paperSize = 50
     w = width obj
     h = height obj
     p0 = left . upper . corner $ obj

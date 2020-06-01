@@ -3,16 +3,21 @@ module Angle where
 import Base
 
 ------------------------------------------------------------
+class Figure an => IsAngle an where
+  angleValue :: an -> Angular 
+  setValue :: Angular -> an -> an
+  angleStart :: an -> Angular
+  angleEnd :: an -> Angular
+
 -- | Type representing angle on the chart
 data Angle = Angle CN Angular Angular
   deriving Eq
 
-angleValue (Angle p s e) = e - s
-setValue v (Angle p s _) = Angle p s (s + v)
-
-angleStart (Angle _ s _) = s
-angleEnd (Angle _ _ e) = e
-
+instance IsAngle Angle where
+  angleValue (Angle p s e) = e - s
+  setValue v (Angle p s _) = Angle p s (s + v)
+  angleStart (Angle _ s _) = s
+  angleEnd (Angle _ _ e) = e
 
 instance Show Angle where
   show an = concat ["<Angle ", val, "(", sx, " ", sy, ")>"]
@@ -39,3 +44,4 @@ instance Figure Angle where
   a1 `isSimilar` a2 = angleValue a1 ~== angleValue a2
   box (Angle p s e) = foldMap pointBox [p, p + cmp s, p + cmp e]
            
+

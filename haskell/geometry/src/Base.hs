@@ -139,7 +139,7 @@ turns :: Angular -> Double
 turns (Angular a) = (a / (2*pi))  `mod'` 1
 
 instance Show Angular where
-  show a = show (deg a) <> "°"
+  show a = show (round (deg a)) <> "°"
 
 instance AlmostEq Angular where  a ~== b = rad a ~== rad b
 
@@ -154,6 +154,29 @@ instance Num Angular where
   negate = withAngular negate
   abs = withAngular abs
   signum = withAngular signum
+
+instance Fractional Angular where
+  fromRational = Angular . fromRational
+  recip (Angular r) = Angular (1 / r) 
+
+instance Floating Angular where
+  pi = Angular pi
+  exp (Angular a) = Angular $ exp a
+  log (Angular a) = Angular $ log a
+  sin (Angular a) = Angular $ sin a
+  cos (Angular a) = Angular $ cos a
+  asin (Angular a) = Angular $ asin a
+  acos (Angular a) = Angular $ acos a
+  atan (Angular a) = Angular $ atan a
+  sinh (Angular a) = Angular $ sinh a
+  cosh (Angular a) = Angular $ cosh a
+  asinh (Angular a) = Angular $ asinh a
+  acosh (Angular a) = Angular $ acosh a
+  atanh (Angular a) = Angular $ atanh a
+
+instance Real Angular where
+  toRational (Angular a) = toRational a
+
 
 withAngular op a = asRad $ op (rad a)
 
@@ -554,3 +577,5 @@ lower = snd
 upper = fst
 right = snd
 left  = fst
+
+------------------------------------------------------------

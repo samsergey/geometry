@@ -8,25 +8,24 @@ import Data.Complex
 
 pt = point (2,2) #: "B"
 
-lb = aLabel "A" # at (-10,0)
+lb = aLabel #: "A" # at (-10,0)
 
 t = aTriangle # scaleX 1.5
 
-c = aCircle
+c = aCircle # scale 1 # at (1,0.5)
+c2 = aCircle # at (1,1)
 
 l = aLine
     #: "a" <> white <> dotted
-    # at (-1, 1) # along 55
+    # at (0, 0.5) # along 35
 
-c' = c # reflectAt l 
+c' = (c <+> t) # reflectAt l 
 
-s = aSegment # scale 8 # at' pt # normalTo l #: "s"
+s = aSegment # at' pt # along 100 #: "s"
 
-an = angleBetween s l #: arcs 2
-        
-t1 = regularPoly 5 # on c 0
+an = angleBetween s l #: "#"
 
-ch = c <+> t <+> c' <+> l <+> pt
+ch = s <+> l <+> an
 
 main :: IO ()
-main = writeSVG 450 "test.svg" $ ch
+main = writeSVG 450 "test.svg" ch

@@ -1,5 +1,4 @@
 ** Triangle
 ** Angle
 *** Values
-*** double stroke arc
 ** Double lines

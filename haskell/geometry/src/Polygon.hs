@@ -16,7 +16,7 @@ import Base
 import Point
 import Line
 
-class Curve p => Polygonal p where
+class Curve p => IsPolygon p where
   vertices :: p -> [CN]
 
   polyClosed :: p -> Bool
@@ -39,7 +39,7 @@ class Curve p => Polygonal p where
 
 data Polygon = Polygon Bool ![CN]
 
-instance Polygonal Polygon where
+instance IsPolygon Polygon where
   vertices (Polygon _ vs) = vs
   polyClosed (Polygon c _) = c
   
@@ -128,6 +128,9 @@ instance Intersections Line Polygon where
 instance Intersections Polygon Line where
   intersections p l = foldMap (intersections l) (segments p)
 
+instance Intersections Polygon Polygon where
+  intersections p1 p2 = foldMap (intersections p1) (segments p2)
+
 ------------------------------------------------------------
 
 newtype Triangle = Triangle Polygon
@@ -136,7 +139,7 @@ newtype Triangle = Triangle Polygon
 fromTriangle (Triangle p) = p
 mkTriangle vs = Triangle $ mkPolygon vs
 
-instance Polygonal Triangle where
+instance IsPolygon Triangle where
   verticesNumber _ = 3
 
   vertices = vertices . fromTriangle

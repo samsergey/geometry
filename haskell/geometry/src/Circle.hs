@@ -1,7 +1,9 @@
 {-# Language RecordWildCards #-}
+{-# Language MultiParamTypeClasses #-}
+{-# Language FlexibleInstances, FlexibleContexts, UndecidableInstances #-}
 module Circle
   (-- * Types and classes
-    Circle (..), Circular (..)
+    Circle (..), IsCircle (..)
     -- * Constructors
   , trivialCircle, mkCircle, mkCircleRC
   ) where
@@ -9,10 +11,12 @@ module Circle
 import Data.Complex
 
 import Base
+import Line
+import Polygon
 import Data.Semigroup
 
 -- | Class for circle and decorated circle
-class Curve c => Circular c where
+class Curve c => IsCircle c where
   -- | Center of the circle.
   center :: c -> CN
   -- | Radius of the circle
@@ -31,7 +35,7 @@ data Circle = Circle
               CN -- ^ starting point,
               Double -- ^ orientation poitive -- CW, negative -- CCW.
 
-instance Circular Circle where
+instance IsCircle Circle where
   center (Circle c _ _) =  c
   radius (Circle c p _) = distance c p  
   orientation (Circle _ _ o) = o
@@ -101,3 +105,56 @@ instance Figure Circle where
           r = radius cir
           x1:+y1 = c-(r:+r)
           x2:+y2 = c+(r:+r)
+
+instance Intersections Circle Circle where
+  intersections cir1 cir2 =
+    filter (isContaining cir1) $
+    filter (isContaining cir2) $
+    invt <$> intersectionC (t cir1) (t cir2)
+    where
+      t = rotate (-a) . translate' (negate c1)
+      invt = translate' c1 . rotate a
+      c1 = center cir1
+      c2 = center cir2
+      a = azimuth c1 c2
+
+intersectionC c1 c2 | d == 0 || b < 0 = []
+                    | b == 0          = [x]
+                    | b > 0           = [x, conjugate x]
+  where
+    r1 = radius c1
+    r2 = radius c2
+    d = magnitude (center c1 - center c2)
+    a = r1**2-r2**2+d**2
+    b = -(r2-r1-d)*(r2-r1+d)*(r2+r1-d)*(r2+r1+d)
+    x = scale (1/(2*d)) $ a :+ sqrt b
+
+instance Intersections Circle Line where
+  intersections cir l =
+    filter (isContaining cir) $
+    filter (isContaining l) $
+    invt <$> intersectionL (t cir) (t l)
+    where
+      t :: Trans x => x -> x
+      t = rotate (-a) . translate' (negate (center cir))
+      invt = translate' (center cir) . rotate a
+      a = angle l
+
+intersectionL c l | b > r = []
+                  | b == r = [0:+b]
+                  | b < r = [a:+b, (-a):+b]
+  where
+    b = getY (refPoint l)
+    r = radius c
+    a = sqrt (r**2 - b**2)
+    
+  
+instance Intersections Line Circle where
+  intersections = flip intersections
+
+instance Intersections Circle Polygon where
+  intersections c p = foldMap (intersections c) (segments p)
+
+instance Intersections Polygon Circle where
+  intersections = flip intersections
+

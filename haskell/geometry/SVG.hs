@@ -8,7 +8,7 @@
 module SVG ( -- * Classes
              Groupable, Group (..)
            , (<+>), group
-           , SVGable (..), ImageSize
+           , SVGable (..), ImageSize, SVGContext(..)
            -- * Functions
            , showSVG
            ) where
@@ -325,6 +325,7 @@ group = foldMap G
 -- | Type alias for explicit image settings
 type ImageSize = Int
 
+-- | The record containing image parameters and options.
 data SVGContext = SVGContext
   { imageSize :: ImageSize
   , figureBox :: Polygon

@@ -15,7 +15,7 @@ name:                geometry
 version:             0.1.0.0
 
 -- A short (one-line) description of the package.
-synopsis: Tools for creating geometric charts in SVG format.
+synopsis: Geometric charts in SVG format.
 
 -- A longer description of the package.
 description: Provides a toolkit for creating scale-free affine geometric charts in terms of geometric relations rather than coordinates.

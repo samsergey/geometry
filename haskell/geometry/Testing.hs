@@ -28,17 +28,11 @@ instance Arbitrary Parameter where
 ------------------------------------------------------------
 
 newtype Position a = Position {getPosition :: a}
-  deriving Show
-
-instance Affine a => Affine (Position a) where
-  cmp = cmp . getPosition
-  fromCN = Position . fromCN
-
-instance Trans a => Trans (Position a) where
-  transform t (Position p) = Position (transform t p)
+  deriving (Show, Affine, Trans)
 
 
-instance (Trans a, Affine a, Arbitrary a) => Arbitrary (Position a) where
+instance (Trans a, Affine a, Arbitrary a) =>
+         Arbitrary (Position a) where
   arbitrary = Position . roundUp 1 <$> arbitrary 
   shrink = shrinkPos 1
 
@@ -47,7 +41,7 @@ shrinkPos :: Affine a => Double -> a -> [a]
 shrinkPos d x = res
   where res = map (roundUp d) $
               takeWhile (\p -> distance x p >= d/2) $
-              map (\s -> fromCN $ (1 - s) * cmp x) $
+              map (\s -> asCmp $ (1 - s) * cmp x) $
               iterate (/2) 1
 
 ------------------------------------------------------------
@@ -61,53 +55,56 @@ instance Arbitrary Point where
   shrink = shrinkPos 1
 
 instance Arbitrary Circle where
-  arbitrary = do r <- arbitrary
-                 Position c <- arbitrary
-                 return $ mkCircle (abs r) c
+  arbitrary = do Position c <- arbitrary
+                 Position p <- arbitrary
+                 w <- signum <$> arbitrary
+                 return $ Circle c p w
                  
-  shrink (Circle r c _ _) = do r' <- shrink r
-                               Position c' <- shrink (Position c)
-                               return $ mkCircle r' c'
+  shrink (Circle c p w) =
+    do Position c' <- shrink (Position c)
+       Position p' <- shrink (Position p)
+       return $ Circle c' p' w
 
 shrinkLine l = let (p1, p2) = refPoints l
-               in do Position p1' <- shrink (Position p1)
-                     Position p2' <- shrink (Position p2)
-                     return $ lineConstructor l (p1', p2')
+  in do Position p1' <- shrink (Position p1)
+        Position p2' <- shrink (Position p2)
+        return $ Line (bounding l) (p1', p2')
 
 ------------------------------------------------------------
 
 instance Arbitrary Line where
-  arbitrary = do Position p1 <- arbitrary
-                 Position p2 <- arbitrary
-                 constr <- elements [Line, Ray, Segment]
-                 return $ constr (p1, p2)
+  arbitrary =
+    do Position p1 <- arbitrary
+       Position p2 <- arbitrary
+       constr <- elements [Unbound, Semibound, Bound]
+       return $ Line constr (p1, p2)
                  
   shrink l = let (p1, p2) = refPoints l
-             in do Position p1' <- shrink (Position p1)
-                   Position p2' <- shrink (Position p2)
-                   return $ lineConstructor l (p1', p2')
+    in do Position p1' <- shrink (Position p1)
+          Position p2' <- shrink (Position p2)
+          return $ Line (bounding l) (p1', p2')
 
 ------------------------------------------------------------
 
 newtype AnySegment = AnySegment Line
-  deriving (Show, Figure, Trans, Affine, Curve)
+  deriving (Eq, Show, Figure, Trans, Affine, Curve)
 
 newtype AnyLine = AnyLine Line 
-  deriving (Show, Figure, Trans, Affine, Curve)
+  deriving (Show, Eq, Figure, Trans, Affine, Curve)
 
 newtype AnyRay = AnyRay Line 
-  deriving (Show, Figure, Trans, Affine, Curve)
+  deriving (Eq, Show, Figure, Trans, Affine, Curve)
 
 instance Arbitrary AnyLine where
-  arbitrary = AnyLine . Line <$> arbitrary
+  arbitrary = AnyLine . Line Unbound <$> arbitrary
   shrink (AnyLine l) = AnyLine <$> shrink l
 
 instance Arbitrary AnySegment where
-  arbitrary = AnySegment . Segment <$> arbitrary
+  arbitrary = AnySegment . Line Bound <$> arbitrary
   shrink (AnySegment l) = AnySegment <$> shrink l
 
 instance Arbitrary AnyRay where
-  arbitrary = AnyRay . Ray <$> arbitrary
+  arbitrary = AnyRay . Line Semibound <$> arbitrary
   shrink (AnyRay l) = AnyRay <$> shrink l
 
 ------------------------------------------------------------
@@ -133,7 +130,7 @@ instance Trans a => Arbitrary (Motion a) where
 ------------------------------------------------------------
 
 newtype Nontrivial a = Nontrivial a deriving
-  (Show, Figure, Affine, Trans, Curve)
+  (Eq, Show, Figure, Affine, Trans, Curve)
 
 
 instance (Arbitrary a, Figure a) => Arbitrary (Nontrivial a) where

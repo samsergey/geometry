@@ -15,7 +15,7 @@ module Figures (
   -- ** Angle constructors
   , anAngle
   , angleBetween
-  , adjacent, vertical, complementary
+  , supplementary, vertical, reflex
   , bisectrisse
   -- ** Polygon constructors
   , aTriangle, triangle2a
@@ -41,11 +41,11 @@ import Angle
 import Decorations
  
 ------------------------------------------------------------
--- | The origin point
+-- | The origin point. Equivalent to `aPoint`.
 origin :: Point
 origin = aPoint
 
--- | The x-axis
+-- | The x-axis. Equivalent to `aLine`.
 oX = aLine
 
 -- | The y-axis
@@ -57,7 +57,7 @@ oY = oX # rotate 90
 point :: XY -> Point
 point = point'
 
--- | The constructor for a point with given affine coordinates.
+-- | The generalized version of `point`.
 point' :: Affine a => a -> Point
 point' p = mkPoint (cmp p)
 
@@ -69,26 +69,30 @@ pointOn c t = mkPoint (c @-> t)
 projectOn :: (Curve c, Affine p) => p -> c -> Point
 projectOn p c = pointOn c (p ->@ c)
 
--- | The template for a point.
+-- | A point at the origin. Equivalent to `origin`.
 aPoint :: Point
 aPoint = mkPoint (0 :: CN)
 
--- | The template for a label.
+-- | A label: the invisible point which coul be labeled using `#:` operator.
 aLabel :: Label
 aLabel = mkLabel origin
 
--- | Returns a list of intersection points as geomtric figures.
+-- | Returns a list of intersection points as `Point` objects.
 intersectionPoints :: (Intersections a b, Curve a, Curve b) => a -> b -> [Point]
 intersectionPoints c1 c2 = point' <$> intersections c1 c2
 
-closestTo :: (Affine a, Affine b) => a -> [b] -> b
-closestTo p = minimumOn (distance p)
+-- | Returns a point from a list which is closest to a given one.
+closestTo :: (Affine a, Affine b) => a -> [b] -> Maybe b
+closestTo p [] = Nothing
+closestTo p ps  = Just $ minimumOn (distance p) ps
 
 ------------------------------------------------------------
 
+-- | The generalized version of `circle`.
 circle' :: Affine a => Double -> a -> Circle
 circle' r p = mkCircleRC r (cmp p)
 
+-- | The constructor for a circle with given radius and coordinates.
 circle :: Double -> XY -> Circle
 circle = circle'
 
@@ -128,17 +132,20 @@ aLine = aSegment `extendAs` Unbound
 aRay :: Line
 aRay = aSegment `extendAs` Semibound
 
-extendToLength :: Curve c => c -> Double -> Line
-extendToLength s l = aSegment # through' (paramL s l) 
+-- | Returns a line, ray or a segment with given unit, in case of a segment -- with given length.
+extendToLength :: Double -> Line -> Line
+extendToLength l s = s # through' (paramL s l) 
 
-extendTo :: Intersections Line a => Line -> a -> Line
-extendTo s f = case r `intersections` f of
-  [] -> r
-  ps -> s # through' (closestTo (start s) ps)
+-- | Returns a segment extended to a closest intersection point with a given curve.
+extendTo :: (Curve c, Intersections Line c) => c -> Line -> Line
+extendTo c s = case closestTo (start s)  (intersections r c) of
+  Nothing -> r
+  Just p -> aSegment # at' (start s) # through' p
   where r = s `extendAs` Semibound
 
-heightTo :: (IsLine a, Intersections Line a) => a -> Line -> Line
-heightTo s c = s # normalTo c # extendTo c
+-- | Returns a segment normal to a given curve.
+heightTo :: (Curve c, Intersections Line c) => c -> Line -> Line
+heightTo c = extendTo c . normalTo c
   
 ------------------------------------------------------------
 
@@ -152,14 +159,14 @@ angleBetween l1 l2 = anAngle (angle l2 - angle l1)
                      # at' (start l1)
                      # along' l1
 
-adjacent :: Angle -> Angle
-adjacent (Angle p s e) = Angle p e (s + 180)
+supplementary :: Angle -> Angle
+supplementary (Angle p s e) = Angle p e (s + 180)
 
 vertical :: Angle -> Angle
 vertical = rotate 180
 
-complementary :: Angle -> Angle
-complementary (Angle p s e) = Angle p e s
+reflex :: Angle -> Angle
+reflex (Angle p s e) = Angle p e s
 
 bisectrisse :: IsAngle a => a -> Line
 bisectrisse an = aSegment
@@ -167,60 +174,72 @@ bisectrisse an = aSegment
                  # along' (pi + angleStart an + 0.5*angleValue an)
 
 ------------------------------------------------------------
-translate :: Trans a => XY -> a -> a
+-- | Moves an object along given vector.
+translate :: Trans f => XY -> (f -> f)
 translate = translate'
 
-scaleAt :: Trans a => XY -> Double -> a -> a
+-- | Scales  an object simmetrically (isotropically) against a given point.
+scaleAt :: Trans f => XY -> Double -> (f -> f)
 scaleAt = scaleAt'
 
-scaleXAt :: Trans a => XY -> Double -> a -> a
+-- | Scales  an object along x-axis against a given point.
+scaleXAt :: Trans f => XY -> Double -> (f -> f)
 scaleXAt = scaleXAt'
 
-scaleYAt :: Trans a => XY -> Double -> a -> a
+-- | Scales  an object along y-axis against a given point.
+scaleYAt :: Trans f => XY -> Double -> (f -> f)
 scaleYAt = scaleYAt'
 
-rotateAt :: Trans a => XY -> Angular -> a -> a
+-- | Rotates  an object  against a given point.
+rotateAt :: Trans f => XY -> Angular -> (f -> f)
 rotateAt = rotateAt'
 
-at' :: (Affine p, Figure a) => p -> a -> a
+-- | Generalized version of  `at` transformer.
+at' :: (Affine p, Figure f) => p -> (f -> f)
 at' p fig = superpose (refPoint fig) p fig
 
-at :: Figure a => XY -> a -> a
+-- | Moves an object so that it's `refPoint` coinsides with a given one.
+at :: Figure f => XY -> (f -> f)
 at = at'
 
-along' :: (Figure f, Affine v, Affine f) => v -> f -> f
+-- | Generalized version of  `along` transformer.
+along' :: (Figure f, Affine v, Affine f) => v -> (f -> f)
 along' v l = rotateAt' (refPoint l) (angle v - angle l) l
 
-along :: (Figure a, Affine a) => Double -> a -> a
+-- | Rotates the figure which is `Affine` instance against it's `refPoint` so that it's
+-- refference angle (given by `angle`) councides with a given one.
+along :: (Figure f, Affine f) => Double -> (f -> f)
 along d = along' (asDeg d)
 
--- | Locates an affine object on a given curve agt
--- given parameter and aligns it along a tangent to a curve.
-on :: (Figure a, Affine a, Curve c) => c -> Double -> a -> a
+-- | Locates an affine object on a given curve at
+-- given parameter and aligns it along a tangent to a curve at this point.
+on :: (Figure f, Affine f, Curve c) => c -> Double -> (f -> f)
 on c x = along' (tangent c x) . at' (c @-> x)
 
--- | Turns and extends the line so that it passes through a given point.
-through' :: (Affine p, IsLine l) => p -> l -> l
+-- | A generalized version of `through`.
+through' :: (Affine p, IsLine l) => p -> (l -> l)
 through' p l = l
                # along' (azimuth p0 p)
                # scaleAt' p0 (distance p0 p / unit l)
   where p0 = start l
 
--- | A coordinated version of `through`.
-through :: IsLine l => XY -> l -> l
+-- | Turns and extends the line so that it passes through a given point.
+through :: IsLine l => XY -> (l -> l)
 through = through'
 
 -- | Turns the line so that it becomes normal to a given curve, pointing towards a curve.
-normalTo :: (Curve c, IsLine l) => c -> l -> l
+normalTo :: (Curve c, IsLine l) => c -> (l -> l)
 normalTo c l =
   if c `isContaining` s
-  then l # along' (normal c (s ->@ c))
-  else l # along' (ray' s (s `projectOn` c))
+    then l # along' (normal c (s ->@ c))
+    else l # along' (ray' s (s `projectOn` c))
   where s = start l 
 
-flipAt :: (Trans c, Curve c) => c -> Double -> c
-flipAt c x = c # reflectAt (normalSegment c x)
+-- | Reflects the curve against the normal at a given parameter.
+flipAt :: (Trans c, Curve c) => Double -> (c -> c)
+flipAt x c = c # reflectAt (normalSegment c x)
 
+-- | Returns a line segment normal to the curve atarting at a given parameter
 normalSegment :: Curve c => c -> Double -> Line
 normalSegment c x = aSegment # at' (c @-> x) # normalTo c
 

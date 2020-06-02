@@ -18,6 +18,7 @@ module Base
   -- * Classes
   -- ** Points in affine space
   , Affine (..)
+  , roundUp
   -- *** Predicates
   , isOrthogonal, isCollinear, isOpposite, isZero
   -- *** Vector and point operations

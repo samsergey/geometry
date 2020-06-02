@@ -1,16 +1,23 @@
 module Geometry
-(  -- * Reexports modules
-    module Base
-  , module Point
-  , module Line
-  , module Circle
-  , module Polygon
-  , module Angle
-  , module Decorations
+( -- * Main interface
+  writeSVG, showSVG, (<+>), group
+  -- ** Definitions for figures and modifiers
   , module Figures
-  -- * Main interface
-  , writeSVG, showSVG, (<+>), group
-  )
+  -- ** Main classes  for affine computations and transformations
+  , module Base
+   -- ** Definitions of a point-like primitives.
+  , module Point
+   -- ** Definitions of a line-like primitives.
+  , module Line
+   -- ** Definition of a circle primitive.
+  , module Circle
+   -- ** Definitions of a polygons and triangles.
+  , module Polygon
+   -- ** Definitions of an angle mark.
+  , module Angle
+   -- ** Style settings.
+  , module Decorations
+)
 where
 
 import Prelude hiding (writeFile)

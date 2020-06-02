@@ -131,6 +131,10 @@ instance Intersections Polygon Line where
 instance Intersections Polygon Polygon where
   intersections p1 p2 = foldMap (intersections p1) (segments p2)
 
+
+boxRectangle f = mkPolygon [ p4, p3, p2, p1 ]
+  where ((p4,p3),(p1,p2)) = corner f
+
 ------------------------------------------------------------
 
 newtype Triangle = Triangle Polygon
@@ -138,6 +142,8 @@ newtype Triangle = Triangle Polygon
 
 fromTriangle (Triangle p) = p
 mkTriangle vs = Triangle $ mkPolygon vs
+
+trivialTriangle = Triangle trivialPolygon
 
 instance IsPolygon Triangle where
   verticesNumber _ = 3
@@ -160,6 +166,3 @@ instance (Curve a, Intersections a Polygon) => Intersections a Triangle where
 
 instance (Curve b, Intersections Polygon b) => Intersections Triangle b where
   intersections t = intersections (fromTriangle t)
-
-boxRectangle f = mkPolygon [ p4, p3, p2, p1 ]
-  where ((p4,p3),(p1,p2)) = corner f

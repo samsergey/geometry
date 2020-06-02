@@ -1,4 +1,5 @@
 {-# language TypeApplications #-}
+{-# language FlexibleContexts #-}
 
 module Figures (
   -- * Constructors for geometric objects
@@ -6,10 +7,11 @@ module Figures (
   origin
   , aPoint, aLabel
   , point, point'
-  , pointOn, projectOn, intersectionPoints
+  , pointOn, projectOn, intersectionPoints, closestTo
   -- ** Line constructors
   , aLine, aRay, aSegment, oX, oY
   , line, line', ray, ray', segment, segment'
+  , extendToLength, extendTo, normalSegment, heightTo
   -- ** Angle constructors
   , anAngle
   , angleBetween
@@ -24,10 +26,11 @@ module Figures (
   -- * Modificators
   , at, at', along, along', through, through'
   , translate, scaleAt, scaleXAt, scaleYAt
-  , on, normalTo
+  , on, normalTo, flipAt
  ) where
 
 import Data.Complex
+import Data.List.Extra
 
 import Base
 import Point
@@ -78,6 +81,9 @@ aLabel = mkLabel origin
 intersectionPoints :: (Intersections a b, Curve a, Curve b) => a -> b -> [Point]
 intersectionPoints c1 c2 = point' <$> intersections c1 c2
 
+closestTo :: (Affine a, Affine b) => a -> [b] -> b
+closestTo p = minimumOn (distance p)
+
 ------------------------------------------------------------
 
 circle' :: Affine a => Double -> a -> Circle
@@ -122,6 +128,18 @@ aLine = aSegment `extendAs` Unbound
 aRay :: Line
 aRay = aSegment `extendAs` Semibound
 
+extendToLength :: Curve c => c -> Double -> Line
+extendToLength s l = aSegment # through' (paramL s l) 
+
+extendTo :: Intersections Line a => Line -> a -> Line
+extendTo s f = case r `intersections` f of
+  [] -> r
+  ps -> s # through' (closestTo (start s) ps)
+  where r = s `extendAs` Semibound
+
+heightTo :: (IsLine a, Intersections Line a) => a -> Line -> Line
+heightTo s c = s # normalTo c # extendTo c
+  
 ------------------------------------------------------------
 
 -- | The template for an angle with given value
@@ -200,6 +218,12 @@ normalTo c l =
   else l # along' (ray' s (s `projectOn` c))
   where s = start l 
 
+flipAt :: (Trans c, Curve c) => c -> Double -> c
+flipAt c x = c # reflectAt (normalSegment c x)
+
+normalSegment :: Curve c => c -> Double -> Line
+normalSegment c x = aSegment # at' (c @-> x) # normalTo c
+
 ------------------------------------------------------------
 
 -- | Constructs a parametric graph as a `Polyline`.
@@ -232,10 +256,10 @@ aTriangle :: Triangle
 aTriangle = asCmp 1
 
 -- | Returns a triangle with base 1 and two given angles.
-triangle2a :: Angular -> Angular -> Polygon
+triangle2a :: Angular -> Angular -> Triangle
 triangle2a a1 a2 = case intersections r1 r2 of
-                    [p] -> mkPolygon [(0,0), (1,0), coord p]
-                    [] -> trivialPolygon
+                    [p] -> mkTriangle [(0,0), (1,0), coord p]
+                    [] -> trivialTriangle
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 

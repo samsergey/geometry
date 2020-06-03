@@ -101,22 +101,27 @@ aCircle :: Circle
 aCircle = circle' 1 origin
 
 ------------------------------------------------------------
-
+-- | 
 line' :: (Affine a1, Affine a2) => a1 -> a2 -> Line
 line' p1 p2 = mkLine (cmp p1, cmp p2)
 
+-- | 
 line :: XY -> XY -> Line
 line = line'
 
+-- | 
 segment' :: (Affine a1, Affine a2) => a1 -> a2 -> Line
 segment' p1 p2 = mkSegment (cmp p1, cmp p2)
 
+-- | 
 segment :: XY -> XY -> Line
 segment = segment'
 
+-- | 
 ray' :: (Affine a1, Affine a2) => a1 -> a2 -> Line
 ray' p1 p2 = mkRay (cmp p1, cmp p2)
 
+-- | 
 ray :: XY -> XY -> Line
 ray = ray'
 
@@ -159,15 +164,19 @@ angleBetween l1 l2 = anAngle (angle l2 - angle l1)
                      # at' (start l1)
                      # along' l1
 
+-- | 
 supplementary :: Angle -> Angle
 supplementary (Angle p s e) = Angle p e (s + 180)
 
+-- | 
 vertical :: Angle -> Angle
 vertical = rotate 180
 
+-- | 
 reflex :: Angle -> Angle
 reflex (Angle p s e) = Angle p e s
 
+-- | 
 bisectrisse :: IsAngle a => a -> Line
 bisectrisse an = aSegment
                  # at' (refPoint an)
@@ -282,3 +291,5 @@ triangle2a a1 a2 = case intersections r1 r2 of
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
+scaleOn :: (Show a, Curve c) => c -> (Double -> a) -> [Double] -> [Point]
+scaleOn = undefined

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="400" width="400" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
+  <line x2="160" y1="297.6148078402348" stroke="orange" stroke-width="2" fill="none" y2="297.6148078402348" x1="90"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="125" text-anchor="middle" y="311.6148078402348">a
+  </text>
+  <line x2="125" y1="297.6148078402348" stroke="orange" stroke-width="2" fill="none" y2="236.99302957532404" x1="90"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="119.62435565298215" text-anchor="middle" y="274.3039187077794">a
+  </text>
+  <line x2="55.000000000000014" y1="297.6148078402348" stroke="orange" stroke-width="2" fill="none" y2="236.99302957532404" x1="90"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="84.62435565298215" text-anchor="middle" y="260.3039187077794">a
+  </text>
+  <line x2="20" y1="297.6148078402348" stroke="orange" stroke-width="2" fill="none" y2="297.61480784023473" x1="90"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="55.00000000000001" text-anchor="middle" y="283.6148078402348">a
+  </text>
+  <line x2="54.99999999999997" y1="297.6148078402348" stroke="orange" stroke-width="2" fill="none" y2="358.2365861051455" x1="90"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="60.37564434701785" text-anchor="middle" y="320.92569697269016">a
+  </text>
+  <line x2="124.99999999999996" y1="297.6148078402348" stroke="orange" stroke-width="2" fill="none" y2="358.2365861051455" x1="90"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="95.37564434701783" text-anchor="middle" y="334.92569697269016">a
+  </text>
+  <line x2="390" y1="87.61480784023477" stroke="orange" stroke-width="2" fill="none" y2="71.89247405532244" x1="90"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="374.73407385264665" text-anchor="middle" y="86.71174018737503">b
+  </text>
+  <line x2="110.79682508148767" y1="87.61480784023477" stroke="orange" stroke-width="2" fill="none" y2="10" x1="90"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="123.0211263503577" text-anchor="middle" y="18.4701328497361">b
+  </text>
+  <line x2="10" y1="87.61480784023477" stroke="orange" stroke-width="2" fill="none" y2="35.66220038443393" x1="90"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="22.463617058155798" text-anchor="middle" y="27.063081841003058">b
+  </text>
+  <line x2="10" y1="87.61480784023477" stroke="orange" stroke-width="2" fill="none" y2="152.39753049583533" x1="90"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="5.966660486759242" text-anchor="middle" y="137.64903051160786">b
+  </text>
+  <line x2="205.0807314117576" y1="87.61480784023477" stroke="orange" stroke-width="2" fill="none" y2="387.4103627979691" x1="90"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="185.89820092066358" text-anchor="middle" y="376.5041559172194">b
+  </text>
+  <polyline points="95.17638090205054,68.29629131445346 90,87.61480784023477 109.97259069509141,86.56808871537594 " stroke="white" stroke-width="1" fill="none"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="110.98294095933826" text-anchor="middle" y="70.62315728188922">72°
+  </text>
+  <polyline points="93.8822856765379,73.12592044589877 94.6015763859952,73.33806119529316 95.30936555094215,73.58588637611399 96.00388406707589,73.86877655447407 96.6833959998043,74.18602465225382 97.34620292317855,74.53683771442844 97.9906481650734,74.9203388910424 98.61512094800466,75.33556962887772 99.21806041523418,75.78149206733778 99.79795953209867,76.25699163255837 100.3533688528116,76.76087982326182 100.88290014332277,77.29189718139125 101.38522985118045,77.84871644009985 101.85910241372328,78.4299458412267 102.30333339633295,79.03413261396742 102.71681245290394,79.65976660604453 103.09850610113058,80.30528405830172 103.4474603056745,80.96907151328736 103.76280286275619,81.64946984805778 104.04374558021014,82.34477842112068 104.2895862475549,83.0532593231531 104.49971039115341,83.77314172086969 104.67359281007725,84.50262628318364 104.8107988888353,85.2398896785974 104.91098568368622,85.98308913258178 104.97390277981914,86.73036703355262 " stroke="white" stroke-width="1" fill="none"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="110.98294095933826" text-anchor="middle" y="70.62315728188922">72°
+  </text>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="110.98294095933826" text-anchor="middle" y="70.62315728188922">72°
+  </text>
+  <polyline points="73.22658864109144,76.7220271399343 90,87.61480784023477 95.17638090205054,68.29629131445346 " stroke="white" stroke-width="1" fill="none"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="80.32406536227697" text-anchor="middle" y="62.4081363248103">β
+  </text>
+  <polyline points="77.4199414808186,79.44522231500943 77.84397237602019,78.82669129543181 78.29838700954491,78.23012599045357 78.78204958146353,77.65701750265197 79.29375118723286,77.10879830477737 79.8322128393275,76.5868386593174 80.39608866404264,76.0924431935544 80.98396926547733,75.6268476386766 81.5943852482903,75.19121574109371 82.22581089042299,74.78663635367698 82.87666795661022,74.41412071419408 83.54532964314629,74.07459991774134 84.23012464404717,73.76892258949084 84.92934132844493,73.49785276356957 85.6412320187736,73.26206797337188 86.36401735905284,73.06215755807892 87.09589076235129,72.89862118961759 87.83502292631302,72.77186762374095 88.5795664054607,72.68221367835172 89.3276602288472,72.62988344162247 90.0774345515138,72.615007711892 90.82701532812877,72.6376236707375 91.57452899712466,72.69767479004 92.31810716362659,72.79501097327525 93.05589126946633,72.92938893067692 93.78603723860981,73.10047278733416 " stroke="white" stroke-width="1" fill="none"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="80.32406536227697" text-anchor="middle" y="62.4081363248103">β
+  </text>
+  <polyline points="79.93595318465488,81.0791394200545 80.27517790081615,80.5843146043924 80.63870960763593,80.10706236040981 81.02563966517083,79.64857557016853 81.43500094978629,79.21000021186885 81.865770271462,78.79243249550088 82.31687093123412,78.39691612289047 82.78717541238187,78.02443967898823 83.27550819863224,77.67593416092193 83.7806487123384,77.35227065098854 84.30133436528817,77.05425813940222 84.83626371451703,76.78264150224003 85.38409971523774,76.53809963963963 85.94347306275594,76.32124377890261 86.51298561501888,76.13261594674447 87.09121388724226,75.9726876145101 87.67671260988104,75.84185851974102 88.26801834105041,75.74045566703971 88.86365312436855,75.66873251072832 89.46212818307777,75.62686832134493 90.06194764121105,75.61496773756056 90.66161226250301,75.63306050463694 91.25962319769972,75.68110140007894 91.85448573090127,75.75897034666716 92.44471301557306,75.86647271258849 93.02882979088785,76.00333979791428 " stroke="white" stroke-width="1" fill="none"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="80.32406536227697" text-anchor="middle" y="62.4081363248103">β
+  </text>
+  <polyline points="82.45196488849116,82.71305652509957 82.7063834256121,82.341937913353 82.97903220572695,81.98399873036605 83.26922974887812,81.6401336376851 83.57625071233971,81.31120211896032 83.8993277035965,80.99802633168434 84.23765319842559,80.70138905222655 84.5903815592864,80.42203171929987 84.95663114897418,80.16065258075014 85.3354865342538,79.9179049483001 85.72600077396613,79.69439556461036 86.12719778588777,79.49068308673871 86.5380747864283,79.30727668978842 86.95760479706696,79.14463479423566 87.38473921126415,79.00316392011703 87.8184104154317,78.88321767094126 88.25753445741077,78.78509584986446 88.70101375578781,78.70904371033848 89.14773984327641,78.65525134310494 89.59659613730832,78.62385320106739 90.04646073090828,78.6149277632291 90.49620919687726,78.6284973385364 90.94471739827479,78.6645280101179 91.39086429817596,78.72292972005907 91.8335347616798,78.80355649450006 92.27162234316589,78.9062068084944 " stroke="white" stroke-width="1" fill="none"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="80.32406536227697" text-anchor="middle" y="62.4081363248103">β
+  </text>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="80.32406536227697" text-anchor="middle" y="62.4081363248103">β
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="367.61480784023473" r="3" cx="230"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="216" text-anchor="middle" y="381.61480784023473">A
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="297.6148078402348" r="3" cx="230"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="216" text-anchor="middle" y="297.6148078402348">A
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="227.61480784023476" r="3" cx="230"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="216" text-anchor="middle" y="213.61480784023476">A
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="367.61480784023473" r="3" cx="300"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="300" text-anchor="middle" y="381.61480784023473">A
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="297.6148078402348" r="3" cx="300"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="300" text-anchor="middle" y="297.6148078402348">A
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="227.61480784023476" r="3" cx="300"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="300" text-anchor="middle" y="213.61480784023476">A
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="367.61480784023473" r="3" cx="370"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="384" text-anchor="middle" y="381.61480784023473">A
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="297.6148078402348" r="3" cx="370"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="384" text-anchor="middle" y="297.6148078402348">A
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="227.61480784023476" r="3" cx="370"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="384" text-anchor="middle" y="213.61480784023476">A
+  </text>
+</svg>

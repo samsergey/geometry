@@ -78,7 +78,7 @@ class Decor a where
 -- | The transparent decoration wrapper for geometric objects.
 -- Inherits all properties of embedded object.
 newtype Decorated a = Decorated (Options, a)
-  deriving Functor
+  deriving (Functor)
 
 -- | The selector for the embedded object.
 fromDecorated (Decorated (_, x)) = x
@@ -118,6 +118,8 @@ instance Curve a => Curve (Decorated a) where
   param = param . fromDecorated
   project = project . fromDecorated
   tangent = tangent . fromDecorated
+  orientation = orientation . fromDecorated
+  isClosed = isClosed . fromDecorated
   isContaining = isContaining . fromDecorated
   isEnclosing = isEnclosing . fromDecorated
   distanceTo pt = distanceTo pt . fromDecorated
@@ -135,11 +137,9 @@ instance IsCircle a => IsCircle (Decorated a) where
   radius = radius . fromDecorated
   center = center . fromDecorated
   phaseShift = phaseShift . fromDecorated
-  orientation = orientation . fromDecorated
 
 instance IsPolygon a => IsPolygon (Decorated a) where
   vertices = vertices . fromDecorated
-  polyClosed = polyClosed . fromDecorated
 
 instance IsAngle a => IsAngle (Decorated a) where
   angleValue = angleValue . fromDecorated

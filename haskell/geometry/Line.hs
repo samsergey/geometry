@@ -137,6 +137,7 @@ instance Curve Line where
 
   isClosed _ = False
   isEnclosing _ _ = False
+  orientation _ = 1
 
   isFinite l = case bounding l of
     Bound -> True

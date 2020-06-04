@@ -24,7 +24,7 @@ module Figures (
   -- ** Circle constructors
   , aCircle, circle, circle'
   -- ** Misc
-  , scaleOn, modularScaleOn
+  , linearScale, modularScale
   -- * Modificators
   , at, at', along, along', through, through'
   , translate, scaleAt, scaleXAt, scaleYAt
@@ -293,13 +293,24 @@ triangle2a a1 a2 = case intersections r1 r2 of
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
-scaleOn :: (Show a, Curve c) => c -> (Double -> a) -> [Double] -> [Decorated Point]
-scaleOn c fn rng = [ pointOn c x
+------------------------------------------------------------
+
+-- | Creates a scale as a list of labeled points on a given curve
+linearScale :: (Show a, Curve c)
+            => (Double -> a) -- ^ labeling function
+            -> [Double] -- ^ range of the curve parameter
+            -> c -- ^ the curve
+            -> [Decorated Point]
+linearScale fn rng c = [ pointOn c x
                      #: label (show (fn x)) <> loffs (cmp (normal c x))
                    | x <- rng ]
 
-modularScaleOn :: (Trans c, Curve c) => c -> Double -> [Decorated Point]
-modularScaleOn c n = scaleOn (c # reflect 90) (round . (* n)) $ (/n) <$> [0..n-1]
+-- | Creates a circular integer scale, representing modular arithmetics.
+modularScale :: (Trans c, Curve c) => Int -> c -> [Decorated Point]
+modularScale n = linearScale lf rng . reflect 90
+  where n' = fromIntegral n
+        rng = (/n') <$> [0..n'-1]
+        lf = round . (* n')
 
 ------------------------------------------------------------
 

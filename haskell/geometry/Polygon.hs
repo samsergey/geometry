@@ -19,8 +19,6 @@ import Line
 class Curve p => IsPolygon p where
   vertices :: p -> [CN]
 
-  polyClosed :: p -> Bool
-
   verticesNumber :: p -> Int
   verticesNumber p = length (vertices p)
 
@@ -37,23 +35,25 @@ class Curve p => IsPolygon p where
               then i `mod` length vs
               else (0 `max` i) `min` length vs
 
-data Polygon = Polygon Bool ![CN]
+data Polygon = Polygon
+               Bool -- ^ flag for closed polygon
+               Double -- ^ orientation
+               ![CN] -- ^ list of vertices
 
 instance IsPolygon Polygon where
-  vertices (Polygon _ vs) = vs
-  polyClosed (Polygon c _) = c
+  vertices (Polygon _ _ vs) = vs
   
 trivialPolygon :: Polygon
-trivialPolygon = Polygon True []
+trivialPolygon = Polygon True 1 []
 
 mkPolygon :: Affine a => [a] -> Polygon
-mkPolygon pts = Polygon True $ cmp <$> pts
+mkPolygon pts = Polygon True 1 $ cmp <$> pts
   
 mkPolyline :: Affine a => [a] -> Polygon
-mkPolyline pts = Polygon False $ cmp <$> pts
+mkPolyline pts = Polygon False 1 $ cmp <$> pts
 
 closePoly :: Polygon -> Polygon
-closePoly p = Polygon True (vertices p)
+closePoly p = Polygon True (orientation p) (vertices p)
 
 
 instance Show Polygon where
@@ -77,7 +77,9 @@ instance Affine Polygon where
 
 
 instance Trans Polygon where
-  transform t (Polygon c vs) = Polygon c $ transform t <$> vs
+  transform t (Polygon c o vs) = Polygon c o' vs'
+    where vs' = transform t <$> vs
+          o' = o * transformOrientation t 
 
 
 instance Curve Polygon where
@@ -98,7 +100,9 @@ instance Curve Polygon where
       ds = scanl (+) 0 $ unit <$> ss
       (x0, s) = minimumOn (\(_,s) -> distanceTo pt s) $ zip ds ss
 
-  isClosed = polyClosed
+  isClosed (Polygon c _ _) = c 
+
+  orientation (Polygon _ o _) = o
 
   location pt p = res
     where res | any (`isContaining` pt) (segments p) = OnCurve
@@ -149,8 +153,6 @@ instance IsPolygon Triangle where
   verticesNumber _ = 3
 
   vertices = vertices . fromTriangle
-
-  polyClosed _ = True
 
   segments p = mkSegment <$> zip (vertices p) (tail vs)
     where vs = cycle (vertices p)

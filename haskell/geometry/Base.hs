@@ -15,6 +15,7 @@ module Base
   -- ** Linear transformations
   , TMatrix
   , rotateT, reflectT, translateT, scaleT
+  , transformOrientation
   -- * Classes
   -- ** Points in affine space
   , Affine (..)
@@ -202,6 +203,11 @@ instance Trans XY where
 
 instance Trans Angular where
   transform t  = asCmp . cmp . transformXY t . coord
+
+-- | Returns 1 if transformation preserves curve orientation, and -1 otherwise.
+transformOrientation :: TMatrix -> Double
+transformOrientation ((a,b,_),(c,d,_)) =
+  signum $ det ((a,b),(c,d))
 
 -- | The rotation matrix.
 rotateT :: Double -> TMatrix
@@ -480,7 +486,12 @@ class Curve c where
 
   -- | Returns `True` if point belongs to the area bound by closed curve.
   isEnclosing :: Affine p => c -> p -> Bool
-  isEnclosing c p = location p c == Inside 
+  isEnclosing c p = location p c == Inside
+
+  -- | Returns th orientation of a curve.
+  -- Orientation affects the direction of tangent and normal vectors.
+  orientation :: c -> Double
+  orientation _ = 1
 
 infix 8 @->
 -- | Operator for `param`

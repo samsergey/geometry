@@ -21,8 +21,6 @@ class Curve c => IsCircle c where
   center :: c -> CN
   -- | Radius of the circle
   radius :: c -> Double
-  -- | Orientation of the circle
-  orientation :: c -> Double
   -- | The angle of the starting point.
   phaseShift :: c -> Double
   -- | The radius-vector for a given parameter
@@ -38,7 +36,6 @@ data Circle = Circle
 instance IsCircle Circle where
   center (Circle c _ _) =  c
   radius (Circle c p _) = distance c p  
-  orientation (Circle _ _ o) = o
   phaseShift (Circle c p o) = signum o * turns (azimuth c p)
 
 -- | The trivial circle with zero radius.
@@ -71,8 +68,7 @@ instance Trans Circle where
   transform t cir = Circle c p w
     where c = transformCN t (center cir)
           p = transformCN t (start cir)
-          p' = transformCN t (cir @-> 0.25)
-          w = signum $ cross (p - c) (p' - c)
+          w = orientation cir * transformOrientation t
 
 
 instance Curve Circle where
@@ -84,6 +80,8 @@ instance Curve Circle where
 
   isClosed = const True
 
+  orientation (Circle _ _ o) = o
+
   location p c = res
     where res | r' ~== radius c = OnCurve
               | r' < radius c   = Inside
@@ -91,7 +89,7 @@ instance Curve Circle where
           r' = distance p (center c)
 
   unit _ = 2 * pi
-  normal c t = azimuth (center c) (c @-> t)
+  normal c t = scale (orientation c) $ azimuth (center c) (c @-> t)
   tangent c t = normal c t + asDeg (orientation c * 90)
   distanceTo p c = abs (center c `distance` p - radius c)
 

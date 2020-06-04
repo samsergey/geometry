@@ -307,10 +307,10 @@ linearScale fn rng c = [ pointOn c x
 
 -- | Creates a circular integer scale, representing modular arithmetics.
 modularScale :: (Trans c, Curve c) => Int -> c -> [Decorated Point]
-modularScale n = linearScale lf rng
+modularScale n = linearScale lf rng . reflect 90
   where n' = fromIntegral n
         rng = (/n') <$> [0..n'-1]
-        lf = (`mod` n) . negate . round . (* n')
+        lf = round . (* n')
 
 ------------------------------------------------------------
 

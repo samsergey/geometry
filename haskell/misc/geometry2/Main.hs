@@ -6,9 +6,9 @@ import Geometry
 
 import Data.Complex
 
-c = aSegment # rotate 30
+c = aCircle # rotate 90
 
-sc = group (modularScale 7 c)
+sc = group (modularScale 24 c)
 
 ch = c <+> sc <+> (c # scale 1.1 #: invisible)
 

@@ -2,76 +2,26 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="350" width="350" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
-  <circle stroke="#444" stroke-width="1" fill="red" cy="33.63636363636365" r="3" cx="170"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="170" text-anchor="middle" y="19.636363636363647">0
+  <line x2="292.72727272727275" y1="193.2050807568877" stroke="orange" stroke-width="2" fill="none" y2="35.74591643244433" x1="20"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="193.2050807568877" r="3" cx="20"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="13.000000000000004" text-anchor="middle" y="181.08072510390556">0
   </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="38.28284186967251" r="3" cx="205.29350615034372"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="208.916972781779" text-anchor="middle" y="24.759880301625554">1
+  <circle stroke="#444" stroke-width="1" fill="red" cy="170.71091442482435" r="3" cx="58.96103896103896"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="51.961038961038966" text-anchor="middle" y="158.58655877184222">6
   </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="51.90562675666746" r="3" cx="238.18181818181816"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="245.18181818181816" text-anchor="middle" y="39.78127110368531">2
+  <circle stroke="#444" stroke-width="1" fill="red" cy="148.21674809276104" r="3" cx="97.92207792207792"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="90.92207792207792" text-anchor="middle" y="136.0923924397789">5
   </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="73.57634802001627" r="3" cx="266.42365197998373"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="276.3231469165954" text-anchor="middle" y="63.67685308340461">3
+  <circle stroke="#444" stroke-width="1" fill="red" cy="125.7225817606977" r="3" cx="136.88311688311688"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="129.88311688311688" text-anchor="middle" y="113.59822610771555">4
   </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="101.81818181818181" r="3" cx="288.09437324333254"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="300.2187288963147" text-anchor="middle" y="94.81818181818181">4
+  <circle stroke="#444" stroke-width="1" fill="red" cy="103.22841542863436" r="3" cx="175.84415584415584"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="168.84415584415584" text-anchor="middle" y="91.10405977565222">3
   </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="134.70649384965625" r="3" cx="301.71715813032745"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="315.24011969837443" text-anchor="middle" y="131.08302721822096">5
+  <circle stroke="#444" stroke-width="1" fill="red" cy="80.734249096571" r="3" cx="214.80519480519482"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="207.80519480519482" text-anchor="middle" y="68.60989344358886">2
   </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="170" r="3" cx="306.3636363636363"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="320.3636363636363" text-anchor="middle" y="170">6
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="205.29350615034372" r="3" cx="301.71715813032745"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="315.24011969837443" text-anchor="middle" y="208.916972781779">7
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="238.18181818181813" r="3" cx="288.09437324333254"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="300.2187288963147" text-anchor="middle" y="245.18181818181813">8
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="266.42365197998373" r="3" cx="266.42365197998373"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="276.3231469165954" text-anchor="middle" y="276.32314691659536">9
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="288.09437324333254" r="3" cx="238.18181818181816"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="245.18181818181816" text-anchor="middle" y="300.2187288963147">10
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="301.71715813032745" r="3" cx="205.29350615034375"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="208.91697278177904" text-anchor="middle" y="315.24011969837443">11
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="306.3636363636363" r="3" cx="170"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="170" text-anchor="middle" y="320.3636363636363">12
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="301.71715813032745" r="3" cx="134.7064938496563"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="131.08302721822102" text-anchor="middle" y="315.24011969837443">13
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="288.0943732433325" r="3" cx="101.81818181818178"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="94.81818181818178" text-anchor="middle" y="300.21872889631464">14
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="266.42365197998373" r="3" cx="73.57634802001627"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="63.676853083404595" text-anchor="middle" y="276.32314691659536">15
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="238.18181818181822" r="3" cx="51.90562675666749"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="39.781271103685356" text-anchor="middle" y="245.18181818181822">16
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="205.2935061503437" r="3" cx="38.28284186967251"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="24.75988030162555" text-anchor="middle" y="208.91697278177898">17
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="170.00000000000003" r="3" cx="33.63636363636365"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="19.636363636363647" text-anchor="middle" y="170.00000000000003">18
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="134.70649384965634" r="3" cx="38.282841869672495"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="24.75988030162554" text-anchor="middle" y="131.08302721822105">19
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="101.8181818181818" r="3" cx="51.90562675666747"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="39.781271103685334" text-anchor="middle" y="94.8181818181818">20
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="73.57634802001627" r="3" cx="73.57634802001624"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="63.67685308340458" text-anchor="middle" y="63.6768530834046">21
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="51.9056267566675" r="3" cx="101.81818181818176"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="94.81818181818176" text-anchor="middle" y="39.78127110368536">22
-  </text>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="38.28284186967251" r="3" cx="134.70649384965628"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="131.083027218221" text-anchor="middle" y="24.75988030162555">23
+  <circle stroke="#444" stroke-width="1" fill="red" cy="58.24008276450768" r="3" cx="253.76623376623377"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="246.76623376623377" text-anchor="middle" y="46.115727111525544">1
   </text>
 </svg>

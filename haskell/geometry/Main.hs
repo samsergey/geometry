@@ -6,7 +6,7 @@ import Geometry
 
 import Data.Complex
 
-c = aSegment # rotate 30
+c = aTriangle
 
 sc = group (modularScale 7 c)
 

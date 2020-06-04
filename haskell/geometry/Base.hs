@@ -46,7 +46,7 @@ module Base
   -- *** Fuzzy inequalities
   , (~<=), (~>=), (~==)
   -- * Misc
-  , (#)
+  , (#), (#!)
   )
 where
 
@@ -71,6 +71,9 @@ type XY = (Double, Double)
 -- | Flipped application used for right chaining of transformations.
 infixl 5 #
 (#) = flip ($)
+
+infixl 5 #!
+x #! f = fromJust $ f x
 
 both f (a,b) = (f a, f b)
 
@@ -203,6 +206,10 @@ instance Trans XY where
 
 instance Trans Angular where
   transform t  = asCmp . cmp . transformXY t . coord
+
+instance Trans a => Trans (Maybe a) where
+  transform t  = fmap (transform t)
+
 
 -- | Returns 1 if transformation preserves curve orientation, and -1 otherwise.
 transformOrientation :: TMatrix -> Double
@@ -391,6 +398,10 @@ instance Affine XY where
 instance Affine Angular where
   cmp a = mkPolar 1 (rad a)
   asCmp = Angular . phase
+
+instance Affine a => Affine (Maybe a) where
+  cmp = maybe 0 cmp
+  asCmp = Just . asCmp
 
 ------------------------------------------------------------
 

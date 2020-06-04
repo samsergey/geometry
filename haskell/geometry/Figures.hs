@@ -23,6 +23,8 @@ module Figures (
   , parametricPoly, polarPoly, regularPoly
   -- ** Circle constructors
   , aCircle, circle, circle'
+  -- ** Misc
+  , scaleOn, modularScaleOn
   -- * Modificators
   , at, at', along, along', through, through'
   , translate, scaleAt, scaleXAt, scaleYAt
@@ -291,5 +293,64 @@ triangle2a a1 a2 = case intersections r1 r2 of
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
-scaleOn :: (Show a, Curve c) => c -> (Double -> a) -> [Double] -> [Point]
-scaleOn = undefined
+scaleOn :: (Show a, Curve c) => c -> (Double -> a) -> [Double] -> [Decorated Point]
+scaleOn c fn rng = [ pointOn c x
+                     #: label (show (fn x)) <> loffs (cmp (normal c x))
+                   | x <- rng ]
+
+modularScaleOn :: (Trans c, Curve c) => c -> Double -> [Decorated Point]
+modularScaleOn c n = scaleOn (c # reflect 90) (round . (* n)) $ (/n) <$> [0..n-1]
+
+------------------------------------------------------------
+
+instance Decor Point where
+  defaultOptions p = mkOptions
+    [ LabelPosition $ cmp p
+    , LabelOffset (0 :+ 1)
+    , LabelCorner (0, 0)
+    , LabelAngle 0
+    , Stroke "#444"
+    , Fill "red"
+    , Thickness "1" ]
+
+instance Decor Label where
+  defaultOptions p = mkOptions
+    [ LabelPosition $ cmp p
+    , LabelOffset 0
+    , LabelCorner (0, 0)
+    , LabelAngle 0 ]
+
+instance Decor Circle where
+  defaultOptions c = mkOptions
+    [ LabelPosition $ c @-> 0
+    , LabelOffset $ cmp $ normal c 0
+    , LabelCorner (-1,0)
+    , LabelAngle 0
+    , Stroke "orange"
+    , Fill "none"
+    , Thickness "2" ]
+
+instance Decor Line where
+  defaultOptions l = mkOptions
+    [ LabelPosition $ l @-> 0.5
+    , LabelOffset $ cmp $ normal l 0
+    , Stroke "orange"
+    , Fill "none"
+    , Thickness "2" ]
+
+instance Decor Polygon where
+  defaultOptions _ = mkOptions
+    [ Stroke "orange"
+    , Fill "none"
+    , Thickness "2" ]
+
+instance Decor Triangle where
+  defaultOptions = defaultOptions . fromTriangle
+
+instance Decor Angle where
+  defaultOptions an = mkOptions
+    [ Stroke "white"
+    , Fill "none"
+    , Thickness "1"
+    , MultiStroke 1
+    , LabelPosition $ refPoint an + scale 27 (cmp (bisectrisse an)) ]

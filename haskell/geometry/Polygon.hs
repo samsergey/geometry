@@ -108,7 +108,7 @@ instance Curve Polygon where
 
   unit p = sum $ unit <$> segments p
 
-  tangent p t = azimuth (p @-> t - dt) (p @-> t + dt)
+  tangent p t =  (p @-> (t + dt)) `azimuth` (p @-> (t - dt))
     where dt = 1e-5
 
   distanceTo pt p = minimum $ distanceTo pt <$> segments p

@@ -47,6 +47,7 @@ extractOption p = getFirst . foldMap (First . p) . getOptions
 
 optFill          = \case {Fill x -> Just x; _ -> Nothing }
 optStroke        = \case {Stroke x -> Just x; _ -> Nothing }
+optInvisible     = \case {Invisible x -> Just x; _ -> Nothing }
 optThickness     = \case {Thickness x -> Just x; _ -> Nothing }
 optMultiStroke   = \case {MultiStroke x -> Just x; _ -> Nothing }
 optDashing       = \case {Dashing x -> Just x; _ -> Nothing }
@@ -84,10 +85,13 @@ instance SVGable XY where
 ------------------------------------------------------------
 
 instance SVGable a => SVGable (Decorated a) where
-  toSVG d = toSVG (fromDecorated d) . updateOptions (options d)
+  toSVG d = case find optInvisible d of
+    Just True -> mempty
+    _ -> toSVG (fromDecorated d) . updateOptions (options d)
+    
 
 attributes :: (Decor f, Figure f) => f -> SVGContext -> [Attribute]
-attributes f ctx = mconcat fmt $ getOptions $ opts
+attributes f ctx = mconcat fmt . getOptions $ opts
   where
     opts = options f <> figureOptions ctx
     fmt = [ attr optStroke Stroke_
@@ -100,16 +104,6 @@ attr opt a x = maybeToList $ (\s -> a <<- pack s) <$> find opt x
   where find p = getFirst . foldMap (First . p)
 ------------------------------------------------------------
 
-instance Decor Point where
-  defaultOptions p = mkOptions
-    [ LabelPosition $ cmp p
-    , LabelOffset (0 :+ 1)
-    , LabelCorner (0, 0)
-    , LabelAngle 0
-    , Stroke "#444"
-    , Fill "red"
-    , Thickness "1" ]
-
 instance SVGable Point where
   toSVG p = circle_ . attr <> labelElement p
     where    
@@ -121,27 +115,10 @@ instance SVGable Point where
 
 ------------------------------------------------------------
 
-instance Decor Label where
-  defaultOptions p = mkOptions
-    [ LabelPosition $ cmp p
-    , LabelOffset 0
-    , LabelCorner (0, 0)
-    , LabelAngle 0 ]
-
 instance SVGable Label where
   toSVG l = labelElement l . updateOptions (options l)
 
 ------------------------------------------------------------
-
-instance Decor Circle where
-  defaultOptions c = mkOptions
-    [ LabelPosition $ c @-> 0
-    , LabelOffset $ cmp $ normal c 0
-    , LabelCorner (-1,0)
-    , LabelAngle 0
-    , Stroke "orange"
-    , Fill "none"
-    , Thickness "2" ]
 
 instance SVGable Circle where
   toSVG c = circle_ . attr <> labelElement c
@@ -153,14 +130,6 @@ instance SVGable Circle where
                    , R_ <<- fmtSVG (radius c) ]
 
 ------------------------------------------------------------
-
-instance Decor Line where
-  defaultOptions l = mkOptions
-    [ LabelPosition $ l @-> 0.5
-    , LabelOffset $ cmp $ normal l 0
-    , Stroke "orange"
-    , Fill "none"
-    , Thickness "2" ]
 
 instance SVGable Line where
   toSVG l =
@@ -180,12 +149,6 @@ instance SVGable Line where
       
 ------------------------------------------------------------
 
-instance Decor Polygon where
-  defaultOptions _ = mkOptions
-    [ Stroke "orange"
-    , Fill "none"
-    , Thickness "2" ]
-
 instance SVGable Polygon where
   toSVG p | isTrivial p = labelElement p
           | otherwise = elem . attr <> labelElement p
@@ -196,28 +159,17 @@ instance SVGable Polygon where
 
 ------------------------------------------------------------
 
-instance Decor Triangle where
-  defaultOptions = defaultOptions . fromTriangle
-
 instance SVGable Triangle where
   toSVG = toSVG . fromTriangle
 
 ------------------------------------------------------------
 
-instance Decor Angle where
-  defaultOptions an = mkOptions
-    [ Stroke "white"
-    , Fill "none"
-    , Thickness "1"
-    , MultiStroke 1
-    , LabelPosition $ refPoint an - scale 27 (cmp (bisectrisse an)) ]
-    
 instance SVGable Angle where
   toSVG an ctx = toSVG (poly <+> group arc) ctx' <> labelElement an ctx'
     where
       t = extractOption optLabelText (figureOptions ctx)
       label = case t of
-        Just "#" -> show (angleValue an)
+        Just "#" -> show (negate $ angleValue an)
         Just s -> s
         Nothing -> ""
       ctx' = updateOptions (options an <> mkOptions [LabelText label]) ctx
@@ -248,23 +200,23 @@ labelElement ff ctx = case lb of
     lpos = fromMaybe 0 $ find optLabelPosition f
     (cx, cy) = fromMaybe (0,0) $ find optLabelCorner f
 
-    fontSize = 16
+    fontSize = 14
     textWidth = fromIntegral $ length lb
     text = text_ $ [ X_ <<- fmtSVG x
                    , Y_ <<- fmtSVG y
-                   , Font_size_ <<- showt fontSize
+                   , Font_size_ <<- "16"
                    , Font_family_ <<- "CMU Serif"
                    , Font_style_ <<- "italic"
                    , Stroke_ <<- "none"
                    , Fill_ <<- "white"] <> offsetX <> offsetY
     
-    x :+ y = lpos + cmp d
-    d = loff # scale (fromIntegral fontSize) # reflect 0
-    offsetX = case 0*signum cx of
+    x :+ y = lpos + d
+    d = scale (fromIntegral fontSize) loff
+    offsetX = case signum cx of
                 -1 -> [ Text_anchor_ <<- "start" ]
                 0 -> [ Text_anchor_ <<- "middle" ]
                 1 -> [ Text_anchor_ <<- "end" ]
-    offsetY = case 0*signum cy of
+    offsetY = case signum cy of
                 1 -> [ Dy_ <<- showt (-fontSize `div` 4 -1) ]
                 0 -> [ Dy_ <<- showt (fontSize `div` 4 +1) ]
                 -1 -> [ Dy_ <<- showt (fontSize - 2) ]
@@ -356,8 +308,8 @@ showSVG size obj = prettyText (contents ctx)
     fb = boxRectangle obj
          # superpose p0 (0 :: CN)
          # reflect 0
-         # scale ((fromIntegral size - 4) / ((w `max` h) `min` paperSize))
-         # translate' ((2, 2) :: XY)
+         # scale ((fromIntegral size - 20) / ((w `max` h) `min` paperSize))
+         # translate' ((10, 10) :: XY)
     paperSize = 50
     w = width obj
     h = height obj

@@ -12,7 +12,7 @@ ps = group $ [ point (x,y) #: "A" <> loffs (x:+y)
              , y <- [-1,0,1] ]
 
 as = anAngle 72 #: "#" <+>
-     (anAngle 72 #: "β" <> mark 2 # rotate 72)
+     (anAngle 72 #: "β" # rotate 72)
 
 ch = ss <+>
      ((rs <+> as) # rotate 3 # translate (0, 3)) <+>

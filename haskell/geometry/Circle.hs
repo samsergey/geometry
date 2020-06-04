@@ -68,11 +68,11 @@ instance Eq Circle where
 
 
 instance Trans Circle where
-  transform t cir = Circle c p 1
+  transform t cir = Circle c p w
     where c = transformCN t (center cir)
           p = transformCN t (start cir)
           p' = transformCN t (cir @-> 0.25)
-          w = signum $ cross (p - c) (p' - p)
+          w = signum $ cross (p - c) (p' - c)
 
 
 instance Curve Circle where
@@ -91,7 +91,7 @@ instance Curve Circle where
           r' = distance p (center c)
 
   unit _ = 2 * pi
-  normal c t = azimuth (c @-> t) (center c)
+  normal c t = azimuth (center c) (c @-> t)
   tangent c t = normal c t + asDeg (orientation c * 90)
   distanceTo p c = abs (center c `distance` p - radius c)
 

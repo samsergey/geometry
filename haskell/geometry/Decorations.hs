@@ -14,6 +14,7 @@ module Decorations
   -- * Decorators
   , Decorator(..)
   , (#:)
+  , visible, invisible
   , stroke, white, fill
   , thickness, thin
   , dashed, dotted
@@ -23,6 +24,7 @@ module Decorations
 where
 
 import Data.Monoid
+import Data.Complex
 import Data.Maybe
 import Data.String( IsString(..) )
 import Control.Monad
@@ -35,7 +37,8 @@ import Angle
 import Polygon
 
 -- | Possible SVG options for a figure.
-data Option = Stroke String
+data Option = Invisible Bool
+            | Stroke String
             | Fill String
             | Thickness String
             | Dashing String
@@ -70,8 +73,6 @@ class Decor a where
   defaultOptions :: a -> Options
   defaultOptions _ = mempty
 
-
-
 ------------------------------------------------------------
 
 -- | The transparent decoration wrapper for geometric objects.
@@ -97,7 +98,7 @@ instance Decor (Decorated a) where
 
 instance Show a => Show (Decorated a) where
   show f = l <> show (fromDecorated f)
-    where l = fromMaybe mempty $ (<> ":") <$> lab
+    where l = maybe mempty (<> ":") lab
           lab = find optLabelText f
           find p d = extractOption p $ defaultOptions d <> options d
           extractOption p = getFirst . foldMap (First . p) . getOptions
@@ -155,7 +156,7 @@ instance Intersections a b => Intersections a (Decorated b) where
   intersections x d = intersections x (fromDecorated d)
 
 instance Intersections a b => Intersections (Decorated a) b where
-  intersections d x = intersections (fromDecorated d) x
+  intersections = intersections . fromDecorated
 
 ------------------------------------------------------------
 -- | A wrapped decoration function with monoidal properties,
@@ -218,6 +219,12 @@ dotted = mkDecorator Dashing "2,3"
 arcs :: Int -> Decorator Angle
 arcs = mkDecorator MultiStroke
 
+visible :: Decor a => Decorator a
+visible = mkDecorator Invisible False
+
+invisible :: Decor a => Decorator a
+invisible = mkDecorator Invisible True
+
 -- | The decorator for labeling objects. Could be used as overloaded string.
 --
 -- >>> aPoint # at (4, 5) #: "A"
@@ -228,7 +235,7 @@ label = mkDecorator LabelText
 
 -- | The decorator for label offset.
 loffs :: Decor a => CN -> Decorator a
-loffs = mkDecorator LabelOffset
+loffs = mkDecorator LabelOffset . conjugate
 
 -- | The decorator for label position.
 lpos :: Decor a => CN -> Decorator a
@@ -237,3 +244,4 @@ lpos = mkDecorator LabelPosition
 -- | The decorator for setting label on a curve at a given parameter value.
 lparam :: (Curve a, Decor a) => Double -> Decorator a
 lparam x = Decorator $ \f -> f #: lpos (f @-> x)
+

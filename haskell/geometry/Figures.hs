@@ -33,6 +33,7 @@ module Figures (
 
 import Data.Complex
 import Data.List.Extra
+import Control.Applicative
 
 import Base
 import Point
@@ -67,9 +68,9 @@ point' p = mkPoint (cmp p)
 pointOn :: Curve a => a -> Double -> Point
 pointOn c t = mkPoint (c @-> t)
 
--- | Returns a point on the curve which is s normal projection of the given point on the curve.
-projectOn :: (Curve c, Affine p) => p -> c -> Point
-projectOn p c = pointOn c (p ->@ c)
+-- | Returns a normal projection of the given point on the curve.
+projectOn :: (Curve c, Affine p) => p -> c -> Maybe Point
+projectOn p c = pointOn c <$> (p ->@? c)
 
 -- | A point at the origin. Equivalent to `origin`.
 aPoint :: Point
@@ -151,8 +152,8 @@ extendTo c s = case closestTo (start s)  (intersections r c) of
   where r = s `extendAs` Semibound
 
 -- | Returns a segment normal to a given curve.
-heightTo :: (Curve c, Intersections Line c) => c -> Line -> Line
-heightTo c = extendTo c . normalTo c
+heightTo :: (Curve c, Intersections Line c) => c -> Line -> Maybe Line
+heightTo c l = extendTo c <$> normalTo c l 
   
 ------------------------------------------------------------
 
@@ -238,22 +239,27 @@ through' p l = l
 through :: IsLine l => XY -> (l -> l)
 through = through'
 
--- | Turns the line so that it becomes normal to a given curve, pointing towards a curve.
-normalTo :: (Curve c, IsLine l) => c -> (l -> l)
-normalTo c l =
-  if c `isContaining` s
-    then l # along' (normal c (s ->@ c))
-    else l # along' (ray' s (s `projectOn` c))
-  where s = start l 
+-- | If possible, turns the line so that it becomes normal to a given curve, pointing towards a curve.
+normalTo :: (Curve c, IsLine l) => c -> l -> Maybe l
+normalTo c l = turn <*> Just l
+  where s = start l
+        turn = if c `isContaining` s
+               then along' . normal c <$> (s ->@? c)
+               else along' . ray' s <$> (s `projectOn` c)
 
--- | Reflects the curve against the normal at a given parameter.
-flipAt :: (Trans c, Curve c) => Double -> (c -> c)
-flipAt x c = c # reflectAt (normalSegment c x)
 
--- | Returns a line segment normal to the curve atarting at a given parameter
-normalSegment :: Curve c => c -> Double -> Line
-normalSegment c x = aSegment # at' (c @-> x) # normalTo c
+-- | Reflects the curve  at a given parameter against the normal, if it exists, or does nothing otherwise.
+flipAt :: (Trans c, Curve c) => Double -> c -> c
+flipAt x c = case normalSegment c x of
+               Just n -> c # reflectAt n
+               Nothing -> c
 
+-- | If possible, returns a line segment normal to the curve starting at a given parameter
+normalSegment :: Curve c => c -> Double -> Maybe Line
+normalSegment c x =
+  do p <- paramMaybe c x
+     aSegment # at' p # normalTo c
+                       
 ------------------------------------------------------------
 
 -- | Constructs a parametric graph as a `Polyline`.

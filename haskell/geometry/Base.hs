@@ -343,14 +343,12 @@ dot a b = let (xa, ya) = coord a
               in xa*xb + ya*yb
 
 -- | Determinant of a matrix, composed of two vector rows.
--- Equivalent to `cross`.
 det :: (Affine a, Affine b) => (a, b) -> Double
 det (a, b) = let (xa, ya) = coord a
                  (xb, yb) = coord b
              in xa*yb - ya*xb
 
 -- | Z-component of a cross product of two vectors.
--- Equivalent to `det`.
 cross :: (Affine a, Affine b) => a -> b -> Double
 cross a b = det (a, b)
 
@@ -417,7 +415,7 @@ class Curve c where
               distanceTo,
               (location | (isContaining, isEnclosing)) #-}
 
-  -- | Returns a point on a curve for given parameter.
+  -- | Returns a point on a curve for a given parameter.
   -- If parameter value is out of range [0, 1] for a finite curves
   -- the closest boundary value is returned.
   -- Use `paramMaybe` for more explicit parameterization.
@@ -436,7 +434,7 @@ class Curve c where
   -- if normal projection doesn't exist returns the parameter of the closest point.
   -- Use `projectMaybe` for more explicit projection.
   project :: Affine p => c -> p -> Double
-  project c p =  fromMaybe closest $ projectMaybe c p
+  project c p = fromMaybe closest $ projectMaybe c p
     where d0 = distance p (param c 0)
           d1 = distance p (param c 1)
           closest = if d0 < d1 then 0 else 1

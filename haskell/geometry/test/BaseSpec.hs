@@ -1,3 +1,5 @@
+{-# language TypeApplications #-}
+
 import Test.Hspec
 import Test.QuickCheck hiding (scale)
 import Test.Invariant
@@ -15,10 +17,10 @@ main = hspec $ do
     describe "equality" $ do
       it "1" $ asDeg 0 == asDeg 360
       it "2" $ asDeg 10 == asDeg 370
-      it "3" $ 45 == asCmp (1 :+ 1)
-      it "4" $ 90 == asCmp (0 :+ 1)
+      it "3" $ 45 == asCmp @Angular (1 :+ 1)
+      it "4" $ 90 == asCmp @Angular (0 :+ 1)
       it "5" $ 90 == asDeg (90 + 1e-12)
-      it "6" $ asCmp (2 :+ 3) == asCmp (4 :+ 6)
+      it "6" $ asCmp @Angular (2 :+ 3) == asCmp @Angular (4 :+ 6)
 
     describe "inequality" $ do
       it "1" $ asDeg 0 <= asDeg 360
@@ -40,12 +42,12 @@ main = hspec $ do
         it "2" $ property $ coord `inverts` cmp 
   
     describe "dot" $ do
-      it "pair" $ dot @XY (1, 2) (3, 6) == 15
-      it "complex" $ dot @CN (1 :+ 2) (3 :+ 6) == 15
+      it "pair" $ dot @XY @XY (1, 2) (3, 6) == 15
+      it "complex" $ dot @CN @CN (1 :+ 2) (3 :+ 6) == 15
   
     describe "cross" $ do
-      it "pair" $ cross @XY (1, 2) (3, 6) == 0
-      it "complex" $ cross @CN (1 :+ 2) (3 :+ 6) == 0
+      it "pair" $ cross @XY @XY (1, 2) (3, 6) == 0
+      it "complex" $ cross @CN @CN (1 :+ 2) (3 :+ 6) == 0
   
     describe "norm" $ do
       it "pair" $ norm @XY (3, 4) == 5
@@ -58,17 +60,19 @@ main = hspec $ do
 
   describe "Transformations" $ do
     describe "translate" $ do
-      it "1" $ translate @XY @XY (10, 20) (3, 4)  == (13, 24)
-      it "2" $ translate @XY @CN 10 (3, 4)  == (13, 4)
-      it "3" $ translate @CN @XY (3, 4) 10  == 13 :+ 4
+      it "1" $ translate' @XY @XY (10, 20) (3, 4)  == (13, 24)
+      it "2" $ translate' @XY @CN 10 (3, 4)  == (13, 4)
+      it "3" $ translate' @CN @XY (3, 4) 10  == 13 :+ 4
 
     it "scale" $ scale @XY 10 (3, 4)  == (30, 40)
+    it "scaleX" $ scale @XY 10 (3, 4)  == (30, 4)
+    it "scaleY" $ scale @XY 10 (3, 4)  == (3, 40)
 
     describe "scaleAt" $ do
-      it "1" $ scaleAt @XY @XY (3, 4) 10 (3, 4)  == (3, 4)
-      it "2" $ scaleAt @XY @XY (0, 0) 10 (3, 4)  == (30, 40)
-      it "3" $ scaleAt @XY @XY (1, 1) 10 (3, 4)  == (21, 31)
-      it "4" $ scaleAt @XY @XY (1, 1) 10 (0, 0)  == (-9, -9)
+      it "1" $ scaleAt' @XY @XY (3, 4) 10 (3, 4)  == (3, 4)
+      it "2" $ scaleAt' @XY @XY (0, 0) 10 (3, 4)  == (30, 40)
+      it "3" $ scaleAt' @XY @XY (1, 1) 10 (3, 4)  == (21, 31)
+      it "4" $ scaleAt' @XY @XY (1, 1) 10 (0, 0)  == (-9, -9)
 
     describe "rotate" $ do
       it "1" $ rotate @XY 0 (3, 4)  == (3, 4)
@@ -77,7 +81,7 @@ main = hspec $ do
       it "4" $ rotate @XY (asCmp (0 :+ 1)) (3, 4) ~== (-4, 3)
 
     describe "rotateAt" $ do
-      it "1" $ rotateAt @XY @XY (0, 0) 0 (3, 4) == (3, 4)
-      it "2" $ rotateAt @XY @XY (3, 4) 90 (3, 4) == (3, 4)
-      it "3" $ rotateAt @XY @XY (1, 0) 90 (0, 0) ~== (1, -1)
-      it "4" $ rotateAt @XY @XY (1, 1) 180 (0, 0) ~== (2, 2)
+      it "1" $ rotateAt' @XY @XY (0, 0) 0 (3, 4) == (3, 4)
+      it "2" $ rotateAt' @XY @XY (3, 4) 90 (3, 4) == (3, 4)
+      it "3" $ rotateAt' @XY @XY (1, 0) 90 (0, 0) ~== (1, -1)
+      it "4" $ rotateAt' @XY @XY (1, 1) 180 (0, 0) ~== (2, 2)

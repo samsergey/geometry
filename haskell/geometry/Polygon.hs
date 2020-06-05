@@ -8,7 +8,7 @@ module Polygon
   (
     IsPolygon (..)
   , Polyline (..)
-  , mkPolyline, trivialPolyline, closePolyline
+  , mkPolyline, trivialPolyline, closePoly
   , Polygon (..)
   , mkPolygon, trivialPolygon
   , Triangle
@@ -53,6 +53,7 @@ class Curve p => IsPolygon p where
               else (0 `max` i) `min` n
           n = length (segments p)
 
+
 interpolation :: IsPolygon p => p -> Double -> Maybe CN
 interpolation p x = param' <$> find interval tbl
   where
@@ -63,7 +64,7 @@ interpolation p x = param' <$> find interval tbl
 
 ------------------------------------------------------------
 
-data Polyline = Polyline ![CN]
+newtype Polyline = Polyline [CN]
 
 instance IsPolygon Polyline where
   vertices (Polyline vs) = vs
@@ -111,9 +112,7 @@ instance Curve Polyline where
 
   location pt p = res
     where res | any (`isContaining` pt) (segments p) = OnCurve
-              | isClosed p && odd (length (intersections r p)) = Inside
               | otherwise = Outside
-          r = mkRay (cmp pt, cmp pt + 1)
 
   unit p = sum $ unit <$> segments p
 
@@ -143,7 +142,7 @@ instance Intersections Polyline Polyline where
 
 ------------------------------------------------------------
 
-data Polygon = Polygon ![CN]
+newtype Polygon = Polygon [CN]
 
 instance IsPolygon Polygon where
   vertices (Polygon vs) = vs
@@ -156,7 +155,7 @@ mkPolygon pts = Polygon $ cmp <$> pts
 
 asPolyline :: Polygon -> Polyline
 asPolyline (Polygon []) = Polyline []
-asPolyline (Polygon vs) = Polyline $ vs ++ head vs
+asPolyline (Polygon vs) = Polyline $ vs ++ [head vs]
   
 instance Show Polygon where
   show p = concat ["<Polygon ", n, ">"]
@@ -169,9 +168,7 @@ instance Eq Polygon where
   p1 == p2 = vertices p1 ~== vertices p2
 
 instance Affine Polygon where
-  cmp p = case segments p of
-            [] -> 0
-            (x:_) -> cmp x
+  cmp = cmp . asPolyline
   asCmp x = mkPolygon [0, x]
 
 instance Trans Polygon where
@@ -179,49 +176,31 @@ instance Trans Polygon where
 
 instance Curve Polygon where
   paramMaybe p t = interpolation p $ (t `mod'` 1) * unit p
-
-  project p = project (asPolyline p)
-
   isClosed _ = True 
-
   orientation _ = 1
-
   location pt p = res
     where res | any (`isContaining` pt) (segments p) = OnCurve
               | isClosed p && odd (length (intersections r p)) = Inside
               | otherwise = Outside
           r = mkRay (cmp pt, cmp pt + 1)
-
-  unit p = sum $ unit <$> segments p
-
-  tangent p t =  (p @-> (t + dt)) `azimuth` (p @-> (t - dt))
-    where dt = 1e-5
-
-  distanceTo pt p = minimum $ distanceTo pt <$> segments p
+  project = project . asPolyline
+  unit = unit . asPolyline
+  tangent = tangent . asPolyline
+  distanceTo pt = distanceTo pt . asPolyline
 
  
 instance Figure Polygon where
-  isTrivial p = length (vertices p) < 2
-  isSimilar p1 p2 = p1 == p2
-  refPoint p = if isNontrivial p
-               then head $ vertices p
-               else 0
-  box p = foldMap (box . mkPoint) (vertices p)
+  isTrivial = isTrivial . asPolyline
+  isSimilar p1 p2 = isSimilar (asPolyline p1) (asPolyline p2)
+  refPoint = refPoint . asPolyline
+  box = box . asPolyline
 
-instance Intersections Line Polygon where
-  intersections = flip intersections
+instance (Curve a, Intersections a Polyline) => Intersections a Polygon where
+  intersections x t = intersections x (asPolyline t)
 
-instance Intersections Polygon Line where
-  intersections p l = foldMap (intersections l) (segments p)
+instance (Curve b, Intersections Polyline b) => Intersections Polygon b where
+  intersections t = intersections (asPolyline t)
 
-instance Intersections Polygon Polygon where
-  intersections p1 p2 = foldMap (intersections p1) (segments p2)
-
-instance Intersections Polygon Polyline where
-  intersections = flip intersections
-
-instance Intersections Polyline Polygon where
-  intersections p l = foldMap (intersections l) (segments p)
 
 ------------------------------------------------------------
 

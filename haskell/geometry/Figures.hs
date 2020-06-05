@@ -264,12 +264,12 @@ normalSegment c x =
 ------------------------------------------------------------
 
 -- | Constructs a parametric graph as a `Polyline`.
-parametricPoly :: (Double -> XY) -> [Double] -> Polygon
+parametricPoly :: (Double -> XY) -> [Double] -> Polyline
 parametricPoly f range =
   mkPolyline [ x :+ y | t <- range , let (x,y) = f t ]
 
 -- | Constructs a polar graph as a `Polyline`.
-polarPoly :: (Double -> Double) -> [Double] -> Polygon
+polarPoly :: (Double -> Double) -> [Double] -> Polyline
 polarPoly rho range =
   mkPolyline [ mkPolar (rho phi) phi | x <- range
                                      , let phi = 2*pi*x ]
@@ -300,12 +300,12 @@ triangle2a a1 a2 = case intersections r1 r2 of
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
-height :: IsPolygon p => p -> Int -> Line
+height :: IsPolyline p => p -> Int -> Line
 height p n = aSegment
              # at' (vertex p n)
              #! normalTo (side p n `extendAs` Unbound)
 
-vertexAngle :: IsPolygon p => p -> Int -> Angle
+vertexAngle :: IsPolyline p => p -> Int -> Angle
 vertexAngle p i = (segments p !! j) `angleBetween` (segments p !! (j-1))
   where j = if isClosed p
             then i `mod` n
@@ -368,15 +368,18 @@ instance Decor Line where
     , Fill "none"
     , Thickness "2" ]
 
-instance Decor Polygon where
+instance Decor Polyline where
   defaultOptions _ = mkOptions
     [ Stroke "orange"
     , Fill "none"
     , Thickness "2" ]
 
-instance Decor Triangle where
-  defaultOptions = defaultOptions . fromTriangle
+instance Decor Polygon where
+  defaultOptions = defaultOptions . asPolyline
 
+instance Decor Triangle where
+  defaultOptions = defaultOptions . asPolyline
+  
 instance Decor Angle where
   defaultOptions an = mkOptions
     [ Stroke "white"

@@ -150,9 +150,9 @@ intersectionL c l | b > r = []
 instance Intersections Line Circle where
   intersections = flip intersections
 
-instance Intersections Circle Polygon where
+instance Intersections Circle Polyline where
   intersections c p = foldMap (intersections c) (segments p)
 
-instance Intersections Polygon Circle where
+instance Intersections Polyline Circle where
   intersections = flip intersections
 

@@ -138,8 +138,9 @@ instance IsCircle a => IsCircle (Decorated a) where
   center = center . fromDecorated
   phaseShift = phaseShift . fromDecorated
 
-instance IsPolygon a => IsPolygon (Decorated a) where
+instance IsPolyline a => IsPolyline (Decorated a) where
   vertices = vertices . fromDecorated
+  asPolyline = asPolyline . fromDecorated
 
 instance IsAngle a => IsAngle (Decorated a) where
   angleValue = angleValue . fromDecorated

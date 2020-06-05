@@ -3,15 +3,16 @@
 {-# language FlexibleContexts #-}
 {-# language UndecidableInstances #-}
 {-# language GeneralizedNewtypeDeriving #-}
+{-# language DerivingVia #-}
 
 module Polygon
   (
-    IsPolygon (..)
+    IsPolyline (..)
   , Polyline (..)
   , mkPolyline, trivialPolyline, closePoly
   , Polygon (..)
   , mkPolygon, trivialPolygon
-  , Triangle
+  , Triangle (..)
   , mkTriangle, trivialTriangle
   , boxRectangle
   )
@@ -27,9 +28,10 @@ import Base
 import Point
 import Line
 
-class Curve p => IsPolygon p where
+class Curve p => IsPolyline p where
   vertices :: p -> [CN]
-
+  asPolyline :: p -> Polyline
+  
   verticesNumber :: p -> Int
   verticesNumber p = length (vertices p)
 
@@ -38,23 +40,24 @@ class Curve p => IsPolygon p where
     where vs = if isClosed p
                then cycle (vertices p)
                else vertices p
-
+                    
   vertex :: p -> Int -> CN
   vertex p i = vs !! j
     where vs = vertices p
+          n = verticesNumber p
           j = if isClosed p
-              then i `mod` length vs
-              else (0 `max` i) `min` length vs
-
+              then i `mod` n
+              else (0 `max` i) `min` n
+                   
   side :: p -> Int -> Line
   side p i = segments p !! j
     where j = if isClosed p
               then (i + n `div` 2) `mod` n
               else (0 `max` i) `min` n
-          n = length (segments p)
+          n = verticesNumber p
+  
 
-
-interpolation :: IsPolygon p => p -> Double -> Maybe CN
+interpolation :: IsPolyline p => p -> Double -> Maybe CN
 interpolation p x = param' <$> find interval tbl
   where
     interval ((a, b), _) = a ~<= x && x ~<= b
@@ -66,8 +69,9 @@ interpolation p x = param' <$> find interval tbl
 
 newtype Polyline = Polyline [CN]
 
-instance IsPolygon Polyline where
+instance IsPolyline Polyline where
   vertices (Polyline vs) = vs
+  asPolyline = id
   
 trivialPolyline :: Polyline
 trivialPolyline = Polyline []
@@ -92,7 +96,7 @@ instance Affine Polyline where
   cmp p = case segments p of
             [] -> 0
             (x:_) -> cmp x
-  asCmp x = mkPolyline [0, x]
+  asCmp x = Polyline [0, x]
 
 instance Trans Polyline where
   transform t (Polyline vs) = Polyline $ transform t <$> vs
@@ -143,36 +147,24 @@ instance Intersections Polyline Polyline where
 ------------------------------------------------------------
 
 newtype Polygon = Polygon [CN]
+  deriving (Eq, Trans, Affine, Figure) via Polyline
 
-instance IsPolygon Polygon where
-  vertices (Polygon vs) = vs
-  
 trivialPolygon :: Polygon
 trivialPolygon = Polygon []
 
 mkPolygon :: Affine a => [a] -> Polygon
 mkPolygon pts = Polygon $ cmp <$> pts
 
-asPolyline :: Polygon -> Polyline
-asPolyline (Polygon []) = Polyline []
-asPolyline (Polygon vs) = Polyline $ vs ++ [head vs]
-  
+instance IsPolyline Polygon where
+  vertices (Polygon vs) = vs
+  asPolyline (Polygon vs) = Polyline vs
+
 instance Show Polygon where
   show p = concat ["<Polygon ", n, ">"]
     where vs = vertices p
           n = if length vs < 5
               then unwords $ show . coord <$> vs
               else "-" <> show (length vs) <> "-"
-
-instance Eq Polygon where
-  p1 == p2 = vertices p1 ~== vertices p2
-
-instance Affine Polygon where
-  cmp = cmp . asPolyline
-  asCmp x = mkPolygon [0, x]
-
-instance Trans Polygon where
-  transform t (Polygon vs) = Polygon $ transform t <$> vs
 
 instance Curve Polygon where
   paramMaybe p t = interpolation p $ (t `mod'` 1) * unit p
@@ -184,16 +176,9 @@ instance Curve Polygon where
               | otherwise = Outside
           r = mkRay (cmp pt, cmp pt + 1)
   project = project . asPolyline
-  unit = unit . asPolyline
+  unit p = sum $ unit <$> segments p
   tangent = tangent . asPolyline
   distanceTo pt = distanceTo pt . asPolyline
-
- 
-instance Figure Polygon where
-  isTrivial = isTrivial . asPolyline
-  isSimilar p1 p2 = isSimilar (asPolyline p1) (asPolyline p2)
-  refPoint = refPoint . asPolyline
-  box = box . asPolyline
 
 instance (Curve a, Intersections a Polyline) => Intersections a Polygon where
   intersections x t = intersections x (asPolyline t)
@@ -209,29 +194,29 @@ boxRectangle f = mkPolygon [ p4, p3, p2, p1 ]
 
 ------------------------------------------------------------
 
-newtype Triangle = Triangle { fromTriangle :: Polygon }
-  deriving (Figure, Curve, Trans, Eq, Show)
+newtype Triangle = Triangle [CN]
+  deriving ( Figure
+           , Curve
+           , Trans
+           , Eq
+           , IsPolyline
+           ) via Polygon
 
-mkTriangle vs = Triangle $ mkPolygon vs
+mkTriangle :: Affine a => [a] -> Triangle
+mkTriangle = Triangle . fmap cmp
 
-trivialTriangle = Triangle trivialPolygon
+trivialTriangle = Triangle []
 
-instance IsPolygon Triangle where
-  verticesNumber _ = 3
-
-  vertices = vertices . fromTriangle
-
-  segments p = mkSegment <$> zip (vertices p) (tail vs)
-    where vs = cycle (vertices p)
-
-  vertex p i = vertices p !! (i `mod` 3)
+instance Show Triangle where
+  show t = concat ["<Triangle ", ss, ">"]
+    where ss = unwords $ show . coord <$> vertices t
 
 instance Affine Triangle where
-  cmp = cmp . fromTriangle
-  asCmp x = mkTriangle [0, x, rotate 60 x]
+  cmp = cmp . asPolyline
+  asCmp x = Triangle [0, x, rotate 60 x]
 
-instance (Curve a, Intersections a Polygon) => Intersections a Triangle where
-  intersections x t = intersections x (fromTriangle t)
+instance (Curve a, Intersections a Polyline) => Intersections a Triangle where
+  intersections x t = intersections x (asPolyline t)
 
-instance (Curve b, Intersections Polygon b) => Intersections Triangle b where
-  intersections t = intersections (fromTriangle t)
+instance (Curve b, Intersections Polyline b) => Intersections Triangle b where
+  intersections t = intersections (asPolyline t)

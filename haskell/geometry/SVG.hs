@@ -149,18 +149,26 @@ instance SVGable Line where
       
 ------------------------------------------------------------
 
+instance SVGable Polyline where
+  toSVG p | isTrivial p = labelElement p
+          | otherwise = polyline_ . attr <> labelElement p
+    where
+      attr = attributes p <>
+             const [ Points_ <<- foldMap fmtSVG (vertices p) ]
+
+------------------------------------------------------------
+
 instance SVGable Polygon where
   toSVG p | isTrivial p = labelElement p
-          | otherwise = elem . attr <> labelElement p
+          | otherwise = polygon_ . attr <> labelElement p
     where
-      elem = if isClosed p then polygon_ else polyline_
       attr = attributes p <>
              const [ Points_ <<- foldMap fmtSVG (vertices p) ]
 
 ------------------------------------------------------------
 
 instance SVGable Triangle where
-  toSVG = toSVG . fromTriangle
+  toSVG = toSVG . Polygon . vertices
 
 ------------------------------------------------------------
 

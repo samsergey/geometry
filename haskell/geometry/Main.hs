@@ -8,9 +8,9 @@ import Data.Complex
 
 c = aTriangle
 
-sc = group (modularScale 7 c)
+sc = group (modularScale 3 c)
 
-ch = c <+> sc <+> (c # scale 1.1 #: invisible)
+ch = c <+> sc <+>  (c # scale 1.1 #: invisible)
 
 main :: IO ()
 main = writeSVG 350 "test.svg" ch

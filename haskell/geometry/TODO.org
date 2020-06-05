@@ -1,4 +1,6 @@
 ** Triangle
-** Angle
-*** Values
-** Double lines
+*** medians and heights
+*** navigation in sides and vertices
+** Boxes
+*** `beside` and `above` transformers
+

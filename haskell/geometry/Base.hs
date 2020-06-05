@@ -72,6 +72,7 @@ type XY = (Double, Double)
 infixl 5 #
 (#) = flip ($)
 
+-- | Non-total application for partial transformers, such as `normalTo`.
 infixl 5 #!
 x #! f = fromJust $ f x
 

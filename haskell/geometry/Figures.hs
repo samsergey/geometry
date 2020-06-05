@@ -280,17 +280,17 @@ regularPoly n' = rotate 90 $ closePoly $
                  polarPoly (const 1) [0,1/n..1-1/n]
   where n = fromIntegral n'
 
--- | The template for a square.
-aSquare :: Polygon
-aSquare = mkPolygon @XY [(0,0),(1,0),(1,1),(0,1)]
-
--- | The template for a Rectangle.
-aRectangle :: Double -> Double -> Polygon
-aRectangle a b = aSquare # scaleX a # scaleY b
-
 -- | The template for a triangle.
 aTriangle :: Triangle
 aTriangle = asCmp 1
+
+-- | The template for a square.
+aSquare :: Rectangle
+aSquare = asCmp 1
+
+-- | The template for a Rectangle.
+aRectangle :: Double -> Double -> Rectangle
+aRectangle a b = aSquare # scaleX a . scaleY b
 
 -- | Returns a triangle with base 1 and two given angles.
 triangle2a :: Angular -> Angular -> Triangle

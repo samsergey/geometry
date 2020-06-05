@@ -14,6 +14,8 @@ module Polygon
   , mkPolygon, trivialPolygon
   , Triangle (..)
   , mkTriangle, trivialTriangle
+  , Rectangle (..)
+  , mkRectangle, trivialRectangle
   , boxRectangle
   )
 where
@@ -189,18 +191,8 @@ instance (Curve b, Intersections Polyline b) => Intersections Polygon b where
 
 ------------------------------------------------------------
 
-boxRectangle f = mkPolygon [ p4, p3, p2, p1 ]
-  where ((p4,p3),(p1,p2)) = corner f
-
-------------------------------------------------------------
-
 newtype Triangle = Triangle [CN]
-  deriving ( Figure
-           , Curve
-           , Trans
-           , Eq
-           , IsPolyline
-           ) via Polygon
+  deriving (Figure, Curve, Trans, Eq, IsPolyline) via Polygon
 
 mkTriangle :: Affine a => [a] -> Triangle
 mkTriangle = Triangle . fmap cmp
@@ -220,3 +212,30 @@ instance (Curve a, Intersections a Polyline) => Intersections a Triangle where
 
 instance (Curve b, Intersections Polyline b) => Intersections Triangle b where
   intersections t = intersections (asPolyline t)
+
+------------------------------------------------------------
+
+newtype Rectangle = Rectangle [CN]
+  deriving (Figure, Curve, Trans, Eq, IsPolyline) via Polygon
+
+mkRectangle :: Affine a => [a] -> Rectangle
+mkRectangle = Rectangle . fmap cmp
+
+trivialRectangle = Rectangle []
+
+instance Show Rectangle where
+  show t = concat ["<Rectangle ", ss, ">"]
+    where ss = unwords $ show . coord <$> vertices t
+
+instance Affine Rectangle where
+  cmp = cmp . asPolyline
+  asCmp (x:+y) = Rectangle [0, x:+0, x:+y, 0:+y]
+
+instance (Curve a, Intersections a Polyline) => Intersections a Rectangle where
+  intersections x t = intersections x (asPolyline t)
+
+instance (Curve b, Intersections Polyline b) => Intersections Rectangle b where
+  intersections t = intersections (asPolyline t)
+
+boxRectangle f = mkRectangle [ p4, p3, p2, p1 ]
+  where ((p4,p3),(p1,p2)) = corner f

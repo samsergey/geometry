@@ -170,6 +170,9 @@ instance SVGable Polygon where
 instance SVGable Triangle where
   toSVG = toSVG . Polygon . vertices
 
+instance SVGable Rectangle where
+  toSVG = toSVG . Polygon . vertices
+
 ------------------------------------------------------------
 
 instance SVGable Angle where
@@ -288,7 +291,7 @@ type ImageSize = Int
 -- | The record containing image parameters and options.
 data SVGContext = SVGContext
   { imageSize :: ImageSize
-  , figureBox :: Polygon
+  , figureBox :: Rectangle
   , figureOptions :: Options }
 
 updateOptions :: Options -> SVGContext -> SVGContext

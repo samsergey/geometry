@@ -29,6 +29,7 @@ module Figures (
   , at, at', along, along', through, through'
   , translate, scaleAt, scaleXAt, scaleYAt
   , on, normalTo, flipAt
+  , vertexAngle, height
  ) where
 
 import Data.Complex
@@ -298,6 +299,18 @@ triangle2a a1 a2 = case intersections r1 r2 of
                     [] -> trivialTriangle
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
+
+height :: IsPolygon p => p -> Int -> Line
+height p n = aSegment
+             # at' (vertex p n)
+             #! normalTo (side p n `extendAs` Unbound)
+
+vertexAngle :: IsPolygon p => p -> Int -> Angle
+vertexAngle p i = (segments p !! j) `angleBetween` (segments p !! (j-1))
+  where j = if isClosed p
+            then i `mod` n
+            else (1 `max` i) `min` (n-1)
+        n = length (segments p)
 
 ------------------------------------------------------------
 

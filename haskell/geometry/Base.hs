@@ -39,7 +39,7 @@ module Base
   , Intersections (..)
   -- ** Figures
   , Figure (..), Box, pointBox
-  , height, width
+  , figureHeight, figureWidth
   , corner, left, right, lower, upper
   -- ** Fuzzy equality
   , AlmostEq
@@ -584,12 +584,12 @@ instance Bounded Double where
   minBound = -1/0
   maxBound = 1/0
 
-width :: Figure f => f -> Double
-width f = let ((Min xmin, Min ymin), (Max xmax, Max ymax)) = box f
+figureWidth :: Figure f => f -> Double
+figureWidth f = let ((Min xmin, Min ymin), (Max xmax, Max ymax)) = box f
           in abs $ xmax - xmin
 
-height :: Figure f => f -> Double
-height f = let ((Min xmin, Min ymin), (Max xmax, Max ymax)) = box f
+figureHeight :: Figure f => f -> Double
+figureHeight f = let ((Min xmin, Min ymin), (Max xmax, Max ymax)) = box f
            in abs $ ymax - ymin
 
 corner p = ((x1:+y2, x2:+y2),(x1:+y1, x2:+y1))

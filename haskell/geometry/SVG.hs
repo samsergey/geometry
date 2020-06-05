@@ -311,6 +311,6 @@ showSVG size obj = prettyText (contents ctx)
          # scale ((fromIntegral size - 20) / ((w `max` h) `min` paperSize))
          # translate' ((10, 10) :: XY)
     paperSize = 50
-    w = width obj
-    h = height obj
+    w = figureWidth obj
+    h = figureHeight obj
     p0 = left . upper . corner $ obj

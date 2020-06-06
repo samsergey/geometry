@@ -132,21 +132,28 @@ instance SVGable Circle where
 ------------------------------------------------------------
 
 instance SVGable Line where
-  toSVG l =
-    let (a, b) = refPoints l
-        elem = if isTrivial l then mempty else line_
-        attr = attributes l <>
-               const [ X1_ <<- fmtSVG (getX a)
-                     , Y1_ <<- fmtSVG (getY a)
-                     , X2_ <<- fmtSVG (getX b)
-                     , Y2_ <<- fmtSVG (getY b) ]
-        relabel s = s #: lpos ((s @-> 0.95) - cmp s)
-    in do
-      bx <- figureBox
-      if bounding l == Bound
-        then elem . attr <> labelElement l
-        else foldMap (toSVG . relabel) $ l `clipBy` bx
+  toSVG l = do
+    bx <- figureBox
+    let relabel s = s #: lpos ((s @-> 0.95) - cmp s) 
+    foldMap (toSVG . relabel) $ l `clipBy` bx
       
+instance SVGable Ray where
+  toSVG r = do
+    bx <- figureBox
+    let relabel s = s #: lpos ((s @-> 0.95) - cmp s) 
+    foldMap (toSVG . relabel) $ r `clipBy` bx
+
+instance SVGable Segment where
+  toSVG s = elem . attr <> labelElement s
+    where
+      (a, b) = refPoints s
+      elem = if isTrivial s then mempty else line_
+      attr = attributes s <>
+             const [ X1_ <<- fmtSVG (getX a)
+                   , Y1_ <<- fmtSVG (getY a)
+                   , X2_ <<- fmtSVG (getX b)
+                   , Y2_ <<- fmtSVG (getY b) ]
+
 ------------------------------------------------------------
 
 instance SVGable Polyline where

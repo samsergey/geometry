@@ -2,19 +2,22 @@
 {-# Language FlexibleContexts #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DerivingVia #-}
-
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Line
   (-- * Types
     IsLine (..)
-  , Line (..)
-  , trivialLine, mkLine
+  , Line (..), trivialLine, mkLine
+  , Ray (..), mkRay
+  , Segment (..), mkSegment
   -- * Functions
---  , extendAs, clipBy
+  ,  clipBy
   ) where
 
 import Data.Complex
 import Data.List
 import Data.Maybe
+import Control.Monad
 
 import Base
 
@@ -22,19 +25,26 @@ bimap f (a, b) = (f a, f b)
 
 -- | Class representing a linear object.
 class (Figure l, Affine l, Curve l, Trans l) => IsLine l where
-  bounding :: l -> Double -> Bool
   refPoints :: l -> (CN, CN)
+
+  asLine :: l -> Line
+  asLine = Line . refPoints
+
+  asRay :: l -> Ray
+  asRay = Ray . refPoints
+
+  asSegment :: l -> Segment
+  asSegment = Segment . refPoints
 
 ------------------------------------------------------------
 
 -- | The straight line, passing through two given points.
--- The first point sets the `Figure`s' refference point and a starting point of a line.
--- The distance between refference points `p1` and `p2` sets the 'unit' and internal scale,
+-- The first point sets the `Figure`'s refference point and a starting point of a line.
+-- The distance between refference points `p1` and `p2` sets the `unit` and internal scale,
 -- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
 newtype Line = Line (CN, CN)
 
 instance IsLine Line where
-  bounding _ _ = True
   refPoints (Line r) = r
 
 -- | The trivial line with coinsiding refference points.
@@ -52,7 +62,7 @@ instance Show Line where
           a = angle l
 
 instance Figure Line where
-  isTrivial l = cmp l == 0
+  isTrivial = isZero
 
   refPoint = fst . refPoints
 
@@ -62,61 +72,48 @@ instance Figure Line where
 
 instance Affine Line where
   cmp l =  let (p1, p2) = refPoints l 
-           in normalize $ cmp p2 - cmp p1
-  asCmp p = mkLine (0, p)
+           in cmp p2 - cmp p1
+  asCmp p = Line (0, p)
 
 
 instance Trans Line where
   transform t (Line ps) = Line $ bimap (transformCN t) ps
-  
 
-instance Curve Line where
-  unit l = let (p1, p2) = refPoints l
-           in distance p1 p2
 
+instance Manifold Line where
+  isClosed _ = False
+
+  bounds l | isTrivial l = [0, 0]
+           | otherwise = []
+   
   paramMaybe l t = let (p1, p2) = refPoints l
-                   in if bounding l t
-                      then Just $ scaleAt' p1 t p2
-                      else Nothing
+                   in Just $ scaleAt' p1 t p2
 
   projectMaybe l p
     | isTrivial l = Nothing
     | otherwise =
-        let (p1, _) = refPoints l
-            v = cmp p - cmp p1
-            t = (v `dot` cmp l) / unit l
-        in if bounding l t
-           then Just t
-           else Nothing
+        let v = cmp p - cmp (refPoint l)
+        in Just $ (v `dot` angle l) / unit l
 
-  isClosed _ = False
+  isContaining l p = l `isCollinear` azimuth (refPoint l) p
+
+  unit l = let (p1, p2) = refPoints l
+           in distance p1 p2
+
+instance Curve Line where
+
   isEnclosing _ _ = False
+
   orientation _ = 1
-
-  isFinite _ = False
-
-  isContaining l p = let p1 = refPoint l
-                         res = l `isCollinear` azimuth p1 p
-                     in res && isJust (projectMaybe l p)
 
   tangent l _ = angle l
 
-  distanceTo p l = case projectMaybe l p of
-    Just x -> p `distance` (l @-> x)
-    Nothing -> (p `distance` (l @-> 0)) `min`
-               (p `distance` (l @-> 1))
-
-
-instance Intersections Line Line where
-  intersections l1 l2
-    | l1 `isCollinear` l2 = []
-    | isTrivial l1 = filter (isContaining l2) [refPoint l1]
-    | isTrivial l2 = filter (isContaining l1) [refPoint l2]
-    | otherwise = 
-      filter (isContaining l1) $
-      filter (isContaining l2) $
-      intersectionV (refPoint l1) (cmp l1) (refPoint l2) (cmp l2)
-
+instance {-# OVERLAPPING #-} Intersections Line Line where
+  intersections' l1 l2 =
+    intersectionV (refPoint l1) (cmp l1) (refPoint l2) (cmp l2)
+ 
+instance (Figure a, Curve a, Intersections Line a) => Intersections a Line where
+  intersections' = flip intersections'
 
 intersectionV (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
   [(v1x*d2 - v2x*d1) :+ (v1y*d2 - v2y*d1) | d0 /= 0]
@@ -129,13 +126,20 @@ intersectionV (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
 ------------------------------------------------------------
 
 newtype Ray = Ray (CN, CN)
-  deriving (Eq, Affine, Trans, Curve, Figure) via Line
+  deriving ( Eq
+           , Affine
+           , Trans
+           , Curve
+           , Figure
+           , Intersections Line
+           , Intersections Ray
+           , Intersections Segment
+           ) via Line
 
 -- | The basic ray constructor.
 mkRay ps = Ray $ bimap cmp ps
 
 instance IsLine Ray where
-  bounding _ x = x >= 0
   refPoints (Ray r) = r
 
 instance Show Ray where
@@ -143,17 +147,35 @@ instance Show Ray where
     where p = coord (l @-> 0)
           a = angle l
 
+instance Manifold Ray where
+  bounds _ = [0]
+  paramMaybe r x = guard (0 ~<= x) >> paramMaybe (asLine r) x
+
+  projectMaybe r p =
+    do x <- projectMaybe (asLine r) p
+       guard (0 ~<= x)
+       return x
+
+  isContaining r p = asLine r `isContaining` p
+                     && isJust (projectMaybe r p)
+
 ------------------------------------------------------------
 
 newtype Segment = Segment (CN, CN)
-  deriving (Eq, Affine, Trans, Curve, Figure) via Line
+  deriving ( Eq
+           , Affine
+           , Trans
+           , Curve
+           , Figure
+           , Intersections Line
+           , Intersections Ray
+           , Intersections Segment
+           ) via Line
 
 -- | The basic segment constructor.
 mkSegment ps = Segment $ bimap cmp ps
 
-
 instance IsLine Segment where
-  bounding _ x = x >= 0 && x <= 1
   refPoints (Segment r) = r
 
 instance Show Segment where
@@ -161,38 +183,24 @@ instance Show Segment where
     where p1 = coord (l @-> 0)
           p2 = coord (l @-> 1)
 
+instance Manifold Segment where
+  paramMaybe s x = guard (0 ~<= x && x ~<= 1) >> paramMaybe (asLine s) x
 
+  projectMaybe s p =
+    do x <- projectMaybe (asLine s) p
+       guard (0 ~<= x && x ~<= 1)
+       return x
+
+  isContaining s p = asLine s `isContaining` p
+                     && isJust (projectMaybe s p)
+
+       
 -- | Returns a list of segments as a result of clipping the line
 -- by a closed curve.
-
--- clipBy :: (IsLine l, Intersections l c, Curve c) => l -> c -> [Line]
--- clipBy l c = filter internal $ Line Bound <$> zip ints (tail ints) 
---   where
---     ints = sortOn (project l) $ intersections l c <> ends
---     internal s = c `isEnclosing` (s @-> 0.5)
---     ends = case bounding l of
---              Bound -> [l @-> 0, l @-> 1]
---              Semibound -> [l @-> 0]
---              Unbound -> []
-
--- | The extension of a line with the same refference points.
---
--- >>> mkSegment (0, 1) `extendAs` Semibound
--- <Ray (0.0,0.0), 0.0°>
---
--- >>> mkSegment (0, 1) `extendAs` Unbound
--- <Line (0.0,0.0), 0.0°>
---
--- >>> mkRay (0, 1) `extendAs` Unbound
--- <Line (0.0,0.0), 0.0°>
--- 
-
-
--- l `extendAs` b =
---   let res = Line b (refPoints l)
---   in case bounding l of
---        Bound -> res
---        Semibound -> case b of
---          Bound -> l
---          _ -> res
---        Unbound -> l
+clipBy :: (IsLine l, Intersections l c, Figure c, Curve c)
+       => l -> c -> [Segment]
+clipBy l c = filter internal $ Segment <$> zip ints (tail ints) 
+  where
+    ints = sortOn (project l) $ intersections l c <> ends
+    internal s = c `isEnclosing` (s @-> 0.5)
+    ends = (l @->) <$> bounds l

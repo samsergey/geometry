@@ -14,7 +14,7 @@ module Figures (
   , extendToLength, extendTo, normalSegment, heightTo
   -- ** Angle constructors
   , anAngle
-  , angleBetween
+  , angleBetween, angleWithin
   , supplementary, vertical, reflex
   , bisectrisse
   -- ** Polygon constructors
@@ -82,7 +82,8 @@ aLabel :: Label
 aLabel = mkLabel origin
 
 -- | Returns a list of intersection points as `Point` objects.
-intersectionPoints :: (Intersections a b, Curve a, Curve b) => a -> b -> [Point]
+intersectionPoints :: ( Curve a, Curve b, Intersections a b )
+                   => a -> b -> [Point]
 intersectionPoints c1 c2 = point' <$> intersections c1 c2
 
 -- | Returns a point from a list which is closest to a given one.
@@ -114,47 +115,47 @@ line :: XY -> XY -> Line
 line = line'
 
 -- | 
-segment' :: (Affine a1, Affine a2) => a1 -> a2 -> Line
+segment' :: (Affine a1, Affine a2) => a1 -> a2 -> Segment
 segment' p1 p2 = mkSegment (cmp p1, cmp p2)
 
 -- | 
-segment :: XY -> XY -> Line
+segment :: XY -> XY -> Segment
 segment = segment'
 
 -- | 
-ray' :: (Affine a1, Affine a2) => a1 -> a2 -> Line
+ray' :: (Affine a1, Affine a2) => a1 -> a2 -> Ray
 ray' p1 p2 = mkRay (cmp p1, cmp p2)
 
 -- | 
-ray :: XY -> XY -> Line
+ray :: XY -> XY -> Ray
 ray = ray'
 
 -- | The template for a segment.
-aSegment :: Line
-aSegment = segment' origin ((1,0) :: XY)
+aSegment :: Segment
+aSegment = asCmp 1
 
 -- | The template for a line.
 aLine :: Line
-aLine = aSegment `extendAs` Unbound
+aLine = asCmp 1
 
 -- | The template for a ray.
-aRay :: Line
-aRay = aSegment `extendAs` Semibound
+aRay :: Ray
+aRay = asCmp 1
 
 -- | Returns a line, ray or a segment with given unit, in case of a segment -- with given length.
 extendToLength :: Double -> Line -> Line
 extendToLength l s = s # through' (paramL s l) 
 
 -- | Returns a segment extended to a closest intersection point with a given curve.
-extendTo :: (Curve c, Intersections Line c) => c -> Line -> Line
-extendTo c s = case closestTo (start s)  (intersections r c) of
-  Nothing -> r
-  Just p -> aSegment # at' (start s) # through' p
-  where r = s `extendAs` Semibound
+extendTo :: (Curve c, Intersections Ray c)
+         => c -> Line -> Maybe Segment
+extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
+  where extend p = aSegment # at' (start s) # through' p
 
 -- | Returns a segment normal to a given curve.
-heightTo :: (Curve c, Intersections Line c) => c -> Line -> Maybe Line
-heightTo c l = extendTo c <$> normalTo c l 
+heightTo :: (Curve c, Intersections Ray c)
+         => c -> Line -> Maybe Segment
+heightTo c l = normalTo c l >>= extendTo c
   
 ------------------------------------------------------------
 
@@ -167,6 +168,10 @@ angleBetween :: (IsLine l1,  IsLine l2) => l1 -> l2 -> Angle
 angleBetween l1 l2 = anAngle (angle l2 - angle l1)
                      # at' (start l1)
                      # along' l1
+
+angleWithin :: (Affine a1, Affine a2, Affine a3)
+            => a1 -> a2 -> a3 -> Angle
+angleWithin p1 p2 p3 = angleBetween (ray' p2 p1) (ray' p2 p3)
 
 -- | 
 supplementary :: Angle -> Angle
@@ -181,8 +186,8 @@ reflex :: Angle -> Angle
 reflex (Angle p s e) = Angle p e s
 
 -- | 
-bisectrisse :: IsAngle a => a -> Line
-bisectrisse an = aSegment
+bisectrisse :: IsAngle a => a -> Ray
+bisectrisse an = aRay
                  # at' (refPoint an)
                  # along' (pi + angleStart an + 0.5*angleValue an)
 
@@ -256,7 +261,7 @@ flipAt x c = case normalSegment c x of
                Nothing -> c
 
 -- | If possible, returns a line segment normal to the curve starting at a given parameter
-normalSegment :: Curve c => c -> Double -> Maybe Line
+normalSegment :: Curve c => c -> Double -> Maybe Segment
 normalSegment c x =
   do p <- paramMaybe c x
      aSegment # at' p # normalTo c
@@ -300,10 +305,10 @@ triangle2a a1 a2 = case intersections r1 r2 of
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
-height :: IsPolyline p => p -> Int -> Line
+height :: IsPolyline p => p -> Int -> Segment
 height p n = aSegment
              # at' (vertex p n)
-             #! normalTo (side p n `extendAs` Unbound)
+             #! normalTo (asLine (side p n))
 
 vertexAngle :: IsPolyline p => p -> Int -> Angle
 vertexAngle p i = (segments p !! j) `angleBetween` (segments p !! (j-1))
@@ -368,6 +373,12 @@ instance Decor Line where
     , Fill "none"
     , Thickness "2" ]
 
+instance Decor Ray where
+  defaultOptions = defaultOptions . asLine
+
+instance Decor Segment where
+  defaultOptions = defaultOptions . asLine
+
 instance Decor Polyline where
   defaultOptions _ = mkOptions
     [ Stroke "orange"
@@ -379,7 +390,10 @@ instance Decor Polygon where
 
 instance Decor Triangle where
   defaultOptions = defaultOptions . asPolyline
-  
+
+instance Decor Rectangle where
+  defaultOptions = defaultOptions . asPolyline
+
 instance Decor Angle where
   defaultOptions an = mkOptions
     [ Stroke "white"

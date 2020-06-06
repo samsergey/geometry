@@ -37,7 +37,7 @@ class Curve p => IsPolyline p where
   verticesNumber :: p -> Int
   verticesNumber p = length (vertices p)
 
-  segments :: p -> [Line]
+  segments :: p -> [Segment]
   segments p = mkSegment <$> zip (vertices p) (tail vs)
     where vs = if isClosed p
                then cycle (vertices p)
@@ -51,7 +51,7 @@ class Curve p => IsPolyline p where
               then i `mod` n
               else (0 `max` i) `min` n
                    
-  side :: p -> Int -> Line
+  side :: p -> Int -> Segment
   side p i = segments p !! j
     where j = if isClosed p
               then (i + n `div` 2) `mod` n
@@ -103,29 +103,31 @@ instance Affine Polyline where
 instance Trans Polyline where
   transform t (Polyline vs) = Polyline $ transform t <$> vs
 
-instance Curve Polyline where
+instance Manifold Polyline where
   paramMaybe p t = interpolation p $ t * unit p
 
-  project p pt = (x0 + projectL s pt) / unit p
+  projectMaybe p pt = if (0 <= x && x <= 1)
+                      then Just x
+                      else Nothing
     where
       ss = segments p
       ds = scanl (+) 0 $ unit <$> ss
       (x0, s) = minimumOn (\(_,s) -> distanceTo pt s) $ zip ds ss
+      x = (x0 + projectL s pt) / unit p
 
   isClosed _ = False
+  isContaining p x = any (`isContaining` x) (segments p)
+  unit p = sum $ unit <$> segments p
 
+instance Curve Polyline where
   orientation _ = 1
 
-  location pt p = res
+  location p pt = res
     where res | any (`isContaining` pt) (segments p) = OnCurve
               | otherwise = Outside
 
-  unit p = sum $ unit <$> segments p
-
   tangent p t =  (p @-> (t + dt)) `azimuth` (p @-> (t - dt))
     where dt = 1e-5
-
-  distanceTo pt p = minimum $ distanceTo pt <$> segments p
 
  
 instance Figure Polyline where
@@ -138,18 +140,30 @@ instance Figure Polyline where
 
 
 instance Intersections Line Polyline where
-  intersections = flip intersections
+  intersections' l p = foldMap (intersections l) (segments p)
 
-instance Intersections Polyline Line where
-  intersections p l = foldMap (intersections l) (segments p)
+instance Intersections Ray Polyline where
+  intersections' l p = foldMap (intersections l) (segments p)
 
-instance Intersections Polyline Polyline where
-  intersections p1 p2 = foldMap (intersections p1) (segments p2)
+instance Intersections Segment Polyline where
+  intersections' l p = foldMap (intersections l) (segments p)
+
+instance {-# OVERLAPPING #-}
+  Intersections Polyline Polyline where
+  intersections' p1 p2 = foldMap (intersections p1) (segments p2)
+
+instance (Curve a, Intersections a Polyline) =>
+         Intersections Polyline a where
+  intersections' = flip intersections'
 
 ------------------------------------------------------------
 
 newtype Polygon = Polygon [CN]
-  deriving (Eq, Trans, Affine, Figure) via Polyline
+  deriving ( Eq
+           , Trans
+           , Affine
+           , Figure
+           ) via Polyline
 
 trivialPolygon :: Polygon
 trivialPolygon = Polygon []
@@ -168,31 +182,41 @@ instance Show Polygon where
               then unwords $ show . coord <$> vs
               else "-" <> show (length vs) <> "-"
 
-instance Curve Polygon where
+instance Manifold Polygon where
   paramMaybe p t = interpolation p $ (t `mod'` 1) * unit p
-  isClosed _ = True 
+  projectMaybe = projectMaybe . asPolyline
+  isClosed _ = True
+  isContaining p x = any (`isContaining` x) (segments p)
+  unit p = sum $ unit <$> segments p
+  
+instance Curve Polygon where
   orientation _ = 1
-  location pt p = res
+  location p pt = res
     where res | any (`isContaining` pt) (segments p) = OnCurve
-              | isClosed p && odd (length (intersections r p)) = Inside
+              | isClosed p && odd (length (intersections p r)) = Inside
               | otherwise = Outside
           r = mkRay (cmp pt, cmp pt + 1)
-  project = project . asPolyline
-  unit p = sum $ unit <$> segments p
+
   tangent = tangent . asPolyline
-  distanceTo pt = distanceTo pt . asPolyline
+
 
 instance (Curve a, Intersections a Polyline) => Intersections a Polygon where
-  intersections x t = intersections x (asPolyline t)
+  intersections' x t = intersections' x (asPolyline t)
 
 instance (Curve b, Intersections Polyline b) => Intersections Polygon b where
-  intersections t = intersections (asPolyline t)
+  intersections' t = intersections' (asPolyline t)
 
 
 ------------------------------------------------------------
 
 newtype Triangle = Triangle [CN]
-  deriving (Figure, Curve, Trans, Eq, IsPolyline) via Polygon
+  deriving ( Figure
+           , Manifold
+           , Curve
+           , Trans
+           , Eq
+           , IsPolyline
+           ) via Polygon
 
 mkTriangle :: Affine a => [a] -> Triangle
 mkTriangle = Triangle . fmap cmp
@@ -208,15 +232,21 @@ instance Affine Triangle where
   asCmp x = Triangle [0, x, rotate 60 x]
 
 instance (Curve a, Intersections a Polyline) => Intersections a Triangle where
-  intersections x t = intersections x (asPolyline t)
+  intersections' x t = intersections' x (asPolyline t)
 
 instance (Curve b, Intersections Polyline b) => Intersections Triangle b where
-  intersections t = intersections (asPolyline t)
+  intersections' t = intersections' (asPolyline t)
 
 ------------------------------------------------------------
 
 newtype Rectangle = Rectangle [CN]
-  deriving (Figure, Curve, Trans, Eq, IsPolyline) via Polygon
+  deriving ( Figure
+           , Manifold
+           , Curve
+           , Trans
+           , Eq
+           , IsPolyline
+           ) via Polygon
 
 mkRectangle :: Affine a => [a] -> Rectangle
 mkRectangle = Rectangle . fmap cmp
@@ -232,10 +262,10 @@ instance Affine Rectangle where
   asCmp (x:+y) = Rectangle [0, x:+0, x:+y, 0:+y]
 
 instance (Curve a, Intersections a Polyline) => Intersections a Rectangle where
-  intersections x t = intersections x (asPolyline t)
+  intersections' x t = intersections' x (asPolyline t)
 
 instance (Curve b, Intersections Polyline b) => Intersections Rectangle b where
-  intersections t = intersections (asPolyline t)
+  intersections' t = intersections' (asPolyline t)
 
 boxRectangle f = mkRectangle [ p4, p3, p2, p1 ]
   where ((p4,p3),(p1,p2)) = corner f

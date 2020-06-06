@@ -71,28 +71,28 @@ instance Trans Circle where
           w = orientation cir * transformOrientation t
 
 
-instance Curve Circle where
-  param c t =
+instance Manifold Circle where
+  paramMaybe c t = Just $
     center c + mkPolar (radius c) (2*pi * orientation c *(t + phaseShift c))
 
-  project c p =
+  projectMaybe c p = Just $
     orientation c * (turns (asCmp (cmp p - center c)) - phaseShift c)
 
   isClosed = const True
+  isContaining c p = distance p (center c) ~== radius c
+  unit _ = 2 * pi
 
+instance Curve Circle where
   orientation (Circle _ _ o) = o
 
-  location p c = res
+  location c p = res
     where res | r' ~== radius c = OnCurve
               | r' < radius c   = Inside
               | r' > radius c   = Outside
           r' = distance p (center c)
 
-  unit _ = 2 * pi
   normal c t = scale (orientation c) $ azimuth (center c) (c @-> t)
   tangent c t = normal c t + asDeg (orientation c * 90)
-  distanceTo p c = abs (center c `distance` p - radius c)
-
 
 instance Figure Circle where
   isTrivial c = radius c < 0
@@ -105,9 +105,7 @@ instance Figure Circle where
           x2:+y2 = c+(r:+r)
 
 instance Intersections Circle Circle where
-  intersections cir1 cir2 =
-    filter (isContaining cir1) $
-    filter (isContaining cir2) $
+  intersections' cir1 cir2 =
     invt <$> intersectionC (t cir1) (t cir2)
     where
       t = rotate (-a) . translate' (negate c1)
@@ -127,10 +125,8 @@ intersectionC c1 c2 | d == 0 || b < 0 = []
     b = -(r2-r1-d)*(r2-r1+d)*(r2+r1-d)*(r2+r1+d)
     x = scale (1/(2*d)) $ a :+ sqrt b
 
-instance Intersections Circle Line where
-  intersections cir l =
-    filter (isContaining cir) $
-    filter (isContaining l) $
+instance Intersections Line Circle where
+  intersections' l cir =
     invt <$> intersectionL (t cir) (t l)
     where
       t :: Trans x => x -> x
@@ -147,12 +143,16 @@ intersectionL c l | b > r = []
     a = sqrt (r**2 - b**2)
     
   
-instance Intersections Line Circle where
-  intersections = flip intersections
+instance Intersections Ray Circle where
+  intersections' = intersections' . asLine
 
-instance Intersections Circle Polyline where
-  intersections c p = foldMap (intersections c) (segments p)
+instance Intersections Segment Circle where
+  intersections' = intersections' . asLine 
 
 instance Intersections Polyline Circle where
-  intersections = flip intersections
+  intersections' p c = foldMap (intersections c) (segments p)
+
+instance (Curve a, Intersections a Circle) =>
+         Intersections Circle a where
+  intersections' = flip intersections'
 

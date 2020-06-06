@@ -1,5 +1,6 @@
 {-# Language FlexibleInstances #-}
 {-# Language GeneralizedNewtypeDeriving #-}
+
 module Testing where
 
 import Data.Complex
@@ -65,47 +66,26 @@ instance Arbitrary Circle where
        Position p' <- shrink (Position p)
        return $ Circle c' p' w
 
-shrinkLine l = let (p1, p2) = refPoints l
-  in do Position p1' <- shrink (Position p1)
-        Position p2' <- shrink (Position p2)
-        return $ Line (bounding l) (p1', p2')
-
 ------------------------------------------------------------
 
-instance Arbitrary Line where
+instance Arbitrary Segment where
   arbitrary =
     do Position p1 <- arbitrary
        Position p2 <- arbitrary
-       constr <- elements [Unbound, Semibound, Bound]
-       return $ Line constr (p1, p2)
+       return $ Segment (p1, p2)
                  
   shrink l = let (p1, p2) = refPoints l
     in do Position p1' <- shrink (Position p1)
           Position p2' <- shrink (Position p2)
-          return $ Line (bounding l) (p1', p2')
+          return $ Segment (p1', p2')
 
-------------------------------------------------------------
+instance Arbitrary Line where
+  arbitrary = asLine <$> (arbitrary :: Gen Segment)      
+  shrink l = asLine <$> shrink (asSegment l)
 
-newtype AnySegment = AnySegment Line
-  deriving (Eq, Show, Figure, Trans, Affine, Curve)
-
-newtype AnyLine = AnyLine Line 
-  deriving (Show, Eq, Figure, Trans, Affine, Curve)
-
-newtype AnyRay = AnyRay Line 
-  deriving (Eq, Show, Figure, Trans, Affine, Curve)
-
-instance Arbitrary AnyLine where
-  arbitrary = AnyLine . Line Unbound <$> arbitrary
-  shrink (AnyLine l) = AnyLine <$> shrink l
-
-instance Arbitrary AnySegment where
-  arbitrary = AnySegment . Line Bound <$> arbitrary
-  shrink (AnySegment l) = AnySegment <$> shrink l
-
-instance Arbitrary AnyRay where
-  arbitrary = AnyRay . Line Semibound <$> arbitrary
-  shrink (AnyRay l) = AnyRay <$> shrink l
+instance Arbitrary Ray where
+  arbitrary = asRay <$> (arbitrary :: Gen Segment)      
+  shrink l = asRay <$> shrink (asSegment l)
 
 ------------------------------------------------------------
   
@@ -130,9 +110,15 @@ instance Trans a => Arbitrary (Motion a) where
 ------------------------------------------------------------
 
 newtype Nontrivial a = Nontrivial a deriving
-  (Eq, Show, Figure, Affine, Trans, Curve)
+  ( Eq
+  , Show
+  , Figure
+  , Affine
+  , Trans
+  , Manifold
+  , Curve )
 
 
 instance (Arbitrary a, Figure a) => Arbitrary (Nontrivial a) where
   arbitrary = Nontrivial <$> arbitrary `suchThat` isNontrivial
-  shrink (Nontrivial l) = Nontrivial <$> shrink l
+  shrink (Nontrivial l) = Nontrivial <$> filter isNontrivial (shrink l)

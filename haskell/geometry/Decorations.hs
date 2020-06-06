@@ -114,15 +114,19 @@ instance Affine a => Affine (Decorated a) where
 instance Trans a => Trans (Decorated a) where
   transform t = fmap (transform t)
 
-instance Curve a => Curve (Decorated a) where
-  param = param . fromDecorated
-  project = project . fromDecorated
-  tangent = tangent . fromDecorated
-  orientation = orientation . fromDecorated
+instance Manifold a => Manifold (Decorated a) where
+  paramMaybe = paramMaybe . fromDecorated
+  projectMaybe = projectMaybe . fromDecorated
   isClosed = isClosed . fromDecorated
   isContaining = isContaining . fromDecorated
+  unit = unit . fromDecorated
+
+instance Curve a => Curve (Decorated a) where
+  tangent = tangent . fromDecorated
+  normal = normal . fromDecorated
+  orientation = orientation . fromDecorated
   isEnclosing = isEnclosing . fromDecorated
-  distanceTo pt = distanceTo pt . fromDecorated
+  location = location . fromDecorated
 
 instance Figure a => Figure (Decorated a) where
   isTrivial = isTrivial . fromDecorated
@@ -130,7 +134,6 @@ instance Figure a => Figure (Decorated a) where
   box = box . fromDecorated
 
 instance IsLine l => IsLine (Decorated l) where
-  bounding = bounding . fromDecorated
   refPoints = refPoints . fromDecorated
 
 instance IsCircle a => IsCircle (Decorated a) where
@@ -151,13 +154,13 @@ instance IsAngle a => IsAngle (Decorated a) where
 
 instance {-# OVERLAPPING #-}
   Intersections a b => Intersections (Decorated a) (Decorated b) where
-  intersections d x = intersections (fromDecorated d) (fromDecorated x)
+  intersections' d x = intersections' (fromDecorated d) (fromDecorated x)
 
 instance Intersections a b => Intersections a (Decorated b) where
-  intersections x d = intersections x (fromDecorated d)
+  intersections' x d = intersections' x (fromDecorated d)
 
 instance Intersections a b => Intersections (Decorated a) b where
-  intersections = intersections . fromDecorated
+  intersections' = intersections' . fromDecorated
 
 ------------------------------------------------------------
 -- | A wrapped decoration function with monoidal properties,

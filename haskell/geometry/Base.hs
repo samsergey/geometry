@@ -32,11 +32,12 @@ module Base
   , scale, scaleX, scaleY, scaleAt', scaleXAt', scaleYAt'
   , rotate, rotateAt', reflect, reflectAt
   -- ** Curves
-  , Curve (..), PointLocation (..)
+  , Manifold (..), Curve (..), PointLocation (..)
   , (->@), (->@?), (@->), (@->?)
-  , start, paramL, projectL
+  , start, paramL, projectL, distanceTo
   -- ** Intersections of curves
   , Intersections (..)
+  , intersections
   -- ** Figures
   , Figure (..), Box, pointBox
   , figureHeight, figureWidth
@@ -55,6 +56,7 @@ import Data.Complex
 import Data.List
 import Data.List.Extra (minimumOn)
 import Control.Applicative
+import Control.Monad
 import Data.Semigroup
 import Data.Monoid
 import Data.Maybe
@@ -247,7 +249,8 @@ transformAt :: (Trans a, Affine p) => p -> (a -> a) -> a -> a
 transformAt p t = translate' xy . t . translate' (-xy)
   where xy = cmp p
 
--- | The translation of an object.
+
+  -- | The translation of an object.
 translate' :: (Trans a, Affine p) => p -> a -> a
 translate' = transform . translateT . cmp
 
@@ -406,6 +409,101 @@ instance Affine a => Affine (Maybe a) where
 
 ------------------------------------------------------------
 
+class Manifold m where
+  {-# MINIMAL paramMaybe, projectMaybe #-}
+
+  -- | Returns bounds for a parameter of a manifold.
+  -- [a, b] for finite, [a] for semibound manifolds (a is lower bound), [] for unbound manifolds
+  bounds :: m -> [Double]
+  bounds _ = [0, 1]
+  
+  -- | Returns a point on a manifold for given parameter, or Nothing
+  -- if parameter runs out of the range defined for a manifold.
+  paramMaybe :: m -> Double -> Maybe CN
+
+  -- | Returns a parameter for a point on a manifold, or nothing
+  -- if parameter could not be found.
+  projectMaybe :: Affine p => m -> p -> Maybe Double
+
+  -- | Returns a point on a manifold for a given parameter.
+  -- If parameter value is out of range [0, 1] for a finite manifolds
+  -- the closest boundary value is returned.
+  param :: m -> Double -> CN
+  param m x = fromMaybe boundary $ paramMaybe m x
+    where boundary = case bounds m of
+            [a, b] | x > b -> fromJust (paramMaybe m b)
+            (a:_)  | x < a -> fromJust (paramMaybe m a)
+            _     -> undefined
+
+  -- | Returns a parameter, corresponding to a normal point projection on a manifold.
+  -- if normal projection doesn't exist returns the parameter of the closest point.
+  project :: Affine p => m -> p -> Double
+  project c p = fromMaybe closest $ projectMaybe c p
+    where
+      closest = case bounds c of
+        [] -> undefined
+        bs -> minimumOn (distance p . param c) bs
+
+  -- | Returns `True` if point belongs to the manifold.
+  isContaining :: Affine p => m -> p -> Bool
+  isContaining c p = case param c <$> projectMaybe c p of
+                       Just p' -> cmp p' ~== cmp p
+                       Nothing -> False
+
+  -- | Is set `True` if the manifold is closed.
+  isClosed :: m -> Bool
+  isClosed _ = False
+
+
+  -- | The internal length unit of the curve,
+  --  which maps the parameter to the length of the curve.
+  unit :: m -> Double
+  unit _ = 1
+
+infix 8 @->
+-- | Operator for `param`
+(@->) ::  Manifold m => m -> Double -> CN
+(@->) = param
+
+infix 8 @->?
+-- | Operator for `paramMaybe`
+(@->?) :: Manifold m => m -> Double -> Maybe CN
+(@->?) = paramMaybe
+
+infix 8 ->@
+-- | Operator for `project` with flipped arguments:
+--
+-- prop>  p ->@ c  ==  project c p
+--  
+(->@) :: (Manifold m, Affine p) => p -> m -> Double
+(->@) = flip project
+
+infix 8 ->@?
+-- | Operator for `projectMaybe` with flipped arguments:
+--
+-- prop>  p ->@? c  ==  projectMaybe c p
+-- 
+(->@?) :: (Manifold m, Affine p) => p -> m -> Maybe Double
+(->@?) = flip projectMaybe
+
+-- | Point on the curve, parameterized by length.
+paramL :: Manifold m => m -> Double -> CN
+paramL c l = param c (l / unit c)
+
+-- | Projection on a curve, parameterized by length.
+projectL :: (Affine p, Manifold m) => m -> p -> Double
+projectL c p = project c p * unit c
+
+-- | The distance between a curve and a point.
+distanceTo :: (Manifold m, Affine p) => p -> m -> Double
+distanceTo p m = p `distance` (m @-> (p ->@ m))
+
+-- | The starting point on the curve. 
+start :: Manifold m => m -> CN
+start m = param m 0
+
+------------------------------------------------------------
+
 -- | The type representing the relation 'belongs to' between a point and a curve.
 data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 
@@ -420,53 +518,9 @@ data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 -- prop>  not isFinite c      ==>  (project c . param c) x == x
 -- prop>  c `isContaining` p  ==>  (param c . project c) p == p
 --
-class Curve c where
-  {-# MINIMAL (param | paramMaybe),
-              (project | projectMaybe),
-              (normal | tangent),
-              distanceTo,
-              (location | (isContaining, isEnclosing)) #-}
-
-  -- | Returns a point on a curve for a given parameter.
-  -- If parameter value is out of range [0, 1] for a finite curves
-  -- the closest boundary value is returned.
-  -- Use `paramMaybe` for more explicit parameterization.
-  param :: c -> Double -> CN
-  param c x = fromMaybe 0 $ paramMaybe c x
---    where boundary = if x < 0 then param c 0 else param c 1
-
-  -- | Returns a point on a curve for given parameter, or Nothing
-  -- if parameter runs out of the range defined for a curve.
-  paramMaybe :: c -> Double -> Maybe CN
-  paramMaybe c x =
-    let p = param c x
-    in if c `isContaining` p then Just p else Nothing                  
-
-  -- | Returns a parameter, corresponding to a normal point projection on a curve.
-  -- if normal projection doesn't exist returns the parameter of the closest point.
-  -- Use `projectMaybe` for more explicit projection.
-  project :: Affine p => c -> p -> Double
-  project c p = fromMaybe closest $ projectMaybe c p
-    where d0 = distance p (param c 0)
-          d1 = distance p (param c 1)
-          closest = if d0 < d1 then 0 else 1
-
-  -- | Returns a parameter for a point on a curve, or nothing
-  -- if parameter could not be found.
-  projectMaybe :: Affine p => c -> p -> Maybe Double
-  projectMaybe c p = 
-    let x = project c p
-    in if c `isContaining` param c x
-       then Just x
-       else Nothing                  
-
-  -- | The internal length unit of the curve,
-  --  which maps the parameter to the length of the curve.
-  unit :: c -> Double
-  unit _ = 1
-
-  -- | The distance between a curve and a point.
-  distanceTo :: Affine p => p -> c -> Double
+class (Figure c, Manifold c) => Curve c where
+  {-# MINIMAL (normal | tangent),
+              (location | isEnclosing) #-}
 
   -- | The tangent direction for a given parameter on the curve.
   tangent :: c -> Double -> Angular
@@ -476,76 +530,35 @@ class Curve c where
   normal :: c -> Double -> Angular
   normal f t = 90 + tangent f t
 
-  -- | Is set `True` if the curve is closed.
-  isClosed :: c -> Bool
-  isClosed _ = False
-
-  -- | Is set `True` if the curve is finite.
-  isFinite :: c -> Bool
-  isFinite _ = True
-  
   -- | Returns the location of a point with respect to the curve.
-  location :: Affine p => p -> c -> PointLocation
-  location p c | isContaining c p = OnCurve
+  location :: Affine p => c -> p -> PointLocation
+  location c p | isContaining c p = OnCurve
                | isClosed c && isEnclosing c p = Inside
                | otherwise = Outside
 
-  -- | Returns `True` if point belongs to the curve.
-  isContaining :: Affine p => c -> p -> Bool
-  isContaining c p = location p c == OnCurve
-
   -- | Returns `True` if point belongs to the area bound by closed curve.
   isEnclosing :: Affine p => c -> p -> Bool
-  isEnclosing c p = location p c == Inside
+  isEnclosing c p = isClosed c && location c p == Inside
 
   -- | Returns th orientation of a curve.
   -- Orientation affects the direction of tangent and normal vectors.
   orientation :: c -> Double
   orientation _ = 1
-
-infix 8 @->
--- | Operator for `param`
-(@->) ::  Curve c => c -> Double -> CN
-(@->) = param
-
-infix 8 @->?
--- | Operator for `paramMaybe`
-(@->?) :: Curve c => c -> Double -> Maybe CN
-(@->?) = paramMaybe
-
-infix 8 ->@
--- | Operator for `project` with flipped arguments:
---
--- prop>  p ->@ c  ==  project c p
---  
-(->@) :: (Curve c, Affine p) => p -> c -> Double
-(->@) = flip project
-
-infix 8 ->@?
--- | Operator for `projectMaybe` with flipped arguments:
---
--- prop>  p ->@? c  ==  projectMaybe c p
--- 
-(->@?) :: (Curve c, Affine p) => p -> c -> Maybe Double
-(->@?) = flip projectMaybe
-
--- | Point on the curve, parameterized by length.
-paramL :: Curve c => c -> Double -> CN
-paramL c l = param c (l / unit c)
-
--- | Projection on a curve, parameterized by length.
-projectL :: (Affine p, Curve c) => c -> p -> Double
-projectL c p = project c p * unit c
-
--- | The starting point on the curve. 
-start :: Curve a => a -> CN
-start c = param c 0
     
 ------------------------------------------------------------
 -- | Class provides `intersections` function returning a list (possible empty)
 -- of intersection points (co-dimension 1).
 class (Curve a, Curve b) => Intersections a b where
-  intersections :: a -> b -> [CN]
+  intersections' :: a -> b -> [CN]
+
+intersections :: Intersections a b => a -> b -> [CN]
+intersections a b  
+  | isTrivial a = filter (isContaining b) [refPoint a]
+  | isTrivial b = filter (isContaining a) [refPoint b]
+  | otherwise = 
+    filter (isContaining a) $
+    filter (isContaining b) $
+    intersections' a b
 
 -- | Returns `True` if tho curves have intersection points.
 isIntersecting :: Intersections a b => a -> b -> Bool

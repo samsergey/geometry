@@ -40,13 +40,6 @@ isIntersecting a b = not . null $ intersections a b
 
 ------------------------------------------------------------
 
-intersectionLL (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
-  [ (v1x*d2 - v2x*d1) :+ (v1y*d2 - v2y*d1) | d0 /= 0 ]
-  where
-    d0 = v1y*v2x - v1x*v2y
-    d1 = (v1x*y1 - v1y*x1) / d0
-    d2 = (v2x*y2 - v2y*x2) / d0
-
 intersectionCC c1 c2 | d == 0 || b < 0 = []
                      | b == 0          = [x]
                      | b > 0           = [x, conjugate x]

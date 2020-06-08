@@ -96,11 +96,11 @@ main = hspec $ do
         transformOrientation (reflectT a) == -1
 
   describe "Box" $ do
-    let l = Line Bound (1:+2, 4:+6)
+    let l = Segment (1:+2, 4:+6)
     it "0" $ box l == ((1,2),(4,6))
     it "1" $ (left.lower.corner $ l) == 1:+2
     it "2" $ (right.lower.corner $ l) == 4:+2
     it "3" $ (left.upper.corner $ l) == 1:+6
     it "4" $ (right.upper.corner $ l) == 4:+6
-    it "5" $ height l == 4
-    it "6" $ width l == 3
+    it "5" $ figureHeight l == 4
+    it "6" $ figureWidth l == 3

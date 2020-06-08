@@ -4,7 +4,7 @@
 {-# language GeneralizedNewtypeDeriving #-}
 {-# language MultiParamTypeClasses #-}
 {-# language DerivingVia #-}
-{-# language DerivingStrategies #-}
+--{-# language DerivingStrategies #-}
 {-# language StandaloneDeriving #-}
 
 module Decorations

@@ -1,7 +1,7 @@
 {-# Language UndecidableInstances #-}
 {-# Language FlexibleInstances #-}
 {-# Language MultiParamTypeClasses #-}
-
+{-# Language GeneralizedNewtypeDeriving #-}
 module Base
   ( -- * Types
     CN
@@ -118,30 +118,31 @@ a ~>= b = a ~== b || a > b
 -- | The representation of a directed value isomorphic either to an angle
 -- or to a complex number or coordinates.
 newtype Angular = Angular Double
-
--- | Constructs a directed value from an angle given in radians.
-asRad :: Double -> Angular
-asRad = Angular . (`mod'` (2*pi))
-
--- | Returns a representation of a directed value as an angle in radians.
-rad :: Angular -> Double
-rad (Angular a) = a  `mod'` (2*pi)
+  deriving (Num, Fractional, Floating, Real)
 
 -- | Constructs a directed value from an angle given in degrees.
 asDeg :: Double -> Angular
-asDeg a = asRad $ a / 180*pi
+asDeg = Angular . (`mod'` 360)
 
 -- | Returns a representation of a directed value as an angle in degrees.
 deg :: Angular -> Double
-deg (Angular a) = (a * 180 / pi) `mod'` 360
+deg (Angular a) = a `mod'` 360
+
+-- | Constructs a directed value from an angle given in radians.
+asRad :: Double -> Angular
+asRad r = asDeg $ (180 * r / pi)
+
+-- | Returns a representation of a directed value as an angle in radians.
+rad :: Angular -> Double
+rad (Angular a) = (a / 180 * pi) `mod'` (2*pi)
 
 -- | Constructs a directed value from a number of turns.
 asTurns :: Double -> Angular
-asTurns a = asRad $ a*2*pi
+asTurns a = asDeg $ a*360
 
 -- | Returns a representation of a directed value as a number of turns.
 turns :: Angular -> Double
-turns (Angular a) = (a / (2*pi))  `mod'` 1
+turns (Angular a) = (a / 360)  `mod'` 1
 
 instance Show Angular where
   show a = show (round (deg a)) <> "°"
@@ -151,41 +152,6 @@ instance AlmostEq Angular where  a ~== b = rad a ~== rad b
 instance Eq Angular  where  a == b = a ~== b
 
 instance Ord Angular where  a <= b = a == b || rad a < rad b
-
-instance Num Angular where
-  fromInteger = asDeg . fromIntegral
-  (+) = withAngular2 (+)
-  (*) = withAngular2 (*)
-  negate = withAngular negate
-  abs = withAngular abs
-  signum = withAngular signum
-
-instance Fractional Angular where
-  fromRational = Angular . fromRational
-  recip (Angular r) = Angular (1 / r) 
-
-instance Floating Angular where
-  pi = Angular pi
-  exp (Angular a) = Angular $ exp a
-  log (Angular a) = Angular $ log a
-  sin (Angular a) = Angular $ sin a
-  cos (Angular a) = Angular $ cos a
-  asin (Angular a) = Angular $ asin a
-  acos (Angular a) = Angular $ acos a
-  atan (Angular a) = Angular $ atan a
-  sinh (Angular a) = Angular $ sinh a
-  cosh (Angular a) = Angular $ cosh a
-  asinh (Angular a) = Angular $ asinh a
-  acosh (Angular a) = Angular $ acosh a
-  atanh (Angular a) = Angular $ atanh a
-
-instance Real Angular where
-  toRational (Angular a) = toRational a
-
-
-withAngular op a = asRad $ op (rad a)
-
-withAngular2 op a b = asRad (rad a `op` rad b)
 
 ------------------------------------------------------------
 
@@ -398,7 +364,7 @@ instance Affine XY where
 
 instance Affine Angular where
   cmp a = mkPolar 1 (rad a)
-  asCmp = Angular . phase
+  asCmp = asRad . phase
 
 instance Affine a => Affine (Maybe a) where
   cmp = maybe 0 cmp
@@ -407,7 +373,7 @@ instance Affine a => Affine (Maybe a) where
 ------------------------------------------------------------
 
 class Manifold m where
-  {-# MINIMAL paramMaybe, projectMaybe #-}
+  {-# MINIMAL param, project, (isContaining | (paramMaybe, projectMaybe)) #-}
 
   -- | Returns bounds for a parameter of a manifold.
   -- [a, b] for finite, [a] for semibound manifolds (a is lower bound), [] for unbound manifolds
@@ -417,29 +383,27 @@ class Manifold m where
   -- | Returns a point on a manifold for given parameter, or Nothing
   -- if parameter runs out of the range defined for a manifold.
   paramMaybe :: m -> Double -> Maybe CN
+  paramMaybe m x = if m `isContaining` p then Just p else Nothing
+    where p = param m x
 
   -- | Returns a parameter for a point on a manifold, or nothing
   -- if parameter could not be found.
   projectMaybe :: Affine p => m -> p -> Maybe Double
+  projectMaybe m p = if inBounds x then Just x else Nothing
+    where x = project m p
+          inBounds x = case bounds m of
+            [] -> True
+            [a] -> x >= a
+            [a, b] -> x >= a && x <= b
 
   -- | Returns a point on a manifold for a given parameter.
   -- If parameter value is out of range [0, 1] for a finite manifolds
   -- the closest boundary value is returned.
   param :: m -> Double -> CN
-  param m x = fromMaybe boundary $ paramMaybe m x
-    where boundary = case bounds m of
-            [a, b] | x > b -> fromJust (paramMaybe m b)
-            (a:_)  | x < a -> fromJust (paramMaybe m a)
-            _     -> undefined
 
   -- | Returns a parameter, corresponding to a normal point projection on a manifold.
   -- if normal projection doesn't exist returns the parameter of the closest point.
   project :: Affine p => m -> p -> Double
-  project c p = fromMaybe closest $ projectMaybe c p
-    where
-      closest = case bounds c of
-        [] -> undefined
-        bs -> minimumOn (distance p . param c) bs
 
   -- | Returns `True` if point belongs to the manifold.
   isContaining :: Affine p => m -> p -> Bool
@@ -485,11 +449,11 @@ infix 8 ->@?
 
 -- | Point on the curve, parameterized by length.
 paramL :: Manifold m => m -> Double -> CN
-paramL c l = param c (l / unit c)
+paramL m l = param m (l / unit m)
 
 -- | Projection on a curve, parameterized by length.
 projectL :: (Affine p, Manifold m) => m -> p -> Double
-projectL c p = project c p * unit c
+projectL c p = unit c * project c p
 
 -- | The distance between a curve and a point.
 distanceTo :: (Manifold m, Affine p) => p -> m -> Double

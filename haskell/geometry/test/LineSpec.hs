@@ -112,6 +112,14 @@ main = hspec $
       it "1" $ angle (line' @CN @CN 0 (1:+1)) == 45
       it "2" $ normal (line' @CN @CN 0 (1:+2)) 0 == asCmp ((-2):+1)
 
+    describe "unit" $ do
+      it "1" $ unit (line' @CN @CN 0 (3:+4)) == 5
+      it "2" $ unit (asCmp 1 :: Ray) == 1
+      it "3" $ unit (asCmp 1 :: Segment) == 1
+      it "4" $ property $ \l -> unit l == norm (l :: Line)
+      it "5" $ property $ \l -> unit l == norm (l :: Ray)
+      it "6" $ property $ \l -> unit l == norm (l :: Segment)
+
     describe "at" $
       it "1" $ aLine # at ((1,2) :: XY) == line (1,2) (2,2)
 
@@ -122,6 +130,11 @@ main = hspec $
         property $ \a p l ->
                      let _ = (a :: Angular, p :: Point, l :: Line)
                      in l # at' p # along' a == l # along' a # at' p
+
+    describe "extendToLength" $ do
+      it "1" $ property $ \(Nontrivial s) (Positive d) ->
+        unit (s # extendToLength d) ~== d
+
 
     describe "distanceTo" $ do
       it "1" $ origin `distanceTo` aLine == 0
@@ -156,12 +169,29 @@ main = hspec $
       it "4.6" $ s `intersections` (s # rotate 90 # translate (1.01,1.01) ) # null
       it "4.7" $ s `intersections` (s # rotate 90 # translate (0.5,0.5) ) ~== [0.5:+0.5]
 
-      it "5" $
-        property $ \(Nontrivial l) (Nontrivial r) (Nontrivial s) ->
-          let types = (l :: Line, r :: Ray, s :: Segment)
-          in l `intersections` r == r `intersections` l &&
-             l `intersections` s == s `intersections` l &&
-             s `intersections` r == r `intersections` s
+      it "5.1" $
+        property $ \(Nontrivial l) (Nontrivial r) ->
+          let types = (l :: Line, r :: Ray)
+          in if l `isCollinear` r
+             then null (l `intersections` r) ||
+                  (r `intersections` l == [start r] && l `intersections` r == [start l])
+             else l `intersections` r == r `intersections` l
+
+      it "5.2" $
+        property $ \(Nontrivial l) (Nontrivial s) ->
+          let types = (l :: Line, s :: Segment)
+          in if l `isCollinear` s
+             then null (l `intersections` s) ||
+                  (s `intersections` l == [start s] && l `intersections` r == [start s])
+             else l `intersections` s == s `intersections` l
+
+      it "5.3" $
+          property $ \(Nontrivial s) (Nontrivial r) ->
+          let types = (s :: Segment, r :: Ray)
+          in if s `isCollinear` r
+             then null (s `intersections` r) ||
+                  (r `intersections` s == [start r] && s `intersections` r == [start s])
+             else s `intersections` r == r `intersections` s
 
     describe "clipping" $ do
       it "1" $ (aLine # rotate 45) `clipBy` aSquare == [Segment (0, 1:+1)]

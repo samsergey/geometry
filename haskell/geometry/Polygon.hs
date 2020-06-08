@@ -24,6 +24,7 @@ import Data.Complex
 import Data.Foldable
 import Data.List.Extra (minimumOn)
 import Data.Monoid
+import Data.Maybe
 import Data.Fixed
 
 import Base
@@ -113,7 +114,7 @@ instance Manifold Polyline where
       ss = segments p
       ds = scanl (+) 0 $ unit <$> ss
       (x0, s) = minimumOn (\(_,s) -> distanceTo pt s) $ zip ds ss
-      x = (x0 + projectL s pt) / unit p
+      x = (x0 + (project s pt * unit s)) / unit p
 
   isClosed _ = False
   isContaining p x = any (`isContaining` x) (segments p)
@@ -174,19 +175,24 @@ instance Manifold Polygon where
   
 instance Curve Polygon where
   orientation _ = 1
-  location p pt = res
-    where res | any (`isContaining` pt) (segments p) = OnCurve
-              | isClosed p && windingNumber p pt ~== 0 = Inside
-              | otherwise = Outside
-          r = mkRay (cmp pt, cmp pt + 1)
-
+  location = loc
   tangent = tangent . asPolyline
 
-windingNumber p x = (sum as / (2*pi)) `mod'` 1
-  where as = [ acos (dot v1 v2 / (norm v1 * norm v2))
-             | Segment (p1, p2) <- segments p
-             , let v1 = p1 - cmp x
-                   v2 = p2 - cmp x ]
+loc p pt = case foldMap go (segments p') of
+             (Any True, _) -> OnCurve
+             (_, Sum n) | odd n -> Inside
+             _ -> Outside
+  where
+    p' = p # translate' (negate (cmp pt))
+    go s | y0 * y1 == 0       = (Any True, mempty)
+         | y0 == y1           = mempty
+         | x == 0             = (Any True, mempty)
+         | x > 0 && y0*y1 < 0 = (mempty, Sum 1)
+         | otherwise          = mempty
+      where
+        (x0:+y0, x1:+y1) = refPoints s 
+        x = (x0*y1-x1*y0)/(y1-y0)
+        
 
 ------------------------------------------------------------
 

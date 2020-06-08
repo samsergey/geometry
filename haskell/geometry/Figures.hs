@@ -146,19 +146,19 @@ aRay :: Ray
 aRay = asCmp 1
 
 -- | Returns a line, ray or a segment with given unit, in case of a segment -- with given length.
-extendToLength :: Double -> Line -> Line
-extendToLength l s = s # through' (paramL s l) 
+extendToLength :: Double -> Segment -> Segment
+extendToLength l s = s # through' (paramL (asLine s) l)
 
 -- | Returns a segment extended to a closest intersection point with a given curve.
 extendTo :: (Curve c, Intersections Ray c)
-         => c -> Line -> Maybe Segment
+         => c -> Segment -> Maybe Segment
 extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
   where extend p = aSegment # at' (start s) # through' p
 
 -- | Returns a segment normal to a given curve.
 heightTo :: (Curve c, Intersections Ray c)
-         => c -> Line -> Maybe Segment
-heightTo c l = normalTo c l >>= extendTo c
+         => c -> Segment -> Maybe Segment
+heightTo c s = normalTo c s >>= extendTo c
 
 -- | Returns a list of segments as a result of clipping the line
 -- by a closed curve.

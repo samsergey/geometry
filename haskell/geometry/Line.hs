@@ -2,7 +2,7 @@
 module Line
   (-- * Types
     IsLine (..)
-  , Line (..), trivialLine, mkLine
+  , Line (..), trivialLine, mkLine, intersectionLL
   , Ray (..), mkRay
   , Segment (..), mkSegment
   ) where
@@ -14,10 +14,12 @@ import Control.Monad
 
 import Base
 
+------------------------------------------------------------
+
 bimap f (a, b) = (f a, f b)
 
--- | Class representing a linear object.
-class (Figure l, Affine l, Curve l, Trans l) => IsLine l where
+-- | Class representing a linear object: line, ray or segment.
+class (Affine l, Curve l, Trans l) => IsLine l where
   refPoints :: l -> (CN, CN)
 
   asLine :: l -> Line
@@ -79,20 +81,16 @@ instance Manifold Line where
   bounds l | isTrivial l = [0, 0]
            | otherwise = []
    
-  paramMaybe l t = let (p1, p2) = refPoints l
-                   in Just $ scaleAt' p1 t p2
+  param l t = let (p1, p2) = refPoints l
+              in scaleAt' p1 t p2
 
-  projectMaybe l p
-    | isTrivial l = Nothing
-    | otherwise =
-        let v = cmp p - cmp (refPoint l)
-        in Just $ (v `dot` angle l) / unit l
+  project l p = let v = cmp p - cmp (refPoint l)
+                in (v `dot` angle l) / unit l
 
   isContaining l p = cmp p ~== refPoint l
                      || l `isCollinear` azimuth (refPoint l) p
 
-  unit l = let (p1, p2) = refPoints l
-           in distance p1 p2
+  unit = norm
 
 instance Curve Line where
 
@@ -101,6 +99,13 @@ instance Curve Line where
   orientation _ = 1
 
   tangent l _ = angle l
+
+intersectionLL (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
+  [ (v1x*d2 - v2x*d1) :+ (v1y*d2 - v2y*d1) | d0 /= 0 ]
+  where
+    d0 = v1y*v2x - v1x*v2y
+    d1 = (v1x*y1 - v1y*x1) / d0
+    d2 = (v2x*y2 - v2y*x2) / d0
 
 ------------------------------------------------------------
 
@@ -137,6 +142,7 @@ instance Manifold Ray where
   isContaining r p = asLine r `isContaining` p
                      && isJust (projectMaybe r p)
 
+  unit = norm
 ------------------------------------------------------------
 
 newtype Segment = Segment (CN, CN)
@@ -172,4 +178,4 @@ instance Manifold Segment where
   isContaining s p = asLine s `isContaining` p
                      && isJust (projectMaybe s p)
        
-
+  unit = norm

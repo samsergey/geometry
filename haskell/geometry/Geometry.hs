@@ -17,6 +17,8 @@ module Geometry
   , module Angle
    -- ** Style settings.
   , module Decorations
+   -- ** Curve intersections.
+  , module Intersections
 )
 where
 
@@ -30,6 +32,7 @@ import Line
 import Polygon
 import Angle
 import Decorations
+import Intersections
 import Figures
 import SVG
 

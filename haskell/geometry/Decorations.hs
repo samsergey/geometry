@@ -151,17 +151,6 @@ instance IsAngle a => IsAngle (Decorated a) where
   angleStart = angleStart . fromDecorated
   angleEnd = angleEnd . fromDecorated
 
-
-instance {-# OVERLAPPING #-}
-  Intersections a b => Intersections (Decorated a) (Decorated b) where
-  intersections' d x = intersections' (fromDecorated d) (fromDecorated x)
-
-instance Intersections a b => Intersections a (Decorated b) where
-  intersections' x d = intersections' x (fromDecorated d)
-
-instance Intersections a b => Intersections (Decorated a) b where
-  intersections' = intersections' . fromDecorated
-
 ------------------------------------------------------------
 -- | A wrapped decoration function with monoidal properties,
 -- corresponding to decoration options.

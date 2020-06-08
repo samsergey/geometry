@@ -35,9 +35,6 @@ module Base
   , Manifold (..), Curve (..), PointLocation (..)
   , (->@), (->@?), (@->), (@->?)
   , start, paramL, projectL, distanceTo
-  -- ** Intersections of curves
-  , Intersections (..)
-  , intersections
   -- ** Figures
   , Figure (..), Box, pointBox
   , figureHeight, figureWidth
@@ -250,7 +247,7 @@ transformAt p t = translate' xy . t . translate' (-xy)
   where xy = cmp p
 
 
-  -- | The translation of an object.
+-- | The translation of an object.
 translate' :: (Trans a, Affine p) => p -> a -> a
 translate' = transform . translateT . cmp
 
@@ -544,25 +541,7 @@ class (Figure c, Manifold c) => Curve c where
   -- Orientation affects the direction of tangent and normal vectors.
   orientation :: c -> Double
   orientation _ = 1
-    
-------------------------------------------------------------
--- | Class provides `intersections` function returning a list (possible empty)
--- of intersection points (co-dimension 1).
-class (Curve a, Curve b) => Intersections a b where
-  intersections' :: a -> b -> [CN]
 
-intersections :: Intersections a b => a -> b -> [CN]
-intersections a b  
-  | isTrivial a = filter (isContaining b) [refPoint a]
-  | isTrivial b = filter (isContaining a) [refPoint b]
-  | otherwise = 
-    filter (isContaining a) $
-    filter (isContaining b) $
-    intersections' a b
-
--- | Returns `True` if tho curves have intersection points.
-isIntersecting :: Intersections a b => a -> b -> Bool
-isIntersecting a b = not . null $ intersections a b
 
 ------------------------------------------------------------
 

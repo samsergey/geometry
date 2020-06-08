@@ -139,23 +139,6 @@ instance Figure Polyline where
   box p = foldMap (box . mkPoint) (vertices p)
 
 
-instance Intersections Line Polyline where
-  intersections' l p = foldMap (intersections l) (segments p)
-
-instance Intersections Ray Polyline where
-  intersections' l p = foldMap (intersections l) (segments p)
-
-instance Intersections Segment Polyline where
-  intersections' l p = foldMap (intersections l) (segments p)
-
-instance {-# OVERLAPPING #-}
-  Intersections Polyline Polyline where
-  intersections' p1 p2 = foldMap (intersections p1) (segments p2)
-
-instance (Curve a, Intersections a Polyline) =>
-         Intersections Polyline a where
-  intersections' = flip intersections'
-
 ------------------------------------------------------------
 
 newtype Polygon = Polygon [CN]
@@ -173,7 +156,7 @@ mkPolygon pts = Polygon $ cmp <$> pts
 
 instance IsPolyline Polygon where
   vertices (Polygon vs) = vs
-  asPolyline (Polygon vs) = Polyline vs
+  asPolyline (Polygon vs) = Polyline $ take (length vs + 1) (cycle vs)
 
 instance Show Polygon where
   show p = concat ["<Polygon ", n, ">"]
@@ -193,19 +176,17 @@ instance Curve Polygon where
   orientation _ = 1
   location p pt = res
     where res | any (`isContaining` pt) (segments p) = OnCurve
-              | isClosed p && odd (length (intersections p r)) = Inside
+              | isClosed p && windingNumber p pt ~== 0 = Inside
               | otherwise = Outside
           r = mkRay (cmp pt, cmp pt + 1)
 
   tangent = tangent . asPolyline
 
-
-instance (Curve a, Intersections a Polyline) => Intersections a Polygon where
-  intersections' x t = intersections' x (asPolyline t)
-
-instance (Curve b, Intersections Polyline b) => Intersections Polygon b where
-  intersections' t = intersections' (asPolyline t)
-
+windingNumber p x = (sum as / (2*pi)) `mod'` 1
+  where as = [ acos (dot v1 v2 / (norm v1 * norm v2))
+             | Segment (p1, p2) <- segments p
+             , let v1 = p1 - cmp x
+                   v2 = p2 - cmp x ]
 
 ------------------------------------------------------------
 
@@ -229,13 +210,8 @@ instance Show Triangle where
 
 instance Affine Triangle where
   cmp = cmp . asPolyline
-  asCmp x = Triangle [0, x, rotate 60 x]
+  asCmp = Triangle . scanl (+) 0 . take 2 . iterate (rotate 120)
 
-instance (Curve a, Intersections a Polyline) => Intersections a Triangle where
-  intersections' x t = intersections' x (asPolyline t)
-
-instance (Curve b, Intersections Polyline b) => Intersections Triangle b where
-  intersections' t = intersections' (asPolyline t)
 
 ------------------------------------------------------------
 
@@ -259,13 +235,8 @@ instance Show Rectangle where
 
 instance Affine Rectangle where
   cmp = cmp . asPolyline
-  asCmp (x:+y) = Rectangle [0, x:+0, x:+y, 0:+y]
+  asCmp = Rectangle . scanl (+) 0 . take 3 . iterate (rotate 90)
 
-instance (Curve a, Intersections a Polyline) => Intersections a Rectangle where
-  intersections' x t = intersections' x (asPolyline t)
-
-instance (Curve b, Intersections Polyline b) => Intersections Rectangle b where
-  intersections' t = intersections' (asPolyline t)
 
 boxRectangle f = mkRectangle [ p4, p3, p2, p1 ]
   where ((p4,p3),(p1,p2)) = corner f

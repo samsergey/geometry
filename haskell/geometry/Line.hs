@@ -1,17 +1,10 @@
-{-# Language MultiParamTypeClasses #-}
-{-# Language FlexibleContexts #-}
-{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE UndecidableInstances #-}
 module Line
   (-- * Types
     IsLine (..)
   , Line (..), trivialLine, mkLine
   , Ray (..), mkRay
   , Segment (..), mkSegment
-  -- * Functions
-  ,  clipBy
   ) where
 
 import Data.Complex
@@ -95,7 +88,8 @@ instance Manifold Line where
         let v = cmp p - cmp (refPoint l)
         in Just $ (v `dot` angle l) / unit l
 
-  isContaining l p = l `isCollinear` azimuth (refPoint l) p
+  isContaining l p = cmp p ~== refPoint l
+                     || l `isCollinear` azimuth (refPoint l) p
 
   unit l = let (p1, p2) = refPoints l
            in distance p1 p2
@@ -108,21 +102,6 @@ instance Curve Line where
 
   tangent l _ = angle l
 
-instance {-# OVERLAPPING #-} Intersections Line Line where
-  intersections' l1 l2 =
-    intersectionV (refPoint l1) (cmp l1) (refPoint l2) (cmp l2)
- 
-instance (Figure a, Curve a, Intersections Line a) => Intersections a Line where
-  intersections' = flip intersections'
-
-intersectionV (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
-  [(v1x*d2 - v2x*d1) :+ (v1y*d2 - v2y*d1) | d0 /= 0]
-  where
-    d0 = v1y*v2x - v1x*v2y
-    d1 = (v1x*y1 - v1y*x1) / d0
-    d2 = (v2x*y2 - v2y*x2) / d0
-
-
 ------------------------------------------------------------
 
 newtype Ray = Ray (CN, CN)
@@ -131,9 +110,6 @@ newtype Ray = Ray (CN, CN)
            , Trans
            , Curve
            , Figure
-           , Intersections Line
-           , Intersections Ray
-           , Intersections Segment
            ) via Line
 
 -- | The basic ray constructor.
@@ -148,7 +124,9 @@ instance Show Ray where
           a = angle l
 
 instance Manifold Ray where
-  bounds _ = [0]
+  bounds r | isTrivial r = [0,0]
+           | otherwise = [0]
+
   paramMaybe r x = guard (0 ~<= x) >> paramMaybe (asLine r) x
 
   projectMaybe r p =
@@ -167,9 +145,6 @@ newtype Segment = Segment (CN, CN)
            , Trans
            , Curve
            , Figure
-           , Intersections Line
-           , Intersections Ray
-           , Intersections Segment
            ) via Line
 
 -- | The basic segment constructor.
@@ -184,6 +159,9 @@ instance Show Segment where
           p2 = coord (l @-> 1)
 
 instance Manifold Segment where
+  bounds s | isTrivial s = [0, 0]
+           | otherwise = [0, 1]
+
   paramMaybe s x = guard (0 ~<= x && x ~<= 1) >> paramMaybe (asLine s) x
 
   projectMaybe s p =
@@ -193,14 +171,5 @@ instance Manifold Segment where
 
   isContaining s p = asLine s `isContaining` p
                      && isJust (projectMaybe s p)
-
        
--- | Returns a list of segments as a result of clipping the line
--- by a closed curve.
-clipBy :: (IsLine l, Intersections l c, Figure c, Curve c)
-       => l -> c -> [Segment]
-clipBy l c = filter internal $ Segment <$> zip ints (tail ints) 
-  where
-    ints = sortOn (project l) $ intersections l c <> ends
-    internal s = c `isEnclosing` (s @-> 0.5)
-    ends = (l @->) <$> bounds l
+

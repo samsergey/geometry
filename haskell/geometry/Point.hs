@@ -1,3 +1,4 @@
+{-# language DerivingVia #-}
 module Point
   (-- * Types
     Point (..), Label (..)
@@ -40,11 +41,11 @@ instance Figure Point where
   refPoint = cmp
   box = pointBox
           
-
 ------------------------------------------------------------
 
 -- | The type representing a label.
 newtype Label = Label CN
+  deriving (Eq, Trans, Affine, Figure) via Point
 
 -- | The general label constructor (the label test is set by `label` decorator).
 mkLabel :: Affine a => a -> Label
@@ -55,19 +56,4 @@ instance Show Label where
     where sx = show $ getX p
           sy = show $ getY p
 
-instance Eq Label where
-  p1 == p2 = cmp p1 ~== cmp p2
-
-instance Trans Label where
-  transform t (Label p) = Label $ transformCN t p 
-
-instance Affine Label where
-  cmp (Label p) = p
-  asCmp = Label
-
-instance Figure Label where
-  isTrivial _ = False
-  isSimilar _ _ = True
-  refPoint = cmp
-  box = pointBox
 

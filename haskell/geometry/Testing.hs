@@ -12,6 +12,9 @@ import Data.Tuple.Extra (second)
 
 import Geometry
 
+infix 0 <==>
+a <==> b = (a ==> b) .&&. (b ==> a)
+
 ------------------------------------------------------------
 
 newtype DInt = DInt Double deriving Show
@@ -29,18 +32,19 @@ instance Arbitrary Parameter where
 ------------------------------------------------------------
 
 newtype Position a = Position {getPosition :: a}
-  deriving (Show, Affine, Trans)
+  deriving (Show, Affine, Trans, Eq)
 
 
-instance (Trans a, Affine a, Arbitrary a) =>
+instance (Eq a, Trans a, Affine a, Arbitrary a) =>
          Arbitrary (Position a) where
   arbitrary = Position . roundUp 1 <$> arbitrary 
-  shrink = shrinkPos 1
+  shrink = shrinkPos 0.5
 
 
-shrinkPos :: Affine a => Double -> a -> [a]
+shrinkPos :: (Eq a, Affine a) => Double -> a -> [a]
 shrinkPos d x = res
-  where res = map (roundUp d) $
+  where res = filter (\y -> not (y == x)) $
+              map (roundUp d) $
               takeWhile (\p -> distance x p >= d/2) $
               map (\s -> asCmp $ (1 - s) * cmp x) $
               iterate (/2) 1
@@ -122,3 +126,4 @@ newtype Nontrivial a = Nontrivial a deriving
 instance (Arbitrary a, Figure a) => Arbitrary (Nontrivial a) where
   arbitrary = Nontrivial <$> arbitrary `suchThat` isNontrivial
   shrink (Nontrivial l) = Nontrivial <$> filter isNontrivial (shrink l)
+

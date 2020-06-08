@@ -1,5 +1,7 @@
 {-# language TypeApplications #-}
 {-# language FlexibleContexts #-}
+{-# language DerivingVia #-}
+{-# language StandaloneDeriving #-}
 
 module Figures (
   -- * Constructors for geometric objects
@@ -11,10 +13,10 @@ module Figures (
   -- ** Line constructors
   , aLine, aRay, aSegment, oX, oY
   , line, line', ray, ray', segment, segment'
-  , extendToLength, extendTo, normalSegment, heightTo
+  , extendToLength, extendTo, normalSegment, heightTo, clipBy
   -- ** Angle constructors
   , anAngle
-  , angleBetween, angleWithin
+  , angleBetween, angleWithin, innerAngle
   , supplementary, vertical, reflex
   , bisectrisse
   -- ** Polygon constructors
@@ -42,6 +44,7 @@ import Circle
 import Line
 import Polygon
 import Angle
+import Intersections
 import Decorations
  
 ------------------------------------------------------------
@@ -156,6 +159,16 @@ extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
 heightTo :: (Curve c, Intersections Ray c)
          => c -> Line -> Maybe Segment
 heightTo c l = normalTo c l >>= extendTo c
+
+-- | Returns a list of segments as a result of clipping the line
+-- by a closed curve.
+clipBy :: (IsLine l, Intersections l c, Figure c, Curve c)
+       => l -> c -> [Segment]
+clipBy l c = filter internal $ Segment <$> zip ints (tail ints) 
+  where
+    ints = sortOn (project l) $ intersections l c <> ends
+    internal s = c `isEnclosing` (s @-> 0.5)
+    ends = (l @->) <$> bounds l
   
 ------------------------------------------------------------
 
@@ -176,6 +189,11 @@ angleWithin p1 p2 p3 = angleBetween (ray' p2 p1) (ray' p2 p3)
 -- | 
 supplementary :: Angle -> Angle
 supplementary (Angle p s e) = Angle p e (s + 180)
+
+-- | 
+innerAngle :: Angle -> Angle
+innerAngle an | angleValue an > 180 = reflex an
+              | otherwise = an
 
 -- | 
 vertical :: Angle -> Angle
@@ -373,11 +391,8 @@ instance Decor Line where
     , Fill "none"
     , Thickness "2" ]
 
-instance Decor Ray where
-  defaultOptions = defaultOptions . asLine
-
-instance Decor Segment where
-  defaultOptions = defaultOptions . asLine
+deriving via Line instance Decor Ray
+deriving via Line instance Decor Segment
 
 instance Decor Polyline where
   defaultOptions _ = mkOptions
@@ -385,14 +400,9 @@ instance Decor Polyline where
     , Fill "none"
     , Thickness "2" ]
 
-instance Decor Polygon where
-  defaultOptions = defaultOptions . asPolyline
-
-instance Decor Triangle where
-  defaultOptions = defaultOptions . asPolyline
-
-instance Decor Rectangle where
-  defaultOptions = defaultOptions . asPolyline
+deriving via Polyline instance Decor Polygon
+deriving via Polyline instance Decor Triangle
+deriving via Polyline instance Decor Rectangle
 
 instance Decor Angle where
   defaultOptions an = mkOptions

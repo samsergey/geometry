@@ -3,6 +3,8 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# language DerivingVia #-}
+{-# language StandaloneDeriving #-}
 
 -- | This module defines representation of all figures as SVG elements. as well as default style settings.
 module SVG ( -- * Classes
@@ -172,13 +174,8 @@ instance SVGable Polygon where
       attr = attributes p <>
              const [ Points_ <<- foldMap fmtSVG (vertices p) ]
 
-------------------------------------------------------------
-
-instance SVGable Triangle where
-  toSVG = toSVG . Polygon . vertices
-
-instance SVGable Rectangle where
-  toSVG = toSVG . Polygon . vertices
+deriving via Polygon instance SVGable Triangle
+deriving via Polygon instance SVGable Rectangle
 
 ------------------------------------------------------------
 

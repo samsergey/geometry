@@ -3,6 +3,9 @@
 {-# language OverloadedStrings #-}
 {-# language GeneralizedNewtypeDeriving #-}
 {-# language MultiParamTypeClasses #-}
+{-# language DerivingVia #-}
+{-# language DerivingStrategies #-}
+{-# language StandaloneDeriving #-}
 
 module Decorations
   ( -- * Classes
@@ -28,6 +31,7 @@ import Data.Complex
 import Data.Maybe
 import Data.String( IsString(..) )
 import Control.Monad
+import Data.Functor.Identity
 
 import Base
 import Point
@@ -78,7 +82,7 @@ class Decor a where
 -- | The transparent decoration wrapper for geometric objects.
 -- Inherits all properties of embedded object.
 newtype Decorated a = Decorated (Options, a)
-  deriving (Functor)
+  deriving Functor
 
 -- | The selector for the embedded object.
 fromDecorated (Decorated (_, x)) = x

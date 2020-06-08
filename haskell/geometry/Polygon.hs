@@ -2,7 +2,6 @@
 {-# language FlexibleInstances #-}
 {-# language FlexibleContexts #-}
 {-# language UndecidableInstances #-}
-{-# language GeneralizedNewtypeDeriving #-}
 {-# language DerivingVia #-}
 
 module Polygon
@@ -105,11 +104,11 @@ instance Trans Polyline where
   transform t (Polyline vs) = Polyline $ transform t <$> vs
 
 instance Manifold Polyline where
-  paramMaybe p t = interpolation p $ t * unit p
+  param p t | t < 0 = param (asLine (side p 0)) t
+            | t > 1 = param (asLine (side p (verticesNumber p - 1))) t
+            | otherwise = fromJust $  interpolation p (t * unit p) 
 
-  projectMaybe p pt = if (0 <= x && x <= 1)
-                      then Just x
-                      else Nothing
+  project p pt = (x0 + (project s pt * unit s)) / unit p
     where
       ss = segments p
       ds = scanl (+) 0 $ unit <$> ss
@@ -167,32 +166,29 @@ instance Show Polygon where
               else "-" <> show (length vs) <> "-"
 
 instance Manifold Polygon where
-  paramMaybe p t = interpolation p $ (t `mod'` 1) * unit p
-  projectMaybe = projectMaybe . asPolyline
+  param p t = fromJust $ interpolation p $ (t `mod'` 1) * unit p
   isClosed _ = True
-  isContaining p x = any (`isContaining` x) (segments p)
-  unit p = sum $ unit <$> segments p
+  project = project . asPolyline
+  isContaining = isContaining . asPolyline
+  unit = unit . asPolyline
   
 instance Curve Polygon where
   orientation _ = 1
-  location = loc
   tangent = tangent . asPolyline
-
-loc p pt = case foldMap go (segments p') of
-             (Any True, _) -> OnCurve
-             (_, Sum n) | odd n -> Inside
-             _ -> Outside
-  where
-    p' = p # translate' (negate (cmp pt))
-    go s | y0 * y1 == 0       = (Any True, mempty)
-         | y0 == y1           = mempty
-         | x == 0             = (Any True, mempty)
-         | x > 0 && y0*y1 < 0 = (mempty, Sum 1)
-         | otherwise          = mempty
-      where
-        (x0:+y0, x1:+y1) = refPoints s 
-        x = (x0*y1-x1*y0)/(y1-y0)
-        
+  location p pt = case foldMap go (segments p') of
+                    (Any True, _) -> OnCurve
+                    (_, Sum n) | odd n -> Inside
+                    _ -> Outside
+    where
+      p' = p # translate' (negate (cmp pt))
+      go s | y0 * y1 == 0       = (Any True, mempty)
+           | y0 == y1           = mempty
+           | x == 0             = (Any True, mempty)
+           | x > 0 && y0*y1 < 0 = (mempty, Sum 1)
+           | otherwise          = mempty
+        where
+          (x0:+y0, x1:+y1) = refPoints s 
+          x = (x0*y1-x1*y0)/(y1-y0)       
 
 ------------------------------------------------------------
 

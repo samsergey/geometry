@@ -4,7 +4,7 @@ module Line
     IsLine (..)
   , Line (..), trivialLine, mkLine, intersectionLL
   , Ray (..), mkRay
-  , Segment (..), mkSegment
+  , Segment (..), mkSegment, end
   ) where
 
 import Data.Complex
@@ -38,6 +38,7 @@ class (Affine l, Curve l, Trans l) => IsLine l where
 -- The distance between refference points `p1` and `p2` sets the `unit` and internal scale,
 -- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
 newtype Line = Line (CN, CN)
+  deriving Show
 
 instance IsLine Line where
   refPoints (Line r) = r
@@ -50,11 +51,6 @@ mkLine ps = Line $ bimap cmp ps
 
 instance Eq Line where
   l1 == l2 = refPoints l1 ~== refPoints l2
-
-instance Show Line where
-  show l = unwords [ "<Line", show p, show a <> ">" ]
-    where p = coord (l @-> 0)
-          a = angle l
 
 instance Figure Line where
   isTrivial = isZero
@@ -109,7 +105,12 @@ intersectionLL (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
 
 ------------------------------------------------------------
 
+-- | The ray, passing through two given points.
+-- The first point sets the `Figure`'s refference point and a starting point of a ray.
+-- The distance between refference points `p1` and `p2` sets the `unit` and internal scale,
+-- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
 newtype Ray = Ray (CN, CN)
+  deriving Show
   deriving ( Eq
            , Affine
            , Trans
@@ -123,29 +124,22 @@ mkRay ps = Ray $ bimap cmp ps
 instance IsLine Ray where
   refPoints (Ray r) = r
 
-instance Show Ray where
-  show l = unwords [ "<Ray", show p, show a <> ">" ]
-    where p = coord (l @-> 0)
-          a = angle l
-
 instance Manifold Ray where
   bounds r | isTrivial r = [0,0]
            | otherwise = [0]
-
-  paramMaybe r x = guard (0 ~<= x) >> paramMaybe (asLine r) x
-
-  projectMaybe r p =
-    do x <- projectMaybe (asLine r) p
-       guard (0 ~<= x)
-       return x
-
-  isContaining r p = asLine r `isContaining` p
-                     && isJust (projectMaybe r p)
-
+  param = param . asLine
+  project = project . asLine
+  isContaining r p = isContaining (asLine r) p
+                     && project r p >= 0
   unit = norm
 ------------------------------------------------------------
 
+-- | The line segment, joining two given points.
+-- The first point sets the `Figure`'s refference point and a starting point of a ray.
+-- The distance between refference points `p1` and `p2` sets the `unit` and internal scale,
+-- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
 newtype Segment = Segment (CN, CN)
+  deriving Show
   deriving ( Eq
            , Affine
            , Trans
@@ -159,23 +153,14 @@ mkSegment ps = Segment $ bimap cmp ps
 instance IsLine Segment where
   refPoints (Segment r) = r
 
-instance Show Segment where
-  show l = unwords [ "<Segment", show p1 <> ",", show p2, ">" ]
-    where p1 = coord (l @-> 0)
-          p2 = coord (l @-> 1)
-
 instance Manifold Segment where
   bounds s | isTrivial s = [0, 0]
            | otherwise = [0, 1]
-
-  paramMaybe s x = guard (0 ~<= x && x ~<= 1) >> paramMaybe (asLine s) x
-
-  projectMaybe s p =
-    do x <- projectMaybe (asLine s) p
-       guard (0 ~<= x && x ~<= 1)
-       return x
-
-  isContaining s p = asLine s `isContaining` p
-                     && isJust (projectMaybe s p)
-       
+  param = param . asLine
+  project = project . asLine
+  isContaining r p = isContaining (asRay r) p
+                     && project r p <= 1      
   unit = norm
+
+end :: Segment -> CN
+end = snd . refPoints

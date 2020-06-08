@@ -1,5 +1,6 @@
 {-# Language FlexibleInstances #-}
 {-# Language GeneralizedNewtypeDeriving #-}
+{-# Language DerivingVia #-}
 
 module Testing where
 
@@ -59,6 +60,10 @@ instance Arbitrary Point where
   arbitrary = Point <$> arbitrary
   shrink = shrinkPos 1
 
+newtype AnyPoint = AnyPoint Point
+  deriving (Show, Arbitrary)
+
+
 instance Arbitrary Circle where
   arbitrary = do Position c <- arbitrary
                  Position p <- arbitrary
@@ -69,6 +74,10 @@ instance Arbitrary Circle where
     do Position c' <- shrink (Position c)
        Position p' <- shrink (Position p)
        return $ Circle c' p' w
+
+newtype AnyCircle = AnyCircle Circle
+  deriving Show
+  deriving Arbitrary via Nontrivial Circle
 
 ------------------------------------------------------------
 
@@ -90,6 +99,18 @@ instance Arbitrary Line where
 instance Arbitrary Ray where
   arbitrary = asRay <$> (arbitrary :: Gen Segment)      
   shrink l = asRay <$> shrink (asSegment l)
+
+newtype AnyLine = AnyLine Line
+  deriving Show
+  deriving Arbitrary via Nontrivial Line
+
+newtype AnyRay = AnyRay Ray
+  deriving Show
+  deriving Arbitrary via Nontrivial Ray
+
+newtype AnySegment = AnySegment Segment
+  deriving Show
+  deriving Arbitrary via Nontrivial Segment
 
 ------------------------------------------------------------
   

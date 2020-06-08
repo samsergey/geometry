@@ -457,7 +457,10 @@ projectL c p = unit c * project c p
 
 -- | The distance between a curve and a point.
 distanceTo :: (Manifold m, Affine p) => p -> m -> Double
-distanceTo p m = p `distance` (m @-> (p ->@ m))
+distanceTo p m = p `distance` p'
+  where p' = case (p ->@? m) of
+               Just x -> m @-> x
+               Nothing -> minimumOn (distance p) (param m <$> bounds m)
 
 -- | The starting point on the curve. 
 start :: Manifold m => m -> CN

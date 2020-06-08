@@ -153,12 +153,12 @@ extendToLength l s = s # through' (paramL (asLine s) l)
 extendTo :: (Curve c, Intersections Ray c)
          => c -> Segment -> Maybe Segment
 extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
-  where extend p = aSegment # at' (start s) # through' p
+  where extend p = s # through' p
 
--- | Returns a segment normal to a given curve.
-heightTo :: (Curve c, Intersections Ray c)
-         => c -> Segment -> Maybe Segment
-heightTo c s = normalTo c s >>= extendTo c
+-- | Returns a segment normal to a given curve starting at given point.
+heightTo :: (Affine p, Curve c, Intersections Ray c)
+         => c -> p -> Maybe Segment
+heightTo c p = (aSegment # at' p # normalTo c) >>= extendTo c
 
 -- | Returns a list of segments as a result of clipping the line
 -- by a closed curve.

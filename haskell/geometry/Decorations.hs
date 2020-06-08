@@ -119,6 +119,8 @@ instance Trans a => Trans (Decorated a) where
   transform t = fmap (transform t)
 
 instance Manifold a => Manifold (Decorated a) where
+  param = param . fromDecorated
+  project = project . fromDecorated
   paramMaybe = paramMaybe . fromDecorated
   projectMaybe = projectMaybe . fromDecorated
   isClosed = isClosed . fromDecorated

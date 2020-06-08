@@ -26,65 +26,38 @@ main = hspec $
       it "8" $ property $ \x -> cmp (asCmp x :: Segment) == x
       
     describe "parametrization" $ do
-      it "1.1" $ property $ \(Nontrivial l) x ->
-        let types = l ::Line
-        in (l @-> x) ->@ l ~== x
+      it "1" $ property $ \(AnyLine l) x -> (l @-> x) ->@ l ~== x
 
-      it "1.2" $ property $ \(Nontrivial r) x ->
-        let types = r :: Ray
-        in (r @-> x) ->@ r ~== max 0 x
-
-      it "1.3" $ property $ \(Nontrivial s) x ->
-        let types = s :: Segment
-        in (s @-> x) ->@ s ~== (0 `max` x) `min` 1
-
-      it "2.1" $ property $ \l x ->
-        let types = l :: Line
-            p = l @-> x
+      it "2" $ property $ \(AnyLine l) x ->
+        let p = l @-> x
         in l @-> (p ->@ l) ~== p
 
-      it "2.2" $ property $ \r x ->
-        let types = r :: Ray
-            p = r @-> x
-        in r @-> (p ->@ r) ~== p
-
-      it "2.3" $ property $ \s x ->
-        let types = s :: Segment
-            p = s @-> x
-        in s @-> (p ->@ s) ~== p
       it "3" $ line' @CN @CN 0 1 @-> 0 == 0
       it "4" $ line' @CN @CN 0 2 @-> 1 == 2
       it "5" $ line' @CN @CN 0 2 @-> 0.5 == 1
 
-      it "6" $ property $ \(Nontrivial l) x ->
-        let types = l :: Line
-        in isJust (l @->? x)
+      it "6" $ property $ \(AnyLine l) x ->
+        isJust (l @->? x)
 
-      it "7" $ property $ \(Nontrivial r) x ->
-        let types = r :: Ray
-        in isJust (r @->? x) <==> x >= 0
+      it "7" $ property $ \(AnyRay r) x ->
+        isJust (r @->? x) <==> x >= 0
 
-      it "8" $ property $ \(Nontrivial s) x ->
-        let types = s :: Segment
-            x' = 2 * cos x
+      it "8" $ property $ \(AnySegment s) x ->
+        let x' = 2 * cos x
         in isJust (s @->? x') <==> 0 <= x' && x' <= 1
 
-      it "9" $ property $ \(Nontrivial l) p ->
-        let types = (p :: Point, l :: Line)
-        in isJust (p ->@? l)
+      it "9" $ property $ \(AnyLine l) (AnyPoint p) -> isJust (p ->@? l)
 
-      it "10" $ property $ \(Nontrivial r) p ->
-        let types = (p :: Point, r :: Ray)
-            an = deg . angleValue $ angleBetween r (r # through' p)
+      it "10" $ property $ \(AnyRay r) (AnyPoint p) ->
+        let an = deg . angleValue $ angleBetween r (r # through' p)
         in isJust (p ->@? r)
            <==>
            (0 <= an && an <= 90) || (270 <= an && an <= 360)
 
-      it "11" $ property $ \(Nontrivial s) p ->
-        let types = (p :: Point, s :: Segment)
-            (p1, p2) = refPoints s
-            an1 = angleValue . innerAngle $ angleWithin p p1 p2
-            an2 = angleValue . innerAngle $ angleWithin p p2 p1
+      it "11" $ property $ \(AnySegment s) (AnyPoint p) ->
+        let (p1, p2) = refPoints s
+            an1 = deg . angleValue . innerAngle $ angleWithin p p1 p2
+            an2 = deg . angleValue . innerAngle $ angleWithin p p2 p1
         in isJust (p ->@? s)
            <==>
            (0 <= an1 && an1 <= 90) && (0 <= an2 && an2 <= 90)
@@ -92,9 +65,9 @@ main = hspec $
 
     describe "containing" $ do
       it "1.1" $
-        property $ \l x -> (l :: Line) `isContaining` (l @-> x)
+        property $ \(AnyLine l) x -> l `isContaining` (l @-> x)
       it "1.2" $
-        property $ \l -> (l :: Line) `isContaining` refPoint l
+        property $ \(AnyLine l) -> l `isContaining` refPoint l
 
       it "2.1" $ aRay `isContaining` ((0,0) :: XY)
       it "2.2" $ aRay `isContaining` ((1,0) :: XY)
@@ -131,9 +104,31 @@ main = hspec $
                      let _ = (a :: Angular, p :: Point, l :: Line)
                      in l # at' p # along' a == l # along' a # at' p
 
-    describe "extendToLength" $ do
-      it "1" $ property $ \(Nontrivial s) (Positive d) ->
-        unit (s # extendToLength d) ~== d
+    describe "extendToLength" $ 
+      it "1" $ property $ \(AnySegment s) d ->
+        unit (s # extendToLength d) ~== abs d
+
+    describe "extendTo" $ do
+      it "1" $ property $ \(AnySegment s) (AnyLine l) ->
+        (asRay s `isIntersecting` l) ==>
+        l `isContaining` ((s #! extendTo l) @-> 1)
+      it "2" $ property $ \(AnySegment s) (AnyCircle c) ->
+        (asRay s `isIntersecting` c) ==>
+        c `isContaining` ((s #! extendTo c) @-> 1)
+
+    describe "heightTo" $ do
+      it "1" $ property $ \(AnyPoint p) (AnyLine l) ->
+        not (l `isContaining` p) ==>
+        fromMaybe False $ do
+          h <- p # heightTo l
+          return $ l `isContaining` (end h) && l `isOrthogonal` h
+
+      it "2" $ property $ \(AnyPoint p) (AnyCircle c) ->
+        not (c `isContaining` p) ==>
+        fromMaybe True $ do
+          h <- p # heightTo c
+          let n = normal c (project c (end h))
+          return $ c `isContaining` (end h) && h `isCollinear` n
 
 
     describe "distanceTo" $ do
@@ -150,9 +145,8 @@ main = hspec $
       
     describe "intersections" $ do
       it "1" $
-        property $ \(Nontrivial l1) (Nontrivial l2) ->
-          let types = (l1 :: Line, l2 :: Line)
-          in isIntersecting l1 l2
+        property $ \(AnyLine l1) (AnyLine l2) ->
+             isIntersecting l1 l2
              <==>
              not (l1 `isCollinear` l2) || l1 `isContaining` refPoint l2
       let r = Ray (0, 1:+1)
@@ -170,28 +164,28 @@ main = hspec $
       it "4.7" $ s `intersections` (s # rotate 90 # translate (0.5,0.5) ) ~== [0.5:+0.5]
 
       it "5.1" $
-        property $ \(Nontrivial l) (Nontrivial r) ->
-          let types = (l :: Line, r :: Ray)
-          in if l `isCollinear` r
-             then null (l `intersections` r) ||
-                  (r `intersections` l == [start r] && l `intersections` r == [start l])
-             else l `intersections` r == r `intersections` l
+        property $ \(AnyLine l) (AnyRay r) ->
+            if l `isCollinear` r
+            then null (l `intersections` r) ||
+                 (r `intersections` l ~== [start r]
+                   && l `intersections` r ~== [start l])
+            else l `intersections` r ~== r `intersections` l
 
       it "5.2" $
-        property $ \(Nontrivial l) (Nontrivial s) ->
-          let types = (l :: Line, s :: Segment)
-          in if l `isCollinear` s
+        property $ \(AnyLine l) (AnySegment s) ->
+             if l `isCollinear` s
              then null (l `intersections` s) ||
-                  (s `intersections` l == [start s] && l `intersections` r == [start s])
-             else l `intersections` s == s `intersections` l
+                  (s `intersections` l ~== [start s]
+                   && l `intersections` s ~== [start l])
+             else l `intersections` s ~== s `intersections` l
 
       it "5.3" $
-          property $ \(Nontrivial s) (Nontrivial r) ->
-          let types = (s :: Segment, r :: Ray)
-          in if s `isCollinear` r
+          property $ \(AnySegment s) (AnyRay r) ->
+             if s `isCollinear` r
              then null (s `intersections` r) ||
-                  (r `intersections` s == [start r] && s `intersections` r == [start s])
-             else s `intersections` r == r `intersections` s
+                  (r `intersections` s ~== [start r]
+                   && s `intersections` r ~== [start s])
+             else s `intersections` r ~== r `intersections` s
 
     describe "clipping" $ do
       it "1" $ (aLine # rotate 45) `clipBy` aSquare == [Segment (0, 1:+1)]

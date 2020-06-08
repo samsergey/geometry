@@ -53,9 +53,9 @@ mkCircleRC r c = mkCircle c (c + (r :+ 0))
 
 
 instance Show Circle where
-  show c = concat ["<Circle ", r, ",", cn, ">"]
+  show c = concat ["<mkCircleRC ", r, " ", cn, ">"]
     where r = show $ radius c
-          cn = show . coord $ center c
+          cn = show $ center c
 
 
 instance Eq Circle where
@@ -72,10 +72,10 @@ instance Trans Circle where
 
 
 instance Manifold Circle where
-  paramMaybe c t = Just $
+  param c t =
     center c + mkPolar (radius c) (2*pi * orientation c *(t + phaseShift c))
 
-  projectMaybe c p = Just $
+  project c p =
     orientation c * (turns (asCmp (cmp p - center c)) - phaseShift c)
 
   isClosed = const True
@@ -95,7 +95,7 @@ instance Curve Circle where
   tangent c t = normal c t + asDeg (orientation c * 90)
 
 instance Figure Circle where
-  isTrivial c = radius c < 0
+  isTrivial c = radius c <= 0
   isSimilar c1 c2 = radius c1 ~== radius c2
   refPoint = center
   box cir = ((Min x1, Min y1), (Max x2, Max y2))

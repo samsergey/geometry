@@ -32,7 +32,7 @@ module Base
   , scale, scaleX, scaleY, scaleAt', scaleXAt', scaleYAt'
   , rotate, rotateAt', reflect, reflectAt
   -- ** Curves
-  , Manifold (..), Curve (..), PointLocation (..)
+  , Manifold (..), Curve (..), ClosedCurve(..), PointLocation (..)
   , (->@), (->@?), (@->), (@->?)
   , start, paramL, projectL, distanceTo
   -- ** Figures
@@ -411,11 +411,6 @@ class Manifold m where
                        Just p' -> cmp p' ~== cmp p
                        Nothing -> False
 
-  -- | Is set `True` if the manifold is closed.
-  isClosed :: m -> Bool
-  isClosed _ = False
-
-
   -- | The internal length unit of the curve,
   --  which maps the parameter to the length of the curve.
   unit :: m -> Double
@@ -458,7 +453,7 @@ projectL c p = unit c * project c p
 -- | The distance between a curve and a point.
 distanceTo :: (Manifold m, Affine p) => p -> m -> Double
 distanceTo p m = p `distance` p'
-  where p' = case (p ->@? m) of
+  where p' = case p ->@? m of
                Just x -> m @-> x
                Nothing -> minimumOn (distance p) (param m <$> bounds m)
 
@@ -483,8 +478,7 @@ data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 -- prop>  c `isContaining` p  ==>  (param c . project c) p == p
 --
 class (Figure c, Manifold c) => Curve c where
-  {-# MINIMAL (normal | tangent),
-              (location | isEnclosing) #-}
+  {-# MINIMAL normal | tangent #-}
 
   -- | The tangent direction for a given parameter on the curve.
   tangent :: c -> Double -> Angular
@@ -494,21 +488,24 @@ class (Figure c, Manifold c) => Curve c where
   normal :: c -> Double -> Angular
   normal f t = 90 + tangent f t
 
-  -- | Returns the location of a point with respect to the curve.
-  location :: Affine p => c -> p -> PointLocation
-  location c p | isContaining c p = OnCurve
-               | isClosed c && isEnclosing c p = Inside
-               | otherwise = Outside
-
-  -- | Returns `True` if point belongs to the area bound by closed curve.
-  isEnclosing :: Affine p => c -> p -> Bool
-  isEnclosing c p = isClosed c && location c p == Inside
-
   -- | Returns th orientation of a curve.
   -- Orientation affects the direction of tangent and normal vectors.
   orientation :: c -> Double
   orientation _ = 1
 
+
+class Curve c => ClosedCurve c where
+  {-# MINIMAL location | isEnclosing #-}
+  -- | Returns the location of a point with respect to the curve.
+  location :: Affine p => c -> p -> PointLocation
+  location c p | isContaining c p = OnCurve
+               | isEnclosing c p = Inside
+               | otherwise = Outside
+
+  -- | Returns `True` if point belongs to the area bound by closed curve.
+  isEnclosing :: Affine p => c -> p -> Bool
+  isEnclosing c p = location c p == Inside
+  
 
 ------------------------------------------------------------
 

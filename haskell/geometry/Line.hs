@@ -54,9 +54,7 @@ instance Eq Line where
 
 instance Figure Line where
   isTrivial = isZero
-
   refPoint = fst . refPoints
-
   box l = pointBox p1 <> pointBox p2
     where (p1,p2) = refPoints l
     
@@ -72,28 +70,18 @@ instance Trans Line where
 
 
 instance Manifold Line where
-  isClosed _ = False
-
   bounds l | isTrivial l = [0, 0]
            | otherwise = []
-   
   param l t = let (p1, p2) = refPoints l
               in scaleAt' p1 t p2
-
   project l p = let v = cmp p - cmp (refPoint l)
                 in (v `dot` angle l) / unit l
-
   isContaining l p = cmp p ~== refPoint l
                      || l `isCollinear` azimuth (refPoint l) p
-
   unit = norm
 
 instance Curve Line where
-
-  isEnclosing _ _ = False
-
   orientation _ = 1
-
   tangent l _ = angle l
 
 intersectionLL (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =

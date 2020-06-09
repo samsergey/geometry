@@ -115,16 +115,11 @@ instance Manifold Polyline where
       (x0, s) = minimumOn (\(_,s) -> distanceTo pt s) $ zip ds ss
       x = (x0 + (project s pt * unit s)) / unit p
 
-  isClosed _ = False
   isContaining p x = any (`isContaining` x) (segments p)
   unit p = sum $ unit <$> segments p
 
 instance Curve Polyline where
   orientation _ = 1
-
-  location p pt = res
-    where res | any (`isContaining` pt) (segments p) = OnCurve
-              | otherwise = Outside
 
   tangent p t =  (p @-> (t + dt)) `azimuth` (p @-> (t - dt))
     where dt = 1e-5
@@ -167,7 +162,6 @@ instance Show Polygon where
 
 instance Manifold Polygon where
   param p t = fromJust $ interpolation p $ (t `mod'` 1) * unit p
-  isClosed _ = True
   project = project . asPolyline
   isContaining = isContaining . asPolyline
   unit = unit . asPolyline
@@ -175,6 +169,8 @@ instance Manifold Polygon where
 instance Curve Polygon where
   orientation _ = 1
   tangent = tangent . asPolyline
+
+instance ClosedCurve Polygon where
   location p pt = case foldMap go (segments p') of
                     (Any True, _) -> OnCurve
                     (_, Sum n) | odd n -> Inside
@@ -196,6 +192,7 @@ newtype Triangle = Triangle [CN]
   deriving ( Figure
            , Manifold
            , Curve
+           , ClosedCurve
            , Trans
            , Eq
            , IsPolyline
@@ -221,6 +218,7 @@ newtype Rectangle = Rectangle [CN]
   deriving ( Figure
            , Manifold
            , Curve
+           , ClosedCurve
            , Trans
            , Eq
            , IsPolyline

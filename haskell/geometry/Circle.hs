@@ -3,12 +3,13 @@
 {-# Language FlexibleInstances, FlexibleContexts, UndecidableInstances #-}
 module Circle
   (-- * Types and classes
-    Circle (..), IsCircle (..)
+    Circle, IsCircle (..)
     -- * Constructors
   , trivialCircle, mkCircle, mkCircleRC
   ) where
 
 import Data.Complex
+import Data.Bool
 
 import Base
 import Line
@@ -16,40 +17,44 @@ import Polygon
 import Data.Semigroup
 
 -- | Class for circle and decorated circle
-class Curve c => IsCircle c where
+class Manifold c => IsCircle c where
   -- | Center of the circle.
   center :: c -> CN
   -- | Radius of the circle
   radius :: c -> Double
   -- | The angle of the starting point.
-  phaseShift :: c -> Double
-  -- | The radius-vector for a given parameter
-  radiusVector :: c -> Double -> XY
-  radiusVector c x = coord $ azimuth (center c) (c @-> x)
+  phaseShift :: c -> Angular
 
 -- | Represents a circle with given center, passing through given point.
-data Circle = Circle
-              CN -- ^ center,
-              CN -- ^ starting point,
-              Double -- ^ orientation poitive -- CW, negative -- CCW.
+newtype Circle = Circle ((CN, CN, CN), CN, Bool)
+
+zeroPoint (Circle ((p, _, _), _, _)) = p
 
 instance IsCircle Circle where
-  center (Circle c _ _) =  c
-  radius (Circle c p _) = distance c p  
-  phaseShift (Circle c p o) = signum o * turns (azimuth c p)
+  center (Circle (_, c, _)) = c
+  radius c = distance (center c) (zeroPoint c)  
+  phaseShift c = azimuth (center c) (zeroPoint c)
 
 -- | The trivial circle with zero radius.
 trivialCircle :: Circle
-trivialCircle = Circle 0 0 1
+trivialCircle = mkCircleRC 0 0
 
 -- | The constructor for a circle with given center and starting point.
-mkCircle :: CN -> CN -> Circle
-mkCircle c p = Circle c p 1
+mkCircle :: (CN, CN, CN) -> Circle
+mkCircle (p1, p2, p3)
+  | isDegenerate t = Circle ((p1, p2, p3), p1, True)
+  | otherwise = Circle ((p1, p2, p3), c, True)
+  where
+    t = mkTriangle [p1, p2, p3]
+    mp1 = midPerpendicular (side t 0)
+    mp2 = midPerpendicular (side t 1)
+    c = head (lineIntersection mp1 mp2)
+
 
 -- | The constructor for a circle with given center and radius.
 -- The starting point is located at zero angle.
 mkCircleRC :: Double -> CN -> Circle
-mkCircleRC r c = mkCircle c (c + (r :+ 0))
+mkCircleRC r c = mkCircle (c + (r :+ 0), c + (0 :+ r), c - (r :+ 0))
 
 
 instance Show Circle where
@@ -65,34 +70,42 @@ instance Eq Circle where
 
 
 instance Trans Circle where
-  transform t cir = Circle c p w
-    where c = transformCN t (center cir)
-          p = transformCN t (start cir)
-          w = orientation cir * transformOrientation t
+  transform t (Circle ((p1, p2, p3), o)) =
+    mkCircle (p1', p2', p3') # setOrientation o
+    where p1' = transformCN t p1
+          p2' = transformCN t p2
+          p3' = transformCN t p3
 
 
 instance Manifold Circle where
-  param c t =
-    center c + mkPolar (radius c) (2*pi * orientation c *(t + phaseShift c))
+  param cir t = center cir + mkPolar (radius cir) x
+    where
+      ph = turns $ phaseShift cir
+      x = rad . asTurns $ t + ph
+    
+  project cir p = turns (x - ph)
+    where
+      ph = phaseShift cir
+      x = azimuth (center cir) p 
 
-  project c p =
-    orientation c * (turns (asCmp (cmp p - center c)) - phaseShift c)
-
-  isClosed = const True
   isContaining c p = distance p (center c) ~== radius c
   unit _ = 2 * pi
 
-instance Curve Circle where
-  orientation (Circle _ _ o) = o
 
+instance Oriented Circle where
+  orientation (Circle (_, _, o)) = o
+  setOrientation (Circle (ps, c, _)) o = Circle (ps, c, o)
+  normal c t = o * azimuth (center c) (c @-> t)
+    where o = bool (-1) 1 (orientation c)
+
+
+instance ClosedCurve Circle where
   location c p = res
     where res | r' ~== radius c = OnCurve
               | r' < radius c   = Inside
               | r' > radius c   = Outside
           r' = distance p (center c)
 
-  normal c t = scale (orientation c) $ azimuth (center c) (c @-> t)
-  tangent c t = normal c t + asDeg (orientation c * 90)
 
 instance Figure Circle where
   isTrivial c = radius c <= 0

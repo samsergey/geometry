@@ -2,6 +2,7 @@
 {-# Language FlexibleInstances #-}
 {-# Language MultiParamTypeClasses #-}
 {-# Language GeneralizedNewtypeDeriving #-}
+
 module Base
   ( -- * Types
     CN
@@ -32,7 +33,7 @@ module Base
   , scale, scaleX, scaleY, scaleAt', scaleXAt', scaleYAt'
   , rotate, rotateAt', reflect, reflectAt
   -- ** Curves
-  , Manifold (..), Curve (..), ClosedCurve(..), PointLocation (..)
+  , Manifold (..), Oriented (..), ClosedCurve(..), PointLocation (..)
   , (->@), (->@?), (@->), (@->?)
   , start, paramL, projectL, distanceTo
   -- ** Figures
@@ -57,6 +58,7 @@ import Control.Monad
 import Data.Semigroup
 import Data.Monoid
 import Data.Maybe
+import Data.Bool
 
 ------------------------------------------------------------
 -- | Type alias for a complex number.
@@ -87,8 +89,8 @@ class AlmostEq a where
   -- | The equality operator.
   (~==) :: a -> a -> Bool
 
+instance AlmostEq Bool where  a ~== b = a == b
 instance AlmostEq Int where a ~== b = a == b
-
 instance AlmostEq Integer where  a ~== b = a == b
 
 instance AlmostEq Double where
@@ -99,6 +101,9 @@ instance (RealFloat a, Ord a, Fractional a, Num a, AlmostEq a) => AlmostEq (Comp
 
 instance (AlmostEq a, AlmostEq b) => AlmostEq (a, b) where
   (a1,b1) ~== (a2,b2) = a1 ~== a2 && b1 ~== b2
+
+instance (AlmostEq a, AlmostEq b, AlmostEq c) => AlmostEq (a, b, c) where
+  (a1,b1,c1) ~== (a2,b2,c2) = a1 ~== a2 && b1 ~== b2 && c1 ~== c2
 
 instance (AlmostEq a) => AlmostEq [a] where
   as ~== bs = and $ zipWith (~==) as bs
@@ -178,9 +183,8 @@ instance Trans a => Trans (Maybe a) where
 
 
 -- | Returns 1 if transformation preserves curve orientation, and -1 otherwise.
-transformOrientation :: TMatrix -> Double
-transformOrientation ((a,b,_),(c,d,_)) =
-  signum $ det ((a,b),(c,d))
+transformOrientation :: TMatrix -> Bool
+transformOrientation ((a,b,_),(c,d,_)) = det ((a,b),(c,d)) > 0
 
 -- | The rotation matrix.
 rotateT :: Double -> TMatrix
@@ -211,7 +215,6 @@ transformXY ((a11, a12, sx), (a21, a22, sy)) (x, y) =
 transformAt :: (Trans a, Affine p) => p -> (a -> a) -> a -> a
 transformAt p t = translate' xy . t . translate' (-xy)
   where xy = cmp p
-
 
 -- | The translation of an object.
 translate' :: (Trans a, Affine p) => p -> a -> a
@@ -477,32 +480,38 @@ data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 -- prop>  not isFinite c      ==>  (project c . param c) x == x
 -- prop>  c `isContaining` p  ==>  (param c . project c) p == p
 --
-class (Figure c, Manifold c) => Curve c where
-  {-# MINIMAL normal | tangent #-}
+class Manifold c => Oriented c where
+  {-# MINIMAL (normal | tangent), orientation, setOrientation #-}
 
   -- | The tangent direction for a given parameter on the curve.
   tangent :: c -> Double -> Angular
-  tangent f t = normal f t + 90
+  tangent c t = normal c t - 90 * bool (-1) 1 (orientation c)
 
   -- | The normal direction for a given parameter on the curve.
   normal :: c -> Double -> Angular
-  normal f t = 90 + tangent f t
+  normal c t = tangent c t + 90 * bool (-1) 1 (orientation c)
 
-  -- | Returns th orientation of a curve.
+  -- | Returns the orientation of a curve.
   -- Orientation affects the direction of tangent and normal vectors.
-  orientation :: c -> Double
-  orientation _ = 1
+  orientation :: c -> Bool
 
+  orientationSign :: c -> Double
+  orientationSign = bool (-1) 1 . orientation 
 
-class Curve c => ClosedCurve c where
+  -- | Setter for the orientation of a curve.
+  setOrientation :: Bool -> c -> c
+
+-- |  Class representing a closed region
+class Manifold c => ClosedCurve c where
   {-# MINIMAL location | isEnclosing #-}
-  -- | Returns the location of a point with respect to the curve.
+  
+  -- | Returns the location of a point with respect to the region.
   location :: Affine p => c -> p -> PointLocation
   location c p | isContaining c p = OnCurve
                | isEnclosing c p = Inside
                | otherwise = Outside
 
-  -- | Returns `True` if point belongs to the area bound by closed curve.
+  -- | Returns `True` if point belongs to the region.
   isEnclosing :: Affine p => c -> p -> Bool
   isEnclosing c p = location c p == Inside
   

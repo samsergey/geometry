@@ -3,10 +3,12 @@
 {-# language FlexibleContexts #-}
 {-# language UndecidableInstances #-}
 {-# language DerivingVia #-}
+{-# language TupleSections #-}
 
 module Polygon
   (
     IsPolyline (..)
+  , isDegenerate
   , Polyline (..)
   , mkPolyline, trivialPolyline, closePoly
   , Polygon (..)
@@ -30,7 +32,7 @@ import Base
 import Point
 import Line
 
-class Curve p => IsPolyline p where
+class Oriented p => IsPolyline p where
   vertices :: p -> [CN]
   asPolyline :: p -> Polyline
   
@@ -38,8 +40,9 @@ class Curve p => IsPolyline p where
   verticesNumber p = length (vertices p)
 
   segments :: p -> [Segment]
-  segments p = mkSegment <$> zip vs (tail vs)
+  segments p = (Segment . (, o)) <$> zip vs (tail vs)
     where vs = vertices p
+          o = orientation p
 
   vertex :: p -> Int -> CN
   vertex p i = vs !! j
@@ -53,6 +56,9 @@ class Curve p => IsPolyline p where
           n = verticesNumber p         
  
 
+isDegenerate :: IsPolyline p => p -> Bool
+isDegenerate = any isZero . segments 
+
 interpolation :: IsPolyline p => p -> Double -> Maybe CN
 interpolation p x = param' <$> find interval tbl
   where
@@ -63,20 +69,21 @@ interpolation p x = param' <$> find interval tbl
 
 ------------------------------------------------------------
 
-newtype Polyline = Polyline [CN]
+newtype Polyline = Polyline ([CN], Bool)
 
 instance IsPolyline Polyline where
-  vertices (Polyline vs) = vs
+  vertices (Polyline (vs, _)) = vs
   asPolyline = id
   
 trivialPolyline :: Polyline
-trivialPolyline = Polyline []
+trivialPolyline = Polyline ([], True)
 
 mkPolyline :: Affine a => [a] -> Polyline
-mkPolyline pts = Polyline $ cmp <$> pts
+mkPolyline pts = Polyline (cmp <$> pts, True)
 
 closePoly :: Polyline -> Polygon
-closePoly p = Polygon (vertices p)
+closePoly p = Polygon (vertices p, orientation p)
+
 
 instance Show Polyline where
   show p = concat ["<Polyline ", n, ">"]
@@ -85,17 +92,23 @@ instance Show Polyline where
               then unwords $ show . coord <$> vs
               else "-" <> show (length vs) <> "-"
 
+
 instance Eq Polyline where
-  p1 == p2 = vertices p1 ~== vertices p2
+  p1 == p2 = vertices p1 ~== vertices p2 &&
+             orientation p1 == orientation p2
+
 
 instance Affine Polyline where
   cmp p = case segments p of
             [] -> 0
             (x:_) -> cmp x
-  asCmp x = Polyline [0, x]
+  asCmp x = mkPolyline [0, x]
+
 
 instance Trans Polyline where
-  transform t (Polyline vs) = Polyline $ transform t <$> vs
+  transform t (Polyline (vs, o)) = Polyline (vs', o)
+    where vs' = transform t <$> vs
+
 
 instance Manifold Polyline where
   param p t | t < 0 = param (asLine (side p 0)) t
@@ -112,9 +125,10 @@ instance Manifold Polyline where
   isContaining p x = any (`isContaining` x) (segments p)
   unit p = sum $ unit <$> segments p
 
-instance Curve Polyline where
-  orientation _ = 1
 
+instance Oriented Polyline where
+  orientation (Polyline (_, o)) = o
+  setOrientation o (Polyline (ps, _)) = Polyline (ps, not o)
   tangent p t =  (p @-> (t + dt)) `azimuth` (p @-> (t - dt))
     where dt = 1e-5
 
@@ -130,25 +144,27 @@ instance Figure Polyline where
 
 ------------------------------------------------------------
 
-newtype Polygon = Polygon [CN]
+newtype Polygon = Polygon ([CN], Bool)
   deriving ( Eq
            , Trans
            , Affine
+           , Oriented
            , Figure
            ) via Polyline
 
 trivialPolygon :: Polygon
-trivialPolygon = Polygon []
+trivialPolygon = Polygon ([], True)
 
 mkPolygon :: Affine a => [a] -> Polygon
-mkPolygon pts = Polygon $ cmp <$> pts
+mkPolygon pts = Polygon (cmp <$> pts, True)
+
 
 instance IsPolyline Polygon where
-  vertices (Polygon vs) = vs
-  asPolyline (Polygon vs) = Polyline $ take (length vs + 1) (cycle vs)
-  segments = segments . asPolyline
-  vertex = vertex . asPolyline
-  side = side . asPolyline
+  asPolyline p = Polyline (take (length vs + 1) (cycle vs), o)
+    where vs = vertices p
+          o = orientation p
+  vertices = vertices . asPolyline
+
 
 instance Show Polygon where
   show p = concat ["<Polygon ", n, ">"]
@@ -162,11 +178,8 @@ instance Manifold Polygon where
   project = project . asPolyline
   isContaining = isContaining . asPolyline
   unit = unit . asPolyline
-  
-instance Curve Polygon where
-  orientation _ = 1
-  tangent = tangent . asPolyline
 
+  
 instance ClosedCurve Polygon where
   location p pt = case foldMap go (segments p') of
                     (Any True, _) -> OnCurve
@@ -185,10 +198,10 @@ instance ClosedCurve Polygon where
 
 ------------------------------------------------------------
 
-newtype Triangle = Triangle [CN]
+newtype Triangle = Triangle ([CN], Bool)
   deriving ( Figure
            , Manifold
-           , Curve
+           , Oriented
            , ClosedCurve
            , Trans
            , Eq
@@ -196,9 +209,9 @@ newtype Triangle = Triangle [CN]
            ) via Polygon
 
 mkTriangle :: Affine a => [a] -> Triangle
-mkTriangle = Triangle . fmap cmp
+mkTriangle ps = Triangle (cmp <$> ps, True)
 
-trivialTriangle = Triangle []
+trivialTriangle = Triangle ([], True)
 
 instance Show Triangle where
   show t = concat ["<Triangle ", ss, ">"]
@@ -206,15 +219,14 @@ instance Show Triangle where
 
 instance Affine Triangle where
   cmp = cmp . asPolyline
-  asCmp = Triangle . scanl (+) 0 . take 2 . iterate (rotate 120)
-
+  asCmp = mkTriangle . scanl (+) 0 . take 2 . iterate (rotate 120)
 
 ------------------------------------------------------------
 
-newtype Rectangle = Rectangle [CN]
+newtype Rectangle = Rectangle ([CN], Bool)
   deriving ( Figure
            , Manifold
-           , Curve
+           , Oriented
            , ClosedCurve
            , Trans
            , Eq
@@ -222,9 +234,9 @@ newtype Rectangle = Rectangle [CN]
            ) via Polygon
 
 mkRectangle :: Affine a => [a] -> Rectangle
-mkRectangle = Rectangle . fmap cmp
+mkRectangle ps = Rectangle (cmp <$> ps, True)
 
-trivialRectangle = Rectangle []
+trivialRectangle = Rectangle ([], False)
 
 instance Show Rectangle where
   show t = concat ["<Rectangle ", ss, ">"]
@@ -232,7 +244,7 @@ instance Show Rectangle where
 
 instance Affine Rectangle where
   cmp = cmp . asPolyline
-  asCmp = Rectangle . scanl (+) 0 . take 3 . iterate (rotate 90)
+  asCmp = mkRectangle . scanl (+) 0 . take 3 . iterate (rotate 90)
 
 
 boxRectangle f = mkRectangle [ p4, p3, p2, p1 ]

@@ -38,26 +38,20 @@ class Curve p => IsPolyline p where
   verticesNumber p = length (vertices p)
 
   segments :: p -> [Segment]
-  segments p = mkSegment <$> zip (vertices p) (tail vs)
-    where vs = if isClosed p
-               then cycle (vertices p)
-               else vertices p
-                    
+  segments p = mkSegment <$> zip vs (tail vs)
+    where vs = vertices p
+
   vertex :: p -> Int -> CN
   vertex p i = vs !! j
     where vs = vertices p
           n = verticesNumber p
-          j = if isClosed p
-              then i `mod` n
-              else (0 `max` i) `min` n
-                   
+          j = (0 `max` i) `min` n
+
   side :: p -> Int -> Segment
   side p i = segments p !! j
-    where j = if isClosed p
-              then (i + n `div` 2) `mod` n
-              else (0 `max` i) `min` n
-          n = verticesNumber p
-  
+    where j = (0 `max` i) `min` n
+          n = verticesNumber p         
+ 
 
 interpolation :: IsPolyline p => p -> Double -> Maybe CN
 interpolation p x = param' <$> find interval tbl
@@ -152,6 +146,9 @@ mkPolygon pts = Polygon $ cmp <$> pts
 instance IsPolyline Polygon where
   vertices (Polygon vs) = vs
   asPolyline (Polygon vs) = Polyline $ take (length vs + 1) (cycle vs)
+  segments = segments . asPolyline
+  vertex = vertex . asPolyline
+  side = side . asPolyline
 
 instance Show Polygon where
   show p = concat ["<Polygon ", n, ">"]

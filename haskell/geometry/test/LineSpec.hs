@@ -123,12 +123,12 @@ main = hspec $
           h <- p # heightTo l
           return $ l `isContaining` (end h) && l `isOrthogonal` h
 
-      it "2" $ property $ \(AnyPoint p) (AnyCircle c) ->
-        not (c `isContaining` p) ==>
-        fromMaybe True $ do
-          h <- p # heightTo c
-          let n = normal c (project c (end h))
-          return $ c `isContaining` (end h) && h `isCollinear` n
+      -- it "2" $ property $ \(AnyPoint p) (AnyCircle c) ->
+      --   not (c `isContaining` p) ==>
+      --   fromMaybe False $ do
+      --     h <- p # heightTo c
+      --     let n = normal c (project c (end h))
+      --     return $ c `isContaining` (end h) && h `isCollinear` n
 
 
     describe "distanceTo" $ do

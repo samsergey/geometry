@@ -85,7 +85,7 @@ aLabel :: Label
 aLabel = mkLabel origin
 
 -- | Returns a list of intersection points as `Point` objects.
-intersectionPoints :: ( Manifold a, Manifold b, Intersections a b )
+intersectionPoints :: ( Curve a, Curve b, Intersections a b )
                    => a -> b -> [Point]
 intersectionPoints c1 c2 = point' <$> intersections c1 c2
 
@@ -150,13 +150,13 @@ extendToLength :: Double -> Segment -> Segment
 extendToLength l s = s # through' (paramL (asLine s) l)
 
 -- | Returns a segment extended to a closest intersection point with a given curve.
-extendTo :: (Manifold c, Intersections Ray c)
+extendTo :: (Curve c, Intersections Ray c)
          => c -> Segment -> Maybe Segment
 extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
   where extend p = s # through' p
 
 -- | Returns a segment normal to a given curve starting at given point.
-heightTo :: (Affine p, Manifold c, Intersections Ray c)
+heightTo :: (Affine p, Curve c, Intersections Ray c)
          => c -> p -> Maybe Segment
 heightTo c p = (aSegment # at' p # normalTo c) >>= extendTo c
 

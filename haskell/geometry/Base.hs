@@ -481,7 +481,7 @@ data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 -- prop>  not isFinite c      ==>  (project c . param c) x == x
 -- prop>  c `isContaining` p  ==>  (param c . project c) p == p
 --
-class (Trans c, Manifold c) => Curve c where
+class (Figure c, Trans c, Manifold c) => Curve c where
   {-# MINIMAL normal | tangent #-}
 
   -- | The tangent direction for a given parameter on the curve.

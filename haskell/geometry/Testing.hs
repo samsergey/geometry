@@ -65,15 +65,14 @@ newtype AnyPoint = AnyPoint Point
 
 
 instance Arbitrary Circle where
-  arbitrary = do Position c <- arbitrary
-                 Position p <- arbitrary
-                 w <- signum <$> arbitrary
-                 return $ Circle c p w
+  arbitrary = do (Position c) <- arbitrary
+                 (Position r) <- arbitrary :: Gen (Position CN)
+                 return $ (mkCircle (norm r) c # rotateAt' c (angle r))
                  
-  shrink (Circle c p w) =
-    do Position c' <- shrink (Position c)
-       Position p' <- shrink (Position p)
-       return $ Circle c' p' w
+  shrink cir =
+    do Position c <- shrink (Position (center cir))
+       r <- shrink (radius cir)
+       return $ mkCircle r c
 
 newtype AnyCircle = AnyCircle Circle
   deriving Show
@@ -141,7 +140,8 @@ newtype Nontrivial a = Nontrivial a deriving
   , Affine
   , Trans
   , Manifold
-  , Curve )
+  , Curve
+  , ClosedCurve )
 
 
 instance (Arbitrary a, Figure a) => Arbitrary (Nontrivial a) where

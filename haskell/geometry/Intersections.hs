@@ -78,7 +78,7 @@ instance Intersections Line Circle  where
       a = angle l
 
 instance Intersections Line Polyline where
-  intersections' l = foldMap (intersections' l) . segments
+  intersections' l = foldMap (intersections' l) . segments . closePolyline
 
 ------------------------------------------------------------
 
@@ -96,7 +96,7 @@ instance Intersections Circle Circle where
       a = azimuth c1 c2
 
 instance Intersections Circle Polyline where
-  intersections' c = foldMap (intersections' c) . segments
+  intersections' c = foldMap (intersections' c) . segments . closePolyline
 
 ------------------------------------------------------------
 
@@ -107,7 +107,7 @@ instance Intersections Polyline Circle where
   intersections' = flip intersections'
   
 instance Intersections Polyline Polyline where
-  intersections' p = foldMap (intersections' p) . segments
+  intersections' p = foldMap (intersections' p) . segments . closePolyline
 
 ------------------------------------------------------------
 

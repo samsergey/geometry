@@ -7,7 +7,7 @@
 
 module Polygon
   (
-    IsPolyline (..)
+    IsPoly (..)
   , isDegenerate
   , Polyline (..)
   , mkPolyline, trivialPolyline
@@ -32,7 +32,8 @@ import Base
 import Point
 import Line
 
-class Curve p => IsPolyline p where
+-- | A class for polylines and polygons.
+class Curve p => IsPoly p where
   vertices :: p -> [CN]
   asPolyline :: p -> Polyline
   
@@ -54,10 +55,11 @@ class Curve p => IsPolyline p where
     where j = (0 `max` i) `min` n
           n = verticesNumber p         
 
-isDegenerate :: IsPolyline p => p -> Bool
+-- | A predicate. Returns `True` if any of polyline's  segment has zero length.
+isDegenerate :: IsPoly p => p -> Bool
 isDegenerate = any isZero . segments 
 
-interpolation :: IsPolyline p => p -> Double -> Maybe CN
+interpolation :: IsPoly p => p -> Double -> Maybe CN
 interpolation p x = param' <$> find interval tbl
   where
     interval ((a, b), _) = a ~<= x && x ~<= b
@@ -67,9 +69,10 @@ interpolation p x = param' <$> find interval tbl
 
 ------------------------------------------------------------
 
+-- | Representation of a polygonal chain as a list of vertices.
 newtype Polyline = Polyline [CN]
 
-instance IsPolyline Polyline where
+instance IsPoly Polyline where
   vertices (Polyline vs) = vs
   asPolyline = id
   
@@ -153,10 +156,13 @@ closePolyline p = Polygon $
               if last vs == head vs then (init vs) else vs
   where vs = vertices p
 
-instance IsPolyline Polygon where
+instance IsPoly Polygon where
   asPolyline p = Polyline $ take (length vs + 1) (cycle vs)
     where vs = vertices p
-  vertices = vertices . asPolyline
+  vertices (Polygon vs) = vs
+  vertex = vertex . asPolyline
+  segments = segments . asPolyline
+  side = side . asPolyline
 
 
 instance Show Polygon where
@@ -165,6 +171,7 @@ instance Show Polygon where
           n = if length vs < 5
               then unwords $ show . coord <$> vs
               else "-" <> show (length vs) <> "-"
+
 
 instance Manifold Polygon where
   param p t = fromJust $ interpolation p $ (t `mod'` 1) * unit p
@@ -198,7 +205,7 @@ newtype Triangle = Triangle [CN]
            , ClosedCurve
            , Trans
            , Eq
-           , IsPolyline
+           , IsPoly
            ) via Polygon
 
 mkTriangle :: Affine a => [a] -> Triangle
@@ -223,7 +230,7 @@ newtype Rectangle = Rectangle [CN]
            , ClosedCurve
            , Trans
            , Eq
-           , IsPolyline
+           , IsPoly
            ) via Polygon
 
 mkRectangle :: Affine a => [a] -> Rectangle

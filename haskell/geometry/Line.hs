@@ -17,7 +17,7 @@ import Base
 ------------------------------------------------------------
 
 -- | Class representing a linear object: line, ray or segment.
-class IsLine l where
+class (Curve l, Affine l, Figure l) => IsLine l where
   refPoints :: l -> (CN, CN)
 
   asLine :: l -> Line
@@ -82,7 +82,7 @@ instance Manifold Line where
   unit = norm
 
 
-instance Oriented Line where
+instance Curve Line where
   tangent l _ = angle l
   
 
@@ -107,7 +107,7 @@ newtype Ray = Ray (CN, CN)
   deriving ( Eq
            , Affine
            , Trans
-           , Oriented
+           , Curve
            , Figure
            , IsLine
            ) via Line
@@ -136,7 +136,7 @@ newtype Segment = Segment (CN, CN)
   deriving ( Eq
            , Affine
            , Trans
-           , Oriented
+           , Curve
            , Figure
            , IsLine
            ) via Line

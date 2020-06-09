@@ -69,11 +69,11 @@ point' :: Affine a => a -> Point
 point' p = mkPoint (cmp p)
 
 -- | The point on a given curve.
-pointOn :: Curve a => a -> Double -> Point
+pointOn :: Manifold a => a -> Double -> Point
 pointOn c t = mkPoint (c @-> t)
 
 -- | Returns a normal projection of the given point on the curve.
-projectOn :: (Curve c, Affine p) => p -> c -> Maybe Point
+projectOn :: (Manifold c, Affine p) => p -> c -> Maybe Point
 projectOn p c = pointOn c <$> (p ->@? c)
 
 -- | A point at the origin. Equivalent to `origin`.
@@ -85,7 +85,7 @@ aLabel :: Label
 aLabel = mkLabel origin
 
 -- | Returns a list of intersection points as `Point` objects.
-intersectionPoints :: ( Curve a, Curve b, Intersections a b )
+intersectionPoints :: ( Manifold a, Manifold b, Intersections a b )
                    => a -> b -> [Point]
 intersectionPoints c1 c2 = point' <$> intersections c1 c2
 
@@ -98,7 +98,7 @@ closestTo p ps  = Just $ minimumOn (distance p) ps
 
 -- | The generalized version of `circle`.
 circle' :: Affine a => Double -> a -> Circle
-circle' r p = mkCircleRC r (cmp p)
+circle' r p = mkCircle r (cmp p)
 
 -- | The constructor for a circle with given radius and coordinates.
 circle :: Double -> XY -> Circle
@@ -150,19 +150,19 @@ extendToLength :: Double -> Segment -> Segment
 extendToLength l s = s # through' (paramL (asLine s) l)
 
 -- | Returns a segment extended to a closest intersection point with a given curve.
-extendTo :: (Curve c, Intersections Ray c)
+extendTo :: (Manifold c, Intersections Ray c)
          => c -> Segment -> Maybe Segment
 extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
   where extend p = s # through' p
 
 -- | Returns a segment normal to a given curve starting at given point.
-heightTo :: (Affine p, Curve c, Intersections Ray c)
+heightTo :: (Affine p, Manifold c, Intersections Ray c)
          => c -> p -> Maybe Segment
 heightTo c p = (aSegment # at' p # normalTo c) >>= extendTo c
 
 -- | Returns a list of segments as a result of clipping the line
 -- by a closed curve.
-clipBy :: (IsLine l, Intersections l c, Figure c, Curve c)
+clipBy :: (IsLine l, Intersections l c, Figure c, ClosedCurve c)
        => l -> c -> [Segment]
 clipBy l c = filter internal $ Segment <$> zip ints (tail ints) 
   where
@@ -273,7 +273,7 @@ normalTo c l = turn <*> Just l
 
 
 -- | Reflects the curve  at a given parameter against the normal, if it exists, or does nothing otherwise.
-flipAt :: (Trans c, Curve c) => Double -> c -> c
+flipAt :: (Curve c) => Double -> c -> c
 flipAt x c = case normalSegment c x of
                Just n -> c # reflectAt n
                Nothing -> c
@@ -299,7 +299,7 @@ polarPoly rho range =
 
 -- | Constructs a regular polygon with given number of sides, enscribed in a unit circle.
 regularPoly :: Int -> Polygon
-regularPoly n' = rotate 90 $ closePoly $
+regularPoly n' = rotate 90 $ closePolyline $
                  polarPoly (const 1) [0,1/n..1-1/n]
   where n = fromIntegral n'
 
@@ -329,11 +329,7 @@ height p n = aSegment
              #! normalTo (asLine (side p n))
 
 vertexAngle :: IsPolyline p => p -> Int -> Angle
-vertexAngle p i = (segments p !! j) `angleBetween` (segments p !! (j-1))
-  where j = if isClosed p
-            then i `mod` n
-            else (1 `max` i) `min` (n-1)
-        n = length (segments p)
+vertexAngle p j = side p j `angleBetween` side p (j-1)
 
 ------------------------------------------------------------
 

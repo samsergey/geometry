@@ -123,16 +123,17 @@ instance Manifold a => Manifold (Decorated a) where
   project = project . fromDecorated
   paramMaybe = paramMaybe . fromDecorated
   projectMaybe = projectMaybe . fromDecorated
-  isClosed = isClosed . fromDecorated
   isContaining = isContaining . fromDecorated
   unit = unit . fromDecorated
 
 instance Curve a => Curve (Decorated a) where
   tangent = tangent . fromDecorated
   normal = normal . fromDecorated
-  orientation = orientation . fromDecorated
+
+instance ClosedCurve a => ClosedCurve (Decorated a) where
   isEnclosing = isEnclosing . fromDecorated
   location = location . fromDecorated
+
 
 instance Figure a => Figure (Decorated a) where
   isTrivial = isTrivial . fromDecorated
@@ -146,6 +147,7 @@ instance IsCircle a => IsCircle (Decorated a) where
   radius = radius . fromDecorated
   center = center . fromDecorated
   phaseShift = phaseShift . fromDecorated
+  orientation = orientation . fromDecorated
 
 instance IsPolyline a => IsPolyline (Decorated a) where
   vertices = vertices . fromDecorated
@@ -241,6 +243,6 @@ lpos :: Decor a => CN -> Decorator a
 lpos = mkDecorator LabelPosition
 
 -- | The decorator for setting label on a curve at a given parameter value.
-lparam :: (Curve a, Decor a) => Double -> Decorator a
+lparam :: (Manifold a, Decor a) => Double -> Decorator a
 lparam x = Decorator $ \f -> f #: lpos (f @-> x)
 

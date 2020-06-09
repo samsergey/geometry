@@ -2,6 +2,7 @@
 {-# Language FlexibleInstances #-}
 {-# Language MultiParamTypeClasses #-}
 {-# Language GeneralizedNewtypeDeriving #-}
+{-# Language ConstraintKinds #-}
 
 module Base
   ( -- * Types
@@ -33,7 +34,7 @@ module Base
   , scale, scaleX, scaleY, scaleAt', scaleXAt', scaleYAt'
   , rotate, rotateAt', reflect, reflectAt
   -- ** Curves
-  , Manifold (..), Oriented (..), ClosedCurve(..), PointLocation (..)
+  , Manifold (..), Curve (..), ClosedCurve(..), PointLocation (..)
   , (->@), (->@?), (@->), (@->?)
   , start, paramL, projectL, distanceTo
   -- ** Figures
@@ -480,7 +481,7 @@ data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 -- prop>  not isFinite c      ==>  (project c . param c) x == x
 -- prop>  c `isContaining` p  ==>  (param c . project c) p == p
 --
-class Manifold c => Oriented c where
+class (Trans c, Manifold c) => Curve c where
   {-# MINIMAL normal | tangent #-}
 
   -- | The tangent direction for a given parameter on the curve.
@@ -490,10 +491,9 @@ class Manifold c => Oriented c where
   -- | The normal direction for a given parameter on the curve.
   normal :: c -> Double -> Angular
   normal c t = tangent c t + 90
-  
 
 -- |  Class representing a closed region
-class Manifold c => ClosedCurve c where
+class Curve c => ClosedCurve c where
   {-# MINIMAL location | isEnclosing #-}
   
   -- | Returns the location of a point with respect to the region.

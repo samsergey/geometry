@@ -72,9 +72,10 @@ instance Manifold Circle where
   unit _ = 2 * pi
 
 
-instance Oriented Circle where
+instance Curve Circle where
   normal c t = azimuth (center c) (c @-> t)
   tangent c t = normal c t + 90 * orientation c
+
 
 instance ClosedCurve Circle where
   location c p = res

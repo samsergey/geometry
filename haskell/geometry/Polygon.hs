@@ -12,7 +12,7 @@ module Polygon
   , Polyline (..)
   , mkPolyline, trivialPolyline
   , Polygon (..)
-  , mkPolygon, trivialPolygon
+  , mkPolygon, trivialPolygon, closePolyline
   , Triangle (..)
   , mkTriangle, trivialTriangle
   , Rectangle (..)
@@ -32,7 +32,7 @@ import Base
 import Point
 import Line
 
-class Oriented p => IsPolyline p where
+class Curve p => IsPolyline p where
   vertices :: p -> [CN]
   asPolyline :: p -> Polyline
   
@@ -53,7 +53,6 @@ class Oriented p => IsPolyline p where
   side p i = segments p !! j
     where j = (0 `max` i) `min` n
           n = verticesNumber p         
- 
 
 isDegenerate :: IsPolyline p => p -> Bool
 isDegenerate = any isZero . segments 
@@ -119,7 +118,7 @@ instance Manifold Polyline where
   unit p = sum $ unit <$> segments p
 
 
-instance Oriented Polyline where
+instance Curve Polyline where
   tangent p t =  (p @-> (t + dt)) `azimuth` (p @-> (t - dt))
     where dt = 1e-5
 
@@ -139,7 +138,7 @@ newtype Polygon = Polygon [CN]
   deriving ( Eq
            , Trans
            , Affine
-           , Oriented
+           , Curve
            , Figure
            ) via Polyline
 
@@ -149,6 +148,10 @@ trivialPolygon = Polygon []
 mkPolygon :: Affine a => [a] -> Polygon
 mkPolygon = Polygon . fmap cmp
 
+closePolyline :: Polyline -> Polygon
+closePolyline p = Polygon $
+              if last vs == head vs then (init vs) else vs
+  where vs = vertices p
 
 instance IsPolyline Polygon where
   asPolyline p = Polyline $ take (length vs + 1) (cycle vs)
@@ -191,7 +194,7 @@ instance ClosedCurve Polygon where
 newtype Triangle = Triangle [CN]
   deriving ( Figure
            , Manifold
-           , Oriented
+           , Curve
            , ClosedCurve
            , Trans
            , Eq
@@ -216,7 +219,7 @@ instance Affine Triangle where
 newtype Rectangle = Rectangle [CN]
   deriving ( Figure
            , Manifold
-           , Oriented
+           , Curve
            , ClosedCurve
            , Trans
            , Eq

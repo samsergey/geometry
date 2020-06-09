@@ -22,10 +22,11 @@ import Decorations
 ------------------------------------------------------------
 -- | Class provides `intersections` function returning a list (possible empty)
 -- of intersection points (co-dimension 1).
-class (Curve a, Curve b) => Intersections a b where
+class (Manifold a, Manifold b) => Intersections a b where
   intersections' :: a -> b -> [CN]
 
-intersections :: Intersections a b => a -> b -> [CN]
+intersections :: (Figure a, Figure b, Intersections a b)
+  => a -> b -> [CN]
 intersections a b  
   | isTrivial a = filter (isContaining b) [refPoint a]
   | isTrivial b = filter (isContaining a) [refPoint b]
@@ -35,7 +36,7 @@ intersections a b
     intersections' a b
 
 -- | Returns `True` if tho curves have intersection points.
-isIntersecting :: Intersections a b => a -> b -> Bool
+isIntersecting :: (Figure a, Figure b, Intersections a b) => a -> b -> Bool
 isIntersecting a b = not . null $ intersections a b
 
 ------------------------------------------------------------
@@ -65,7 +66,7 @@ instance Intersections Line Line where
   intersections' l1 l2
     | l2 `isContaining` refPoint l1 = [refPoint l1]
     | l1 `isContaining` refPoint l2 = [refPoint l2]
-    | otherwise = intersectionLL (refPoint l1) (cmp l1) (refPoint l2) (cmp l2)
+    | otherwise = lineIntersection l1 l2
 
 instance Intersections Line Circle  where
   intersections' l cir =
@@ -77,7 +78,7 @@ instance Intersections Line Circle  where
       a = angle l
 
 instance Intersections Line Polyline where
-  intersections' l = foldMap (intersections' l) . segments . closePoly
+  intersections' l = foldMap (intersections' l) . segments
 
 ------------------------------------------------------------
 
@@ -95,7 +96,7 @@ instance Intersections Circle Circle where
       a = azimuth c1 c2
 
 instance Intersections Circle Polyline where
-  intersections' c = foldMap (intersections' c) . segments . closePoly
+  intersections' c = foldMap (intersections' c) . segments
 
 ------------------------------------------------------------
 
@@ -106,12 +107,12 @@ instance Intersections Polyline Circle where
   intersections' = flip intersections'
   
 instance Intersections Polyline Polyline where
-  intersections' p = foldMap (intersections' p) . segments . closePoly
+  intersections' p = foldMap (intersections' p) . segments
 
 ------------------------------------------------------------
 
 deriving via Line instance
-  (Curve a, Intersections a Line) => Intersections a Ray
+  (Manifold a, Intersections a Line) => Intersections a Ray
 
 instance Intersections Ray Line where
   intersections' = intersections' . asLine 
@@ -125,7 +126,7 @@ instance Intersections Ray Circle where
 ------------------------------------------------------------
 
 deriving via Line instance
-  (Curve a, Intersections a Line) => Intersections a Segment
+  (Manifold a, Intersections a Line) => Intersections a Segment
 
 instance Intersections Segment Line where
   intersections' = intersections' . asLine 
@@ -139,7 +140,7 @@ instance Intersections Segment Circle where
 ------------------------------------------------------------
 
 deriving via Polyline instance
-  (Curve a, Intersections a Polyline) => Intersections a Polygon
+  (Manifold a, Intersections a Polyline) => Intersections a Polygon
 
 instance Intersections Polygon Line  where
   intersections' = intersections' . asPolyline
@@ -153,7 +154,7 @@ instance Intersections Polygon Circle  where
 ------------------------------------------------------------
 
 deriving via Polygon instance
-  (Curve a, Intersections a Polyline) => Intersections a Triangle
+  (Manifold a, Intersections a Polyline) => Intersections a Triangle
 
 instance Intersections Triangle Line  where
   intersections' = intersections' . asPolyline
@@ -167,7 +168,7 @@ instance Intersections Triangle Circle  where
 ------------------------------------------------------------
 
 deriving via Polygon instance
-  (Curve a, Intersections a Polyline) => Intersections a Rectangle
+  (Manifold a, Intersections a Polyline) => Intersections a Rectangle
 
 instance Intersections Rectangle Line  where
   intersections' = intersections' . asPolyline

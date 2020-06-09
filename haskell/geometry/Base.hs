@@ -183,8 +183,8 @@ instance Trans a => Trans (Maybe a) where
 
 
 -- | Returns 1 if transformation preserves curve orientation, and -1 otherwise.
-transformOrientation :: TMatrix -> Bool
-transformOrientation ((a,b,_),(c,d,_)) = det ((a,b),(c,d)) > 0
+transformOrientation :: TMatrix -> Double
+transformOrientation ((a,b,_),(c,d,_)) = signum $ det ((a,b),(c,d))
 
 -- | The rotation matrix.
 rotateT :: Double -> TMatrix
@@ -481,25 +481,16 @@ data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 -- prop>  c `isContaining` p  ==>  (param c . project c) p == p
 --
 class Manifold c => Oriented c where
-  {-# MINIMAL (normal | tangent), orientation, setOrientation #-}
+  {-# MINIMAL normal | tangent #-}
 
   -- | The tangent direction for a given parameter on the curve.
   tangent :: c -> Double -> Angular
-  tangent c t = normal c t - 90 * bool (-1) 1 (orientation c)
+  tangent c t = normal c t - 90
 
   -- | The normal direction for a given parameter on the curve.
   normal :: c -> Double -> Angular
-  normal c t = tangent c t + 90 * bool (-1) 1 (orientation c)
-
-  -- | Returns the orientation of a curve.
-  -- Orientation affects the direction of tangent and normal vectors.
-  orientation :: c -> Bool
-
-  orientationSign :: c -> Double
-  orientationSign = bool (-1) 1 . orientation 
-
-  -- | Setter for the orientation of a curve.
-  setOrientation :: Bool -> c -> c
+  normal c t = tangent c t + 90
+  
 
 -- |  Class representing a closed region
 class Manifold c => ClosedCurve c where

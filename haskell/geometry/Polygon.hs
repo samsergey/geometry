@@ -10,7 +10,7 @@ module Polygon
     IsPolyline (..)
   , isDegenerate
   , Polyline (..)
-  , mkPolyline, trivialPolyline, closePoly
+  , mkPolyline, trivialPolyline
   , Polygon (..)
   , mkPolygon, trivialPolygon
   , Triangle (..)
@@ -40,9 +40,8 @@ class Oriented p => IsPolyline p where
   verticesNumber p = length (vertices p)
 
   segments :: p -> [Segment]
-  segments p = (Segment . (, o)) <$> zip vs (tail vs)
+  segments p = Segment <$> zip vs (tail vs)
     where vs = vertices p
-          o = orientation p
 
   vertex :: p -> Int -> CN
   vertex p i = vs !! j
@@ -69,21 +68,17 @@ interpolation p x = param' <$> find interval tbl
 
 ------------------------------------------------------------
 
-newtype Polyline = Polyline ([CN], Bool)
+newtype Polyline = Polyline [CN]
 
 instance IsPolyline Polyline where
-  vertices (Polyline (vs, _)) = vs
+  vertices (Polyline vs) = vs
   asPolyline = id
   
 trivialPolyline :: Polyline
-trivialPolyline = Polyline ([], True)
+trivialPolyline = Polyline []
 
 mkPolyline :: Affine a => [a] -> Polyline
-mkPolyline pts = Polyline (cmp <$> pts, True)
-
-closePoly :: Polyline -> Polygon
-closePoly p = Polygon (vertices p, orientation p)
-
+mkPolyline = Polyline . fmap cmp
 
 instance Show Polyline where
   show p = concat ["<Polyline ", n, ">"]
@@ -94,8 +89,7 @@ instance Show Polyline where
 
 
 instance Eq Polyline where
-  p1 == p2 = vertices p1 ~== vertices p2 &&
-             orientation p1 == orientation p2
+  p1 == p2 = vertices p1 ~== vertices p2
 
 
 instance Affine Polyline where
@@ -106,8 +100,7 @@ instance Affine Polyline where
 
 
 instance Trans Polyline where
-  transform t (Polyline (vs, o)) = Polyline (vs', o)
-    where vs' = transform t <$> vs
+  transform t p = Polyline $ transform t <$> vertices p
 
 
 instance Manifold Polyline where
@@ -127,8 +120,6 @@ instance Manifold Polyline where
 
 
 instance Oriented Polyline where
-  orientation (Polyline (_, o)) = o
-  setOrientation o (Polyline (ps, _)) = Polyline (ps, not o)
   tangent p t =  (p @-> (t + dt)) `azimuth` (p @-> (t - dt))
     where dt = 1e-5
 
@@ -144,7 +135,7 @@ instance Figure Polyline where
 
 ------------------------------------------------------------
 
-newtype Polygon = Polygon ([CN], Bool)
+newtype Polygon = Polygon [CN]
   deriving ( Eq
            , Trans
            , Affine
@@ -153,16 +144,15 @@ newtype Polygon = Polygon ([CN], Bool)
            ) via Polyline
 
 trivialPolygon :: Polygon
-trivialPolygon = Polygon ([], True)
+trivialPolygon = Polygon []
 
 mkPolygon :: Affine a => [a] -> Polygon
-mkPolygon pts = Polygon (cmp <$> pts, True)
+mkPolygon = Polygon . fmap cmp
 
 
 instance IsPolyline Polygon where
-  asPolyline p = Polyline (take (length vs + 1) (cycle vs), o)
+  asPolyline p = Polyline $ take (length vs + 1) (cycle vs)
     where vs = vertices p
-          o = orientation p
   vertices = vertices . asPolyline
 
 
@@ -198,7 +188,7 @@ instance ClosedCurve Polygon where
 
 ------------------------------------------------------------
 
-newtype Triangle = Triangle ([CN], Bool)
+newtype Triangle = Triangle [CN]
   deriving ( Figure
            , Manifold
            , Oriented
@@ -209,9 +199,9 @@ newtype Triangle = Triangle ([CN], Bool)
            ) via Polygon
 
 mkTriangle :: Affine a => [a] -> Triangle
-mkTriangle ps = Triangle (cmp <$> ps, True)
+mkTriangle = Triangle . fmap cmp
 
-trivialTriangle = Triangle ([], True)
+trivialTriangle = Triangle []
 
 instance Show Triangle where
   show t = concat ["<Triangle ", ss, ">"]
@@ -223,7 +213,7 @@ instance Affine Triangle where
 
 ------------------------------------------------------------
 
-newtype Rectangle = Rectangle ([CN], Bool)
+newtype Rectangle = Rectangle [CN]
   deriving ( Figure
            , Manifold
            , Oriented
@@ -234,9 +224,9 @@ newtype Rectangle = Rectangle ([CN], Bool)
            ) via Polygon
 
 mkRectangle :: Affine a => [a] -> Rectangle
-mkRectangle ps = Rectangle (cmp <$> ps, True)
+mkRectangle = Rectangle . fmap cmp
 
-trivialRectangle = Rectangle ([], False)
+trivialRectangle = Rectangle []
 
 instance Show Rectangle where
   show t = concat ["<Rectangle ", ss, ">"]

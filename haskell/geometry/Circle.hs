@@ -1,11 +1,9 @@
-{-# Language RecordWildCards #-}
-{-# Language MultiParamTypeClasses #-}
-{-# Language FlexibleInstances, FlexibleContexts, UndecidableInstances #-}
+
 module Circle
   (-- * Types and classes
     Circle, IsCircle (..)
     -- * Constructors
-  , trivialCircle, mkCircle, mkCircleRC
+  , trivialCircle, mkCircle
   ) where
 
 import Data.Complex
@@ -17,87 +15,66 @@ import Polygon
 import Data.Semigroup
 
 -- | Class for circle and decorated circle
-class Manifold c => IsCircle c where
+class IsCircle c where
   -- | Center of the circle.
   center :: c -> CN
   -- | Radius of the circle
   radius :: c -> Double
   -- | The angle of the starting point.
   phaseShift :: c -> Angular
+  -- | The orientation of the circle (positive -- CCW).
+  orientation :: c -> Angular
 
--- | Represents a circle with given center, passing through given point.
-newtype Circle = Circle ((CN, CN, CN), CN, Bool)
-
-zeroPoint (Circle ((p, _, _), _, _)) = p
+-- | Represents a circle with given center, radius vector and tangent direction.
+data Circle = Circle CN CN Double
+  deriving Show
 
 instance IsCircle Circle where
-  center (Circle (_, c, _)) = c
-  radius c = distance (center c) (zeroPoint c)  
-  phaseShift c = azimuth (center c) (zeroPoint c)
+  center (Circle c _ _) = c
+  radius (Circle _ r _) = norm r
+  orientation (Circle _ _ o) = asDeg (signum o)
+  phaseShift (Circle _ r _) = angle r
 
 -- | The trivial circle with zero radius.
 trivialCircle :: Circle
-trivialCircle = mkCircleRC 0 0
-
--- | The constructor for a circle with given center and starting point.
-mkCircle :: (CN, CN, CN) -> Circle
-mkCircle (p1, p2, p3)
-  | isDegenerate t = Circle ((p1, p2, p3), p1, True)
-  | otherwise = Circle ((p1, p2, p3), c, True)
-  where
-    t = mkTriangle [p1, p2, p3]
-    mp1 = midPerpendicular (side t 0)
-    mp2 = midPerpendicular (side t 1)
-    c = head (lineIntersection mp1 mp2)
-
+trivialCircle = mkCircle 0 0
 
 -- | The constructor for a circle with given center and radius.
--- The starting point is located at zero angle.
-mkCircleRC :: Double -> CN -> Circle
-mkCircleRC r c = mkCircle (c + (r :+ 0), c + (0 :+ r), c - (r :+ 0))
-
-
-instance Show Circle where
-  show c = concat ["<mkCircleRC ", r, " ", cn, ">"]
-    where r = show $ radius c
-          cn = show $ center c
-
+-- The radius-vector has zero angle, and circle is CCW-oriented.
+mkCircle :: Double -> CN -> Circle
+mkCircle r c = Circle c (r:+0) 1 
 
 instance Eq Circle where
   c1 == c2 = radius c1 ~== radius c2 &&
              center c1 ~== center c2 &&
-             orientation c1 ~== orientation c2 
+             phaseShift c1 ~== phaseShift c2 
 
 
 instance Trans Circle where
-  transform t (Circle ((p1, p2, p3), o)) =
-    mkCircle (p1', p2', p3') # setOrientation o
-    where p1' = transformCN t p1
-          p2' = transformCN t p2
-          p3' = transformCN t p3
+  transform t (Circle c r o) = Circle c' r' o'
+    where c' = transformCN t c
+          r' = transformCN t (c + r) - c'
+          o' = transformOrientation t * o
 
 
 instance Manifold Circle where
-  param cir t = center cir + mkPolar (radius cir) x
+  param c t = center c + mkPolar (radius c) x
     where
-      ph = turns $ phaseShift cir
-      x = rad . asTurns $ t + ph
+      ph = turns $ phaseShift c
+      x = rad . asTurns $ ph + t * (turns (orientation c))
     
-  project cir p = turns (x - ph)
+  project c p = turns (x - ph)
     where
-      ph = phaseShift cir
-      x = azimuth (center cir) p 
+      ph = phaseShift c
+      x = orientation c * azimuth (center c) p 
 
   isContaining c p = distance p (center c) ~== radius c
   unit _ = 2 * pi
 
 
 instance Oriented Circle where
-  orientation (Circle (_, _, o)) = o
-  setOrientation (Circle (ps, c, _)) o = Circle (ps, c, o)
-  normal c t = o * azimuth (center c) (c @-> t)
-    where o = bool (-1) 1 (orientation c)
-
+  normal c t = azimuth (center c) (c @-> t)
+  tangent c t = normal c t + 90 * orientation c
 
 instance ClosedCurve Circle where
   location c p = res

@@ -3,20 +3,16 @@
 {-# language FlexibleContexts #-}
 {-# language UndecidableInstances #-}
 {-# language DerivingVia #-}
+{-# language GeneralizedNewtypeDeriving #-}
 {-# language TupleSections #-}
 
 module Polygon
   (
-    IsPoly (..)
-  , isDegenerate
-  , Polyline (..)
-  , mkPolyline, trivialPolyline
-  , Polygon (..)
-  , mkPolygon, trivialPolygon, closePolyline
-  , Triangle (..)
-  , mkTriangle, trivialTriangle
-  , Rectangle (..)
-  , mkRectangle, trivialRectangle
+    IsPoly (..), isDegenerate
+  , Polyline (..), mkPolyline, trivialPolyline
+  , Polygon (..), mkPolygon, trivialPolygon, closePolyline
+  , Triangle (..), mkTriangle
+  , Rectangle (..), mkRectangle
   , boxRectangle
   )
 where
@@ -55,7 +51,7 @@ class Curve p => IsPoly p where
     where j = (0 `max` i) `min` n
           n = verticesNumber p         
 
--- | A predicate. Returns `True` if any of polyline's  segment has zero length.
+-- | A predicate. Returns `True` if any of polyline's segment has zero length.
 isDegenerate :: IsPoly p => p -> Bool
 isDegenerate = any isZero . segments 
 
@@ -67,6 +63,9 @@ interpolation p x = param' <$> find interval tbl
     tbl = zip (zip ds (tail ds)) $ segments p
     ds = scanl (+) 0 $ unit <$> segments p
 
+instance IsPoly Segment where
+  vertices s = let (p1,p2) = refPoints s in [p1,p2]
+  asPolyline = Polyline . vertices
 ------------------------------------------------------------
 
 -- | Representation of a polygonal chain as a list of vertices.
@@ -75,10 +74,12 @@ newtype Polyline = Polyline [CN]
 instance IsPoly Polyline where
   vertices (Polyline vs) = vs
   asPolyline = id
-  
-trivialPolyline :: Polyline
-trivialPolyline = Polyline []
 
+-- | Creates an empty polyline.
+trivialPolyline :: Polyline
+trivialPolyline = mempty
+
+-- | The main polyline constructor.
 mkPolyline :: Affine a => [a] -> Polyline
 mkPolyline = Polyline . fmap cmp
 
@@ -93,6 +94,11 @@ instance Show Polyline where
 instance Eq Polyline where
   p1 == p2 = vertices p1 ~== vertices p2
 
+instance Semigroup Polyline where
+  p1 <> p2 = Polyline $ vertices p1 <> vertices p2
+
+instance Monoid Polyline where
+  mempty = Polyline []
 
 instance Affine Polyline where
   cmp p = case segments p of
@@ -137,6 +143,7 @@ instance Figure Polyline where
 
 ------------------------------------------------------------
 
+-- | Representation of a closed polygon as a list of vertices.
 newtype Polygon = Polygon [CN]
   deriving ( Eq
            , Trans
@@ -145,12 +152,15 @@ newtype Polygon = Polygon [CN]
            , Figure
            ) via Polyline
 
+-- | Creates an empty polyline.
 trivialPolygon :: Polygon
 trivialPolygon = Polygon []
 
+-- | The main polyline constructor.
 mkPolygon :: Affine a => [a] -> Polygon
 mkPolygon = Polygon . fmap cmp
 
+-- | Turns a polyline to a polygon with the same vertices.
 closePolyline :: Polyline -> Polygon
 closePolyline p = Polygon $
               if last vs == head vs then (init vs) else vs
@@ -198,6 +208,7 @@ instance ClosedCurve Polygon where
 
 ------------------------------------------------------------
 
+-- | Representation of a triangle as a list of vertices.
 newtype Triangle = Triangle [CN]
   deriving ( Figure
            , Manifold
@@ -208,10 +219,9 @@ newtype Triangle = Triangle [CN]
            , IsPoly
            ) via Polygon
 
+-- | The main triangle constructor.
 mkTriangle :: Affine a => [a] -> Triangle
 mkTriangle = Triangle . fmap cmp
-
-trivialTriangle = Triangle []
 
 instance Show Triangle where
   show t = concat ["<Triangle ", ss, ">"]
@@ -223,6 +233,7 @@ instance Affine Triangle where
 
 ------------------------------------------------------------
 
+-- | Representation of a rectangle as a list of vertices.
 newtype Rectangle = Rectangle [CN]
   deriving ( Figure
            , Manifold
@@ -233,10 +244,10 @@ newtype Rectangle = Rectangle [CN]
            , IsPoly
            ) via Polygon
 
-mkRectangle :: Affine a => [a] -> Rectangle
-mkRectangle = Rectangle . fmap cmp
-
-trivialRectangle = Rectangle []
+-- | The main rectangle constructor, uses two side lengths and guarantees
+-- that polygon will have right angles.
+mkRectangle :: Double -> Double -> Rectangle
+mkRectangle a b = (asCmp 1 :: Rectangle) # scaleX a # scaleY b
 
 instance Show Rectangle where
   show t = concat ["<Rectangle ", ss, ">"]
@@ -244,8 +255,7 @@ instance Show Rectangle where
 
 instance Affine Rectangle where
   cmp = cmp . asPolyline
-  asCmp = mkRectangle . scanl (+) 0 . take 3 . iterate (rotate 90)
+  asCmp = Rectangle . scanl (+) 0 . take 3 . iterate (rotate 90)
 
-
-boxRectangle f = mkRectangle [ p4, p3, p2, p1 ]
+boxRectangle f = Rectangle [ p4, p3, p2, p1 ]
   where ((p4,p3),(p1,p2)) = corner f

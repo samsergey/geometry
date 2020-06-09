@@ -149,7 +149,7 @@ instance IsCircle a => IsCircle (Decorated a) where
   phaseShift = phaseShift . fromDecorated
   orientation = orientation . fromDecorated
 
-instance IsPolyline a => IsPolyline (Decorated a) where
+instance IsPoly a => IsPoly (Decorated a) where
   vertices = vertices . fromDecorated
   asPolyline = asPolyline . fromDecorated
 

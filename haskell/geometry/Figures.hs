@@ -319,16 +319,16 @@ aRectangle a b = aSquare # scaleX a . scaleY b
 triangle2a :: Angular -> Angular -> Triangle
 triangle2a a1 a2 = case intersections r1 r2 of
                     [p] -> mkTriangle [(0,0), (1,0), coord p]
-                    [] -> trivialTriangle
+                    [] -> mkTriangle @XY [(0,0), (1,0), (0,0)]
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
-height :: IsPolyline p => p -> Int -> Segment
+height :: IsPoly p => p -> Int -> Segment
 height p n = aSegment
              # at' (vertex p n)
              #! normalTo (asLine (side p n))
 
-vertexAngle :: IsPolyline p => p -> Int -> Angle
+vertexAngle :: IsPoly p => p -> Int -> Angle
 vertexAngle p j = side p j `angleBetween` side p (j-1)
 
 ------------------------------------------------------------

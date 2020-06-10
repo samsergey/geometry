@@ -8,11 +8,16 @@
 
 module Polygon
   (
-    IsPoly (..), isDegenerate
-  , Polyline (..), mkPolyline, trivialPolyline
-  , Polygon (..), mkPolygon, trivialPolygon, closePolyline
-  , Triangle (..), mkTriangle
-  , Rectangle (..), mkRectangle
+    IsPoly (..)
+  , isDegenerate
+  , Polyline (..)
+  , mkPolyline, trivialPolyline
+  , Polygon (..)
+  , mkPolygon, trivialPolygon, closePolyline
+  , Triangle (..)
+  , mkTriangle
+  , Rectangle (..)
+  , mkRectangle
   , boxRectangle
   )
 where
@@ -29,26 +34,49 @@ import Point
 import Line
 
 -- | A class for polylines and polygons.
-class Curve p => IsPoly p where
+-- Within instances of `IsPoly` class there are affine points and segments.
+--
+-- >>> asPolyline (1 :: CN)
+-- <Polyline (1.0,0.0)>
+--
+-- >>> isDegenerate $ asPolyline (1 :: CN)
+-- True
+--
+-- >>> asPolyline $ Segment (0:+2, 3:+4)
+-- <Polyline (0.0,2.0) (3.0,4.0)>
+--
+-- >>> asPolyline (Segment (0:+2, 3:+4)) <> asPolyline (1 :: CN)
+-- <Polyline (0.0,2.0) (3.0,4.0) (1.0,0.0)>
+-- 
+class IsPoly p where
+  {-# MINIMAL vertices, asPolyline #-}
+  -- | A list of polyline vertices.
   vertices :: p -> [CN]
+  -- | A representation of the instance as a polyline.
   asPolyline :: p -> Polyline
   
+  -- | The number of vertices of a polyline.
   verticesNumber :: p -> Int
   verticesNumber p = length (vertices p)
 
+  -- | The list of segments of a polyline.
   segments :: p -> [Segment]
-  segments p = Segment <$> zip vs (tail vs)
-    where vs = vertices p
+  segments p = case vertices p of
+    [] -> []
+    [x] -> [Segment (x,x)]
+    vs -> Segment <$> zip vs (tail vs)
 
+  -- | The indexed selector for vertices of a polyline.
   vertex :: p -> Int -> CN
   vertex p i = vs !! j
     where vs = vertices p
           n = verticesNumber p
-          j = (0 `max` i) `min` n
+          j = (0 `max` i) `min` (n - 1)
 
+  -- | The indexed selector for sides of a polyline.
   side :: p -> Int -> Segment
   side p i = segments p !! j
-    where j = (0 `max` i) `min` n
+    where j = (0 `max` i) `min` (n - 1)
           n = verticesNumber p         
 
 -- | A predicate. Returns `True` if any of polyline's segment has zero length.
@@ -63,12 +91,41 @@ interpolation p x = param' <$> find interval tbl
     tbl = zip (zip ds (tail ds)) $ segments p
     ds = scanl (+) 0 $ unit <$> segments p
 
+-- | Instantiates as a single segment polyline.
 instance IsPoly Segment where
   vertices s = let (p1,p2) = refPoints s in [p1,p2]
   asPolyline = Polyline . vertices
+
+-- | Instantiates as a single point polyline.
+instance IsPoly CN where
+  vertices x = [x]
+  asPolyline = Polyline . vertices
+
+-- | Instantiates as a single point polyline.
+instance IsPoly XY where
+  vertices x = [cmp x]
+  asPolyline = Polyline . vertices
+
+-- | Instantiates as a single point polyline.
+instance IsPoly Point where
+  vertices x = [cmp x]
+  asPolyline = Polyline . vertices
+
 ------------------------------------------------------------
 
 -- | Representation of a polygonal chain as a list of vertices.
+-- Vector representation of a polyline is given by the first segment of a polyline.
+-- It is used for alignment or creation of polylines.
+--
+-- >>> cmp $ mkTriangle [0, 1:+0, 0:+1]
+-- 1.0 :+ 0.0
+--
+-- >>> asCmp (1 :+ 2) :: Triangle
+-- <Triangle (0.0,0.0) (1.0,2.0) (-1.2320508075688772,1.8660254037844393)>
+--
+-- >>> asCmp (1) :: Rectangle
+-- <Rectangle (0.0,0.0) (1.0,0.0) (1.0,1.0) (0.0,1.0)>
+--
 newtype Polyline = Polyline [CN]
 
 instance IsPoly Polyline where
@@ -81,7 +138,9 @@ trivialPolyline = mempty
 
 -- | The main polyline constructor.
 mkPolyline :: Affine a => [a] -> Polyline
-mkPolyline = Polyline . fmap cmp
+mkPolyline [] = Polyline [0, 0]
+mkPolyline [x] = Polyline [cmp x, cmp x]
+mkPolyline vs = Polyline $ cmp <$> vs
 
 instance Show Polyline where
   show p = concat ["<Polyline ", n, ">"]
@@ -94,11 +153,21 @@ instance Show Polyline where
 instance Eq Polyline where
   p1 == p2 = vertices p1 ~== vertices p2
 
+-- | Addition of polylines, excluding zero segments.
 instance Semigroup Polyline where
-  p1 <> p2 = Polyline $ vertices p1 <> vertices p2
+  p1 <> p2 = Polyline $ vs
+    where
+      vs | null v1 = v2
+         | null v2 = v1
+         | otherwise = v1 <> m v2
+        where
+          v1 = vertices p1
+          v2 = vertices p2
+          m = if last v1 == head v2 then tail else id
 
 instance Monoid Polyline where
   mempty = Polyline []
+
 
 instance Affine Polyline where
   cmp p = case segments p of
@@ -257,5 +326,6 @@ instance Affine Rectangle where
   cmp = cmp . asPolyline
   asCmp = Rectangle . scanl (+) 0 . take 3 . iterate (rotate 90)
 
+-- | Returns a figures' box as a rectangle.
 boxRectangle f = Rectangle [ p4, p3, p2, p1 ]
   where ((p4,p3),(p1,p2)) = corner f

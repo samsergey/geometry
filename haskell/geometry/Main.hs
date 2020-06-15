@@ -6,11 +6,9 @@ import Geometry
 
 import Data.Complex
 
-c = aTriangle
+c = Plot (\x -> (cos (2.5*x), sin (3*x))) (0,4.1*pi)
 
-sc = group (modularScale 3 c)
-
-ch = c <+> sc <+>  (c # scale 1.1 #: invisible)
+ch = asPolyline c
 
 main :: IO ()
 main = writeSVG 350 "test.svg" ch

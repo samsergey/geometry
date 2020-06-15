@@ -63,6 +63,7 @@ instance Arbitrary Point where
 newtype AnyPoint = AnyPoint Point
   deriving (Show, Arbitrary)
 
+------------------------------------------------------------
 
 instance Arbitrary Circle where
   arbitrary = do (Position c) <- arbitrary
@@ -79,6 +80,25 @@ newtype AnyCircle = AnyCircle Circle
   deriving Arbitrary via Nontrivial Circle
 
 ------------------------------------------------------------
+
+instance Arbitrary Angle where
+  arbitrary = do (Position p) <- arbitrary
+                 s <- arbitrary
+                 e <- arbitrary
+                 return $ Angle p s e
+                 
+  shrink an =
+    do Position p <- shrink (Position (refPoint an))
+       s <- shrink (angleStart an)
+       e <- shrink (angleEnd an)
+       return $ Angle p s e
+
+newtype AnyAngle = AnyAngle Angle
+  deriving Show
+  deriving Arbitrary via Nontrivial Angle
+
+------------------------------------------------------------
+
 
 instance Arbitrary Segment where
   arbitrary =

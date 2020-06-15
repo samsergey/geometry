@@ -34,6 +34,7 @@ import Point
 import Circle
 import Polygon
 import Line
+import Angle
 import Figures
 
 showt :: Show a => a -> Text
@@ -179,7 +180,7 @@ deriving via Polygon instance SVGable Rectangle
 ------------------------------------------------------------
 
 instance SVGable Angle where
-  toSVG an ctx = toSVG (poly <+> group arc) ctx' <> labelElement an ctx'
+  toSVG an ctx = toSVG (rays <+> group arc) ctx' <> labelElement an ctx'
     where
       t = extractOption optLabelText (figureOptions ctx)
       label = case t of
@@ -188,7 +189,7 @@ instance SVGable Angle where
         Nothing -> ""
       ctx' = updateOptions (options an <> mkOptions [LabelText label]) ctx
       Just ns = extractOption optMultiStroke (figureOptions ctx')
-      poly = scaleAt' p 20 $ mkPolyline [e, p, s]
+      rays = scaleAt' (refPoint an) 20 $ asPolyline an
       arc = [ mkPolyline [ p + scale r (cmp (asRad x))
                          | x <- [ a1, a1 + 0.05 .. a2]]
             | i <- [1..ns]

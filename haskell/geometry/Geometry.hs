@@ -13,6 +13,8 @@ module Geometry
   , module Circle
    -- ** Definitions of a polygons and triangles.
   , module Polygon
+   -- ** Definitions of an angle mark
+  , module Angle
    -- ** Style settings.
   , module Decorations
    -- ** Curve intersections.
@@ -28,6 +30,7 @@ import Point
 import Circle
 import Line
 import Polygon
+import Angle
 import Decorations
 import Intersections
 import Figures

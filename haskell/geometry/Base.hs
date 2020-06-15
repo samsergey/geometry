@@ -517,7 +517,7 @@ pointBox p = ((Min x, Min y), (Max x, Max y))
 
            
 -- | Class representing the interface for a figure on a chart
-class (Eq a, Trans a) => Figure a where
+class (Trans a) => Figure a where
   {-# MINIMAL isTrivial, refPoint, box #-}
 
   -- | Returns `True` is figure is trivial in a certain sence.
@@ -529,10 +529,6 @@ class (Eq a, Trans a) => Figure a where
 
   -- | Returns a refference point using for superposing and figure locataion.
   refPoint :: a -> CN
-
-  -- | The geometric similarity relation.
-  isSimilar :: a -> a -> Bool
-  isSimilar = (==)
 
   box :: a -> Box
 

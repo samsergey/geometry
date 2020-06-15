@@ -59,10 +59,10 @@ instance Trans Circle where
 
 
 instance Manifold Circle where
-  param c t = center c + mkPolar (radius c) x
+  param c t = center c + mkPolar (radius c) (rad x)
     where
       ph = turns $ phaseShift c
-      x = rad . asTurns $ ph + t * (turns (orientation c))
+      x = asTurns $ ph + t * (deg (orientation c))
     
   project c p = turns (x - ph)
     where
@@ -88,7 +88,6 @@ instance ClosedCurve Circle where
 
 instance Figure Circle where
   isTrivial c = radius c <= 0
-  isSimilar c1 c2 = radius c1 ~== radius c2
   refPoint = center
   box cir = ((Min x1, Min y1), (Max x2, Max y2))
     where c = center cir

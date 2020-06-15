@@ -407,3 +407,4 @@ instance WithOptions Angle where
     , Thickness "1"
     , MultiStroke 1
     , LabelPosition $ refPoint an + scale 27 (cmp (bisectrisse an)) ]
+

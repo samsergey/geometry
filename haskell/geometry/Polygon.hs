@@ -17,6 +17,7 @@ module Polygon
   , Rectangle (..)
   , mkRectangle
   , boxRectangle
+  , Plot (..), plotManifold
   )
 where
 
@@ -32,27 +33,15 @@ import Point
 import Line
 
 -- | A class for polylines and polygons.
--- Within instances of `PiecewiseLinear` class there are affine points and segments.
---
--- >>> asPolyline (1 :: CN)
--- <Polyline (1.0,0.0)>
---
--- >>> isDegenerate $ asPolyline (1 :: CN)
--- True
---
--- >>> asPolyline $ Segment (0:+2, 3:+4)
--- <Polyline (0.0,2.0) (3.0,4.0)>
---
--- >>> asPolyline (Segment (0:+2, 3:+4)) <> asPolyline (1 :: CN)
--- <Polyline (0.0,2.0) (3.0,4.0) (1.0,0.0)>
--- 
-class (Trans p, Manifold p, Curve p, Figure p) =>
+class (Trans p, Manifold p) =>
   PiecewiseLinear p where
-  {-# MINIMAL vertices, asPolyline #-}
+  {-# MINIMAL vertices #-}
   -- | A list of polyline vertices.
   vertices :: p -> [CN]
+  
   -- | A representation of the instance as a polyline.
   asPolyline :: p -> Polyline
+  asPolyline = Polyline . vertices
   
   -- | The number of vertices of a polyline.
   verticesNumber :: p -> Int
@@ -93,7 +82,6 @@ interpolation p x = param' <$> find interval tbl
 -- | Instantiates as a single segment polyline.
 instance PiecewiseLinear Segment where
   vertices s = let (p1,p2) = refPoints s in [p1,p2]
-  asPolyline = Polyline . vertices
 
 ------------------------------------------------------------
 
@@ -151,7 +139,7 @@ instance Semigroup Polyline where
 
 instance Monoid Polyline where
   mempty = Polyline []
-
+  
 
 instance Affine Polyline where
   cmp p = case segments p of
@@ -187,7 +175,6 @@ instance Curve Polyline where
  
 instance Figure Polyline where
   isTrivial p = length (vertices p) < 2
-  isSimilar p1 p2 = p1 == p2
   refPoint p = if isNontrivial p
                then head $ vertices p
                else 0
@@ -314,3 +301,45 @@ instance Affine Rectangle where
 boxRectangle f = Rectangle [ p4, p3, p2, p1 ]
   where ((p4,p3),(p1,p2)) = corner f
 
+------------------------------------------------------------
+
+data Plot = Plot (Double -> XY) (Double, Double)
+
+instance Trans Plot where
+  transform t (Plot f b) = Plot (transform t <$> f) b
+
+instance PiecewiseLinear Plot where
+  vertices p@(Plot _ b) = vertices $ plotManifold b p
+
+instance Curve Plot where
+  tangent p t = asCmp $ (p @-> (t + dt)) - (p @-> (t - dt))
+    where dt = 1e-5
+
+instance Figure Plot where
+  refPoint = start
+  box = box . asPolyline
+  isTrivial = isTrivial . asPolyline
+
+instance Manifold Plot where
+  bounds (Plot _ (a,b)) = [a,b]
+  param (Plot f _) = asCoord . f
+  project _ _ = undefined
+  isContaining _ _ = undefined
+
+
+plotManifold :: Manifold m => (Double, Double) -> m -> Polyline
+plotManifold (a, b) m = Polyline $ pts
+  where
+    pts = clean $ [m @-> a] <> tree a b <> [m @-> b]
+    tree a b | xa `distance` xb < 1e-3 = [xc]
+                 | abs (azimuth xa xc - azimuth xc xb) < asDeg 2 = [xc]
+                 | otherwise = tree a c <> tree c b
+          where
+            c = (a + b) / 2
+            xa = m @-> a
+            xb = m @-> b
+            xc = m @-> c
+    clean (x:y:z:t) | Segment (x,z) `isContaining` y = clean (x:z:t)
+                    | otherwise = x : clean (y:z:t)
+    clean xs = xs
+    

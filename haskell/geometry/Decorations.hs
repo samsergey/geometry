@@ -4,12 +4,10 @@
 {-# language GeneralizedNewtypeDeriving #-}
 {-# language MultiParamTypeClasses #-}
 {-# language DerivingVia #-}
---{-# language DerivingStrategies #-}
-{-# language StandaloneDeriving #-}
 
 module Decorations
   ( -- * Classes
-    Decor (..)
+    WithOptions (..)
     -- * Types and records
   , Options, Option(..)
   , mkOptions, getOptions
@@ -40,6 +38,7 @@ import Circle
 import Angle
 import Polygon
 
+
 -- | Possible SVG options for a figure.
 data Option = Invisible Bool
             | Stroke String
@@ -51,20 +50,20 @@ data Option = Invisible Bool
             | LabelCorner (Int, Int)
             | LabelPosition CN
             | LabelOffset CN
-            | LabelAngle Angular
+            | LabelAngle Direction
             | SegmentMark Int  deriving (Show)
 
 -- | Monoidal options list wrapper. Concatenates dually to a usual list.
 newtype Options = Options (Dual [Option])
   deriving (Semigroup, Monoid, Show)
 
--- | Puts a list of options to a wrapper.
+-- | Puts a list of options to a wrapper.g
 mkOptions = Options . Dual
 -- | Extracts an option list from the `Options` wrapper.
 getOptions (Options (Dual os)) = os
 
 -- | The class of objects which could have decorations.
-class Decor a where
+class WithOptions a where
   -- | Get the decoration data
   options :: a -> Options
   options = defaultOptions
@@ -96,7 +95,7 @@ instance Monad Decorated where
     let Decorated (d', y) = f x
     in Decorated (d <> d', y)
 
-instance Decor (Decorated a) where
+instance WithOptions (Decorated a) where
   options (Decorated (o, _)) = o
   setOptions o' f = Decorated (o', id) <*> f
 
@@ -140,20 +139,20 @@ instance Figure a => Figure (Decorated a) where
   refPoint = refPoint . fromDecorated
   box = box . fromDecorated
 
-instance IsLine l => IsLine (Decorated l) where
+instance Linear l => Linear (Decorated l) where
   refPoints = refPoints . fromDecorated
 
-instance IsCircle a => IsCircle (Decorated a) where
+instance Circular a => Circular (Decorated a) where
   radius = radius . fromDecorated
   center = center . fromDecorated
   phaseShift = phaseShift . fromDecorated
   orientation = orientation . fromDecorated
 
-instance IsPoly a => IsPoly (Decorated a) where
+instance PiecewiseLinear a => PiecewiseLinear (Decorated a) where
   vertices = vertices . fromDecorated
   asPolyline = asPolyline . fromDecorated
 
-instance IsAngle a => IsAngle (Decorated a) where
+instance Angular a => Angular (Decorated a) where
   angleValue = angleValue . fromDecorated
   setValue v = fmap (setValue v)
   angleStart = angleStart . fromDecorated
@@ -173,7 +172,7 @@ instance Semigroup (Decorator a) where
 instance Monoid (Decorator a) where
   mempty = Decorator $ \a -> Decorated (mempty, a)
 
-instance Decor a => IsString (Decorator a) where
+instance WithOptions a => IsString (Decorator a) where
   fromString = label
 
 infixl 5 #:
@@ -185,45 +184,45 @@ infixl 5 #:
 -- >>> segment (4,5) (6,9) #: "s" <> dotted <> white
 -- s:<Segment (4.0,5.0) (6.0,9.0)>
 --
-(#:) :: Decor a => a -> Decorator a -> Decorated a
+(#:) :: WithOptions a => a -> Decorator a -> Decorated a
 a #: (Decorator d) = d a
 
 -- | The stroke color decorator.
-stroke :: Decor a => String -> Decorator a
+stroke :: WithOptions a => String -> Decorator a
 stroke = mkDecorator Stroke
 
 -- | The decorator for white lines.
-white :: Decor a => Decorator a
+white :: WithOptions a => Decorator a
 white = stroke "white"
 
 -- | The fill color decorator.
-fill :: Decor a => String -> Decorator a
+fill :: WithOptions a => String -> Decorator a
 fill = mkDecorator Fill
 
 -- | The stroke-thickness decorator.
-thickness :: Decor a => String -> Decorator a
+thickness :: WithOptions a => String -> Decorator a
 thickness = mkDecorator Thickness
 
 -- | The decorator for thin lines.
-thin :: Decor a => Decorator a
+thin :: WithOptions a => Decorator a
 thin = thickness "1"
 
 -- | The decorator for dashed lines.
-dashed :: Decor a => Decorator a
+dashed :: WithOptions a => Decorator a
 dashed = mkDecorator Dashing "5,5"
 
 -- | The decorator for dotted lines.
-dotted :: Decor a => Decorator a
+dotted :: WithOptions a => Decorator a
 dotted = mkDecorator Dashing "2,3"
 
 -- | The decorator for dotted lines.
 arcs :: Int -> Decorator Angle
 arcs = mkDecorator MultiStroke
 
-visible :: Decor a => Decorator a
+visible :: WithOptions a => Decorator a
 visible = mkDecorator Invisible False
 
-invisible :: Decor a => Decorator a
+invisible :: WithOptions a => Decorator a
 invisible = mkDecorator Invisible True
 
 -- | The decorator for labeling objects. Could be used as overloaded string.
@@ -231,18 +230,18 @@ invisible = mkDecorator Invisible True
 -- >>> aPoint # at (4, 5) #: "A"
 -- A:<Point (4, 5)>
 --
-label :: Decor a => String -> Decorator a
+label :: WithOptions a => String -> Decorator a
 label = mkDecorator LabelText
 
 -- | The decorator for label offset.
-loffs :: Decor a => CN -> Decorator a
+loffs :: WithOptions a => CN -> Decorator a
 loffs = mkDecorator LabelOffset . conjugate
 
 -- | The decorator for label position.
-lpos :: Decor a => CN -> Decorator a
+lpos :: WithOptions a => CN -> Decorator a
 lpos = mkDecorator LabelPosition
 
 -- | The decorator for setting label on a curve at a given parameter value.
-lparam :: (Manifold a, Decor a) => Double -> Decorator a
+lparam :: (Manifold a, WithOptions a) => Double -> Decorator a
 lparam x = Decorator $ \f -> f #: lpos (f @-> x)
 

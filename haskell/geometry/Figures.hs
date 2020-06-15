@@ -42,8 +42,8 @@ import Base
 import Point
 import Circle
 import Line
-import Polygon
 import Angle
+import Polygon
 import Intersections
 import Decorations
  
@@ -162,7 +162,7 @@ heightTo c p = (aSegment # at' p # normalTo c) >>= extendTo c
 
 -- | Returns a list of segments as a result of clipping the line
 -- by a closed curve.
-clipBy :: (IsLine l, Intersections l c, Figure c, ClosedCurve c)
+clipBy :: (Linear l, Intersections l c, Figure c, ClosedCurve c)
        => l -> c -> [Segment]
 clipBy l c = filter internal $ Segment <$> zip ints (tail ints) 
   where
@@ -173,11 +173,11 @@ clipBy l c = filter internal $ Segment <$> zip ints (tail ints)
 ------------------------------------------------------------
 
 -- | The template for an angle with given value
-anAngle :: Angular -> Angle
+anAngle :: Direction -> Angle
 anAngle = Angle 0 0
 
 -- | Returns the angle equal to the angle between thwo lines, located on the first one.
-angleBetween :: (IsLine l1,  IsLine l2) => l1 -> l2 -> Angle
+angleBetween :: (Linear l1,  Linear l2) => l1 -> l2 -> Angle
 angleBetween l1 l2 = anAngle (angle l2 - angle l1)
                      # at' (start l1)
                      # along' l1
@@ -204,7 +204,7 @@ reflex :: Angle -> Angle
 reflex (Angle p s e) = Angle p e s
 
 -- | 
-bisectrisse :: IsAngle a => a -> Ray
+bisectrisse :: Angular a => a -> Ray
 bisectrisse an = aRay
                  # at' (refPoint an)
                  # along' (pi + angleStart an + 0.5*angleValue an)
@@ -227,7 +227,7 @@ scaleYAt :: Trans f => XY -> Double -> (f -> f)
 scaleYAt = scaleYAt'
 
 -- | Rotates  an object  against a given point.
-rotateAt :: Trans f => XY -> Angular -> (f -> f)
+rotateAt :: Trans f => XY -> Direction -> (f -> f)
 rotateAt = rotateAt'
 
 -- | Generalized version of  `at` transformer.
@@ -253,18 +253,18 @@ on :: (Figure f, Affine f, Curve c) => c -> Double -> (f -> f)
 on c x = along' (tangent c x) . at' (c @-> x)
 
 -- | A generalized version of `through`.
-through' :: (Affine p, IsLine l) => p -> (l -> l)
+through' :: (Affine p, Linear l) => p -> (l -> l)
 through' p l = l
                # along' (azimuth p0 p)
                # scaleAt' p0 (distance p0 p / unit l)
   where p0 = start l
 
 -- | Turns and extends the line so that it passes through a given point.
-through :: IsLine l => XY -> (l -> l)
+through :: Linear l => XY -> (l -> l)
 through = through'
 
 -- | If possible, turns the line so that it becomes normal to a given curve, pointing towards a curve.
-normalTo :: (Curve c, IsLine l) => c -> l -> Maybe l
+normalTo :: (Curve c, Linear l) => c -> l -> Maybe l
 normalTo c l = turn <*> Just l
   where s = start l
         turn = if c `isContaining` s
@@ -316,19 +316,19 @@ aRectangle :: Double -> Double -> Rectangle
 aRectangle a b = aSquare # scaleX a . scaleY b
 
 -- | Returns a triangle with base 1 and two given angles.
-triangle2a :: Angular -> Angular -> Triangle
+triangle2a :: Direction -> Direction -> Triangle
 triangle2a a1 a2 = case intersections r1 r2 of
                     [p] -> mkTriangle [(0,0), (1,0), coord p]
                     [] -> mkTriangle @XY [(0,0), (1,0), (0,0)]
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
-height :: IsPoly p => p -> Int -> Segment
+height :: PiecewiseLinear p => p -> Int -> Segment
 height p n = aSegment
              # at' (vertex p n)
              #! normalTo (asLine (side p n))
 
-vertexAngle :: IsPoly p => p -> Int -> Angle
+vertexAngle :: PiecewiseLinear p => p -> Int -> Angle
 vertexAngle p j = side p j `angleBetween` side p (j-1)
 
 ------------------------------------------------------------
@@ -352,7 +352,7 @@ modularScale n = linearScale lf rng
 
 ------------------------------------------------------------
 
-instance Decor Point where
+instance WithOptions Point where
   defaultOptions p = mkOptions
     [ LabelPosition $ cmp p
     , LabelOffset (0 :+ 1)
@@ -362,14 +362,14 @@ instance Decor Point where
     , Fill "red"
     , Thickness "1" ]
 
-instance Decor Label where
+instance WithOptions Label where
   defaultOptions p = mkOptions
     [ LabelPosition $ cmp p
     , LabelOffset 0
     , LabelCorner (0, 0)
     , LabelAngle 0 ]
 
-instance Decor Circle where
+instance WithOptions Circle where
   defaultOptions c = mkOptions
     [ LabelPosition $ c @-> 0
     , LabelOffset $ cmp $ normal c 0
@@ -379,7 +379,7 @@ instance Decor Circle where
     , Fill "none"
     , Thickness "2" ]
 
-instance Decor Line where
+instance WithOptions Line where
   defaultOptions l = mkOptions
     [ LabelPosition $ l @-> 0.5
     , LabelOffset $ cmp $ normal l 0
@@ -387,20 +387,20 @@ instance Decor Line where
     , Fill "none"
     , Thickness "2" ]
 
-deriving via Line instance Decor Ray
-deriving via Line instance Decor Segment
+deriving via Line instance WithOptions Ray
+deriving via Line instance WithOptions Segment
 
-instance Decor Polyline where
+instance WithOptions Polyline where
   defaultOptions _ = mkOptions
     [ Stroke "orange"
     , Fill "none"
     , Thickness "2" ]
 
-deriving via Polyline instance Decor Polygon
-deriving via Polyline instance Decor Triangle
-deriving via Polyline instance Decor Rectangle
+deriving via Polyline instance WithOptions Polygon
+deriving via Polyline instance WithOptions Triangle
+deriving via Polyline instance WithOptions Rectangle
 
-instance Decor Angle where
+instance WithOptions Angle where
   defaultOptions an = mkOptions
     [ Stroke "white"
     , Fill "none"

@@ -51,7 +51,7 @@ shrinkPos d x = res
               iterate (/2) 1
 
 ------------------------------------------------------------
-instance Arbitrary Angular where
+instance Arbitrary Direction where
   arbitrary = oneof [asDeg <$> arbitrary, asCmp <$> arbitrary]
   shrink = shrinkPos 1
 

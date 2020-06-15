@@ -3,17 +3,18 @@ module Angle where
 import Base
 
 ------------------------------------------------------------
-class Figure an => IsAngle an where
-  angleValue :: an -> Angular 
-  setValue :: Angular -> an -> an
-  angleStart :: an -> Angular
-  angleEnd :: an -> Angular
+
+class Figure an => Angular an where
+  angleValue :: an -> Direction 
+  setValue :: Direction -> an -> an
+  angleStart :: an -> Direction
+  angleEnd :: an -> Direction
 
 -- | Type representing angle on the chart
-data Angle = Angle CN Angular Angular
+data Angle = Angle CN Direction Direction
   deriving Eq
 
-instance IsAngle Angle where
+instance Angular Angle where
   angleValue (Angle p s e) = e - s
   setValue v (Angle p s _) = Angle p s (s + v)
   angleStart (Angle _ s _) = s
@@ -25,11 +26,9 @@ instance Show Angle where
           sx = show $ getX $ refPoint an
           sy = show $ getY $ refPoint an
 
-
 instance Affine Angle where
   cmp = cmp . angleStart
-  asCmp x = Angle 0 0 (asCmp x)
-  
+  asCmp x = Angle 0 (asCmp x) 0
 
 instance Trans Angle where
   transform t (Angle p s e) = Angle p' s' e'
@@ -37,6 +36,9 @@ instance Trans Angle where
           s' = azimuth p' (transform t (cmp p + cmp s))
           e' = azimuth p' (transform t (cmp p + cmp e))
 
+instance Manifold Angle where
+  param an x = refPoint an + cmp (angleStart an + asTurns x * angleValue an)
+  project an p = (azimuth (refPoint an) p - angleStart an) / angleValue an
 
 instance Figure Angle where
   refPoint (Angle p _ _) = p
@@ -44,4 +46,3 @@ instance Figure Angle where
   a1 `isSimilar` a2 = angleValue a1 ~== angleValue a2
   box (Angle p s e) = foldMap pointBox [p, p + cmp s, p + cmp e]
            
-

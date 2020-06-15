@@ -1,7 +1,7 @@
 
 module Circle
   (-- * Types and classes
-    Circle, IsCircle (..)
+    Circle, Circular (..)
     -- * Constructors
   , trivialCircle, mkCircle
   ) where
@@ -15,21 +15,22 @@ import Polygon
 import Data.Semigroup
 
 -- | Class for circle and decorated circle
-class IsCircle c where
+class (Trans c, Manifold c, Curve c, ClosedCurve c, Figure c) =>
+  Circular c where
   -- | Center of the circle.
   center :: c -> CN
   -- | Radius of the circle
   radius :: c -> Double
   -- | The angle of the starting point.
-  phaseShift :: c -> Angular
+  phaseShift :: c -> Direction
   -- | The orientation of the circle (positive -- CCW).
-  orientation :: c -> Angular
+  orientation :: c -> Direction
 
 -- | Represents a circle with given center, radius vector and tangent direction.
 data Circle = Circle CN CN Double
   deriving Show
 
-instance IsCircle Circle where
+instance Circular Circle where
   center (Circle c _ _) = c
   radius (Circle _ r _) = norm r
   orientation (Circle _ _ o) = asDeg (signum o)

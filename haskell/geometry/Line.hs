@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingVia #-}
 module Line
   (-- * Types
-    IsLine (..)
+    Linear (..)
   , Line (..), trivialLine, mkLine, lineIntersection
   , Ray (..), mkRay
   , Segment (..), mkSegment, end, midPerpendicular
@@ -17,7 +17,7 @@ import Base
 ------------------------------------------------------------
 
 -- | Class representing a linear object: line, ray or segment.
-class (Curve l, Affine l, Figure l) => IsLine l where
+class (Curve l, Affine l, Figure l) => Linear l where
   refPoints :: l -> (CN, CN)
 
   asLine :: l -> Line
@@ -38,7 +38,7 @@ class (Curve l, Affine l, Figure l) => IsLine l where
 newtype Line = Line (CN, CN)
   deriving Show
 
-instance IsLine Line where
+instance Linear Line where
   refPoints (Line ps) = ps
 
 -- | The trivial line with coinsiding refference points.
@@ -109,7 +109,7 @@ newtype Ray = Ray (CN, CN)
            , Trans
            , Curve
            , Figure
-           , IsLine
+           , Linear
            ) via Line
 
 -- | The basic ray constructor.
@@ -138,7 +138,7 @@ newtype Segment = Segment (CN, CN)
            , Trans
            , Curve
            , Figure
-           , IsLine
+           , Linear
            ) via Line
 
 -- | The basic segment constructor.

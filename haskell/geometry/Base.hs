@@ -9,8 +9,8 @@ module Base
     CN
   , XY
   -- ** Directed values
-  , Angular (..)
-  -- ** Angular isomorphisms
+  , Direction (..)
+  -- ** Direction isomorphisms
   , deg, asDeg
   , rad, asRad
   , turns, asTurns
@@ -123,41 +123,41 @@ a ~>= b = a ~== b || a > b
 
 -- | The representation of a directed value isomorphic either to an angle
 -- or to a complex number or coordinates.
-newtype Angular = Angular Double
+newtype Direction = Direction Double
   deriving (Num, Fractional, Floating, Real)
 
 -- | Constructs a directed value from an angle given in degrees.
-asDeg :: Double -> Angular
-asDeg = Angular . (`mod'` 360)
+asDeg :: Double -> Direction
+asDeg = Direction . (`mod'` 360)
 
 -- | Returns a representation of a directed value as an angle in degrees.
-deg :: Angular -> Double
-deg (Angular a) = a `mod'` 360
+deg :: Direction -> Double
+deg (Direction a) = a `mod'` 360
 
 -- | Constructs a directed value from an angle given in radians.
-asRad :: Double -> Angular
+asRad :: Double -> Direction
 asRad r = asDeg $ (180 * r / pi)
 
 -- | Returns a representation of a directed value as an angle in radians.
-rad :: Angular -> Double
-rad (Angular a) = (a / 180 * pi) `mod'` (2*pi)
+rad :: Direction -> Double
+rad (Direction a) = (a / 180 * pi) `mod'` (2*pi)
 
 -- | Constructs a directed value from a number of turns.
-asTurns :: Double -> Angular
+asTurns :: Double -> Direction
 asTurns a = asDeg $ a*360
 
 -- | Returns a representation of a directed value as a number of turns.
-turns :: Angular -> Double
-turns (Angular a) = (a / 360)  `mod'` 1
+turns :: Direction -> Double
+turns (Direction a) = (a / 360)  `mod'` 1
 
-instance Show Angular where
+instance Show Direction where
   show a = show (round (deg a)) <> "°"
 
-instance AlmostEq Angular where  a ~== b = rad a ~== rad b
+instance AlmostEq Direction where  a ~== b = rad a ~== rad b
 
-instance Eq Angular  where  a == b = a ~== b
+instance Eq Direction  where  a == b = a ~== b
 
-instance Ord Angular where  a <= b = a == b || rad a < rad b
+instance Ord Direction where  a <= b = a == b || rad a < rad b
 
 ------------------------------------------------------------
 
@@ -176,7 +176,7 @@ instance Trans CN where
 instance Trans XY where
   transform  = transformXY
 
-instance Trans Angular where
+instance Trans Direction where
   transform t  = asCmp . cmp . transformXY t . coord
 
 instance Trans a => Trans (Maybe a) where
@@ -250,15 +250,15 @@ scaleYAt' :: (Trans a, Affine p) => p -> Double -> a -> a
 scaleYAt' p s = transformAt p (scaleY s)
 
 -- | The rotation of an object against the origin.
-rotate :: Trans a => Angular -> a -> a
+rotate :: Trans a => Direction -> a -> a
 rotate = transform . rotateT . rad
 
 -- | The rotation of an object against a given point.
-rotateAt' :: (Trans a, Affine p) => p -> Angular -> a -> a
+rotateAt' :: (Trans a, Affine p) => p -> Direction -> a -> a
 rotateAt' p a = transformAt p (rotate a)
 
 -- | The reflection of an object against the direction passing through the origin.
-reflect :: Trans a => Angular -> a -> a
+reflect :: Trans a => Direction -> a -> a
 reflect d = transform $ reflectT $ rad d
 
 --reflectAt :: (Linear l, Trans a) => l -> a -> a
@@ -311,7 +311,7 @@ isZero :: Affine a => a -> Bool
 isZero a = cmp a ~== 0
 
 -- | The ngle between tho two points
-azimuth :: (Affine a, Affine b) => a -> b -> Angular
+azimuth :: (Affine a, Affine b) => a -> b -> Direction
 azimuth p1 p2 = asCmp (cmp p2 - cmp p1)
 
 -- | The dot product of two points.
@@ -350,7 +350,7 @@ roundUp d = asCoord . (\(x,y) -> (rounding x, rounding y)) . coord
   where rounding x = fromIntegral (ceiling (x /d)) * d
 
 -- | The direction of the vector or a point.
-angle :: Affine a => a -> Angular
+angle :: Affine a => a -> Direction
 angle = asCmp . cmp
 
 -- | The matrix, composed of two vector columns.
@@ -366,7 +366,7 @@ instance Affine XY where
   coord = id
   asCoord = id
 
-instance Affine Angular where
+instance Affine Direction where
   cmp a = mkPolar 1 (rad a)
   asCmp = asRad . phase
 
@@ -485,11 +485,11 @@ class (Figure c, Trans c, Manifold c) => Curve c where
   {-# MINIMAL normal | tangent #-}
 
   -- | The tangent direction for a given parameter on the curve.
-  tangent :: c -> Double -> Angular
+  tangent :: c -> Double -> Direction
   tangent c t = normal c t - 90
 
   -- | The normal direction for a given parameter on the curve.
-  normal :: c -> Double -> Angular
+  normal :: c -> Double -> Direction
   normal c t = tangent c t + 90
 
 -- |  Class representing a closed region

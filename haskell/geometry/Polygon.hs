@@ -3,12 +3,10 @@
 {-# language FlexibleContexts #-}
 {-# language UndecidableInstances #-}
 {-# language DerivingVia #-}
-{-# language GeneralizedNewtypeDeriving #-}
-{-# language TupleSections #-}
 
 module Polygon
   (
-    IsPoly (..)
+    PiecewiseLinear (..)
   , isDegenerate
   , Polyline (..)
   , mkPolyline, trivialPolyline
@@ -34,7 +32,7 @@ import Point
 import Line
 
 -- | A class for polylines and polygons.
--- Within instances of `IsPoly` class there are affine points and segments.
+-- Within instances of `PiecewiseLinear` class there are affine points and segments.
 --
 -- >>> asPolyline (1 :: CN)
 -- <Polyline (1.0,0.0)>
@@ -48,7 +46,8 @@ import Line
 -- >>> asPolyline (Segment (0:+2, 3:+4)) <> asPolyline (1 :: CN)
 -- <Polyline (0.0,2.0) (3.0,4.0) (1.0,0.0)>
 -- 
-class IsPoly p where
+class (Trans p, Manifold p, Curve p, Figure p) =>
+  PiecewiseLinear p where
   {-# MINIMAL vertices, asPolyline #-}
   -- | A list of polyline vertices.
   vertices :: p -> [CN]
@@ -80,10 +79,10 @@ class IsPoly p where
           n = verticesNumber p         
 
 -- | A predicate. Returns `True` if any of polyline's segment has zero length.
-isDegenerate :: IsPoly p => p -> Bool
+isDegenerate :: PiecewiseLinear p => p -> Bool
 isDegenerate = any isZero . segments 
 
-interpolation :: IsPoly p => p -> Double -> Maybe CN
+interpolation :: PiecewiseLinear p => p -> Double -> Maybe CN
 interpolation p x = param' <$> find interval tbl
   where
     interval ((a, b), _) = a ~<= x && x ~<= b
@@ -92,23 +91,8 @@ interpolation p x = param' <$> find interval tbl
     ds = scanl (+) 0 $ unit <$> segments p
 
 -- | Instantiates as a single segment polyline.
-instance IsPoly Segment where
+instance PiecewiseLinear Segment where
   vertices s = let (p1,p2) = refPoints s in [p1,p2]
-  asPolyline = Polyline . vertices
-
--- | Instantiates as a single point polyline.
-instance IsPoly CN where
-  vertices x = [x]
-  asPolyline = Polyline . vertices
-
--- | Instantiates as a single point polyline.
-instance IsPoly XY where
-  vertices x = [cmp x]
-  asPolyline = Polyline . vertices
-
--- | Instantiates as a single point polyline.
-instance IsPoly Point where
-  vertices x = [cmp x]
   asPolyline = Polyline . vertices
 
 ------------------------------------------------------------
@@ -128,7 +112,7 @@ instance IsPoly Point where
 --
 newtype Polyline = Polyline [CN]
 
-instance IsPoly Polyline where
+instance PiecewiseLinear Polyline where
   vertices (Polyline vs) = vs
   asPolyline = id
 
@@ -235,7 +219,7 @@ closePolyline p = Polygon $
               if last vs == head vs then (init vs) else vs
   where vs = vertices p
 
-instance IsPoly Polygon where
+instance PiecewiseLinear Polygon where
   asPolyline p = Polyline $ take (length vs + 1) (cycle vs)
     where vs = vertices p
   vertices (Polygon vs) = vs
@@ -285,7 +269,7 @@ newtype Triangle = Triangle [CN]
            , ClosedCurve
            , Trans
            , Eq
-           , IsPoly
+           , PiecewiseLinear
            ) via Polygon
 
 -- | The main triangle constructor.
@@ -310,7 +294,7 @@ newtype Rectangle = Rectangle [CN]
            , ClosedCurve
            , Trans
            , Eq
-           , IsPoly
+           , PiecewiseLinear
            ) via Polygon
 
 -- | The main rectangle constructor, uses two side lengths and guarantees
@@ -329,3 +313,4 @@ instance Affine Rectangle where
 -- | Returns a figures' box as a rectangle.
 boxRectangle f = Rectangle [ p4, p3, p2, p1 ]
   where ((p4,p3),(p1,p2)) = corner f
+

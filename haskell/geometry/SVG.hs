@@ -34,7 +34,6 @@ import Point
 import Circle
 import Polygon
 import Line
-import Angle
 import Figures
 
 showt :: Show a => a -> Text
@@ -42,7 +41,7 @@ showt = pack . show
 
 ------------------------------------------------------------
 
-find :: Decor a => (Option -> Maybe b) -> a -> Maybe b
+find :: WithOptions a => (Option -> Maybe b) -> a -> Maybe b
 find p d = extractOption p $ defaultOptions d <> options d
 
 extractOption p = getFirst . foldMap (First . p) . getOptions
@@ -92,7 +91,7 @@ instance SVGable a => SVGable (Decorated a) where
     _ -> toSVG (fromDecorated d) . updateOptions (options d)
     
 
-attributes :: (Decor f, Figure f) => f -> SVGContext -> [Attribute]
+attributes :: (WithOptions f, Figure f) => f -> SVGContext -> [Attribute]
 attributes f ctx = mconcat fmt . getOptions $ opts
   where
     opts = options f <> figureOptions ctx
@@ -202,7 +201,7 @@ instance SVGable Angle where
 
 ------------------------------------------------------------
 
-labelElement :: (Decor f, Figure f) => f -> SVGContext -> Element
+labelElement :: (WithOptions f, Figure f) => f -> SVGContext -> Element
 labelElement ff ctx = case lb of
                    Just s -> text $ toElement s
                    Nothing -> mempty

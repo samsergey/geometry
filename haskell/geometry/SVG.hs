@@ -180,25 +180,21 @@ deriving via Polygon instance SVGable Rectangle
 ------------------------------------------------------------
 
 instance SVGable Angle where
-  toSVG an ctx = toSVG (rays <+> group arc) ctx' <> labelElement an ctx'
+  toSVG an' ctx = toSVG (rays <+> group arc) ctx' <>
+                 labelElement an ctx'
     where
+      an = reflex an'
       t = extractOption optLabelText (figureOptions ctx)
       label = case t of
-        Just "#" -> show (negate $ angleValue an)
+        Just "#" -> show (angleValue an)
         Just s -> s
         Nothing -> ""
       ctx' = updateOptions (options an <> mkOptions [LabelText label]) ctx
       Just ns = extractOption optMultiStroke (figureOptions ctx')
-      rays = scaleAt' (refPoint an) 20 $ asPolyline an
-      arc = [ mkPolyline [ p + scale r (cmp (asRad x))
-                         | x <- [ a1, a1 + 0.05 .. a2]]
+      rays = asPolyline an # scaleAt' (refPoint an) 20
+      arc = [ plotManifold (0,1) an # scaleAt' (refPoint an) r
             | i <- [1..ns]
             , let r = 12 + fromIntegral i * 4 ]
-      p = refPoint an
-      s = p + cmp (angleStart an)
-      e = p + cmp (angleEnd   an)
-      a1 = rad (angleStart an) `min` rad (angleEnd an)
-      a2 = rad (angleStart an) `max` rad (angleEnd an)
 
 ------------------------------------------------------------
 
@@ -254,7 +250,7 @@ instance Semigroup Group where (<>) = Append
 
 instance Monoid Group where mempty = EmptyFig
 
-infixl 5 <+>
+infixl 2 <+>
 -- | The appending operator for groupable objects.
 (<+>) :: (Groupable a, Groupable b) => a -> b -> Group
 a <+> b = G a <> G b
@@ -304,10 +300,11 @@ updateOptions opts ctx = ctx {figureOptions = figureOptions ctx <> opts}
 wrapSVG :: Element -> SVGContext -> Element
 wrapSVG content ctx =
   doctype <>
-  with (svg11_ content) [ Version_ <<- "1.1"
-                        , Width_ <<- showt (imageSize ctx)
-                        , Height_ <<- showt (imageSize ctx)
-                        , Style_ <<- "background : #444;" ]
+  with (svg11_ content) 
+  [ Version_ <<- "1.1"
+  , Width_ <<- showt (40 + figureWidth (figureBox ctx))
+  , Height_ <<- showt (40 + figureHeight (figureBox ctx))
+  , Style_ <<- "background : #444;" ]
 
 -- | Creates a SVG contents for geometric objects.
 showSVG :: (Figure a, SVGable a) => ImageSize -> a -> LT.Text
@@ -319,7 +316,7 @@ showSVG size obj = prettyText (contents ctx)
            # superpose p0 (0 :: CN)
            # reflect 0
            # scale ((fromIntegral size - 50) / ((w `max` h) `min` paperSize))
-           # translate' ((20, 20) :: XY)
+           # translate' ((25, 20) :: XY)
     fb = boxRectangle obj
          # superpose p0 (0 :: CN)
          # reflect 0

@@ -16,9 +16,8 @@ module Figures (
   , extendToLength, extendTo, normalSegment, heightTo, clipBy
   -- ** Angle constructors
   , anAngle
-  , angleBetween, angleWithin, innerAngle
+  , angleBetween, angleWithin, bisectrisse
   , supplementary, vertical, reflex
-  , bisectrisse
   -- ** Polygon constructors
   , aTriangle, triangle2a
   , aSquare, aRectangle
@@ -29,7 +28,7 @@ module Figures (
   , linearScale, modularScale
   -- * Modificators
   , at, at', along, along', through, through'
-  , translate, scaleAt, scaleXAt, scaleYAt
+  , translate, scaleAt, scaleXAt, scaleYAt, scaleFig
   , on, normalTo, flipAt
   , vertexAngle, height
  ) where
@@ -170,44 +169,6 @@ clipBy l c = filter internal $ Segment <$> zip ints (tail ints)
     internal s = c `isEnclosing` (s @-> 0.5)
     ends = (l @->) <$> bounds l
   
-------------------------------------------------------------
-
--- | The template for an angle with given value
-anAngle :: Direction -> Angle
-anAngle = Angle 0 0
-
--- | Returns the angle equal to the angle between thwo lines, located on the first one.
-angleBetween :: (Linear l1,  Linear l2) => l1 -> l2 -> Angle
-angleBetween l1 l2 = anAngle (angle l2 - angle l1)
-                     # at' (start l1)
-                     # along' l1
-
-angleWithin :: (Affine a1, Affine a2, Affine a3)
-            => a1 -> a2 -> a3 -> Angle
-angleWithin p1 p2 p3 = angleBetween (ray' p2 p1) (ray' p2 p3)
-
--- | 
-supplementary :: Angle -> Angle
-supplementary (Angle p s e) = Angle p e (s + 180)
-
--- | 
-innerAngle :: Angle -> Angle
-innerAngle an | angleValue an > 180 = reflex an
-              | otherwise = an
-
--- | 
-vertical :: Angle -> Angle
-vertical = rotate 180
-
--- | 
-reflex :: Angle -> Angle
-reflex (Angle p s e) = Angle p e s
-
--- | 
-bisectrisse :: Angular a => a -> Ray
-bisectrisse an = aRay
-                 # at' (refPoint an)
-                 # along' (pi + angleStart an + 0.5*angleValue an)
 
 ------------------------------------------------------------
 -- | Moves an object along given vector.
@@ -225,6 +186,11 @@ scaleXAt = scaleXAt'
 -- | Scales  an object along y-axis against a given point.
 scaleYAt :: Trans f => XY -> Double -> (f -> f)
 scaleYAt = scaleYAt'
+
+-- | Scales  an object simmetrically (isotropically) against a given point.
+scaleFig :: (Figure f, Trans f) => Double -> (f -> f)
+scaleFig s f = scaleAt' (refPoint f) s f
+
 
 -- | Rotates  an object  against a given point.
 rotateAt :: Trans f => XY -> Direction -> (f -> f)
@@ -283,7 +249,107 @@ normalSegment :: Curve c => c -> Double -> Maybe Segment
 normalSegment c x =
   do p <- paramMaybe c x
      aSegment # at' p # normalTo c
-                       
+
+------------------------------------------------------------
+
+-- | The `Angle` mark looks like a small labeled arc and two segments.
+--
+-- >>> anAngle 30
+-- <Angle 30 (0.0, 0.0)>
+--
+-- > writeSVG 400 "figs/angle1.svg" $
+-- >   let t = triangle2a 30 60
+-- >      a1 = anAngle 30 #: "#" <> loffs ((-1):+1)
+-- >      a2 = anAngle 90 # on (side t 2) 0 #: "#"
+-- >      a3 = vertexAngle t 1 #: "#"
+-- >  in t <+> a1 <+> a2 <+> a3
+--
+-- <<file:////home/sergey/work/webinar/geometry/haskell/geometry/figs/angle1.svg>>
+--
+-- Angle is a `Manifold` instance, where the angle arc is parameterized
+--
+-- >>> Angle 0 0 90 @-> 0.5
+-- 0.7071067811865476 :+ 0.7071067811865475
+-- >>> deg . asCmp $ Angle 0 0 90 @-> 0.5
+-- 45.0
+-- >>> deg . asCmp $ Angle 0 0 90 @-> 0
+-- 0.0
+-- >>> deg . asCmp $ Angle 0 0 90 @-> 1
+-- 90.0
+--
+-- >>> (1.0, 1.0) ->@ Angle 0 0 90
+-- 0.5
+-- >>> (-1.0, 1.0) ->@ Angle 0 0 90
+-- 1.5
+-- >>> (1.0, 0.0) ->@ Angle 0 0 90
+-- 0.0
+-- | The template for an angle with given value.
+anAngle :: Direction -> Angle
+anAngle = Angle 0 0.01
+
+-- | Returns the angle equal to the angle between two lines, located on the first one.
+angleBetween :: (Linear l1,  Linear l2) => l1 -> l2 -> Angle
+angleBetween l1 l2 = anAngle (angle l2 - angle l1)
+                     # at' (start l1)
+                     # along' l1
+
+-- | Returns the Angle mark for the angle, formed by three points.
+angleWithin :: (Affine a1, Affine a2, Affine a3)
+            => a1 -> a2 -> a3 -> Angle
+angleWithin p1 p2 p3 = angleBetween (ray' p2 p1) (ray' p2 p3)
+
+-- | Returns the Angle mark for the angle at given polyline vertex.
+vertexAngle :: PiecewiseLinear p => p -> Int -> Angle
+vertexAngle p n = angleWithin p3 p2 p1 # innerAngle
+  where p1 = vertex p (n-1)
+        p2 = vertex p (n)
+        p3 = vertex p (n+1)
+
+-- | Returns a ray, representng the bisectrisse of a given angle.
+bisectrisse :: Angular a => a -> Ray
+bisectrisse an = ray' (refPoint an) (an @-> 0.5)
+
+-- | The supplementary angle.
+--
+-- > let a = anAngle 60 #: "a"
+-- >     b = a # supplementary #: "b"
+-- > in aRay <+> aRay # rotate 60 <+> a <+> b
+--
+-- <<file:////home/sergey/work/webinar/geometry/haskell/geometry/figs/angle2.svg>>
+-- 
+supplementary :: Angular an => an -> an
+supplementary = asAngle . (\(Angle p s e) -> Angle p e (s + 180)) . toAngle
+
+-- | The vertical angle.
+--
+-- > let a = anAngle 60 #: "a"
+-- >     b = a # vertical #: "b"
+-- > in aRay <+> aRay # rotate 60 <+> a <+> b
+--
+-- <<file:////home/sergey/work/webinar/geometry/haskell/geometry/figs/angle3.svg>>
+-- 
+vertical :: Angular an => an -> an
+vertical = rotate 180
+
+-- | The reflex angle.
+--
+-- > let a = anAngle 60 #: "a"
+-- >     b = a # reflex #: "b"
+-- > in aRay <+> aRay # rotate 60 <+> a <+> b
+--
+-- <<file:////home/sergey/work/webinar/geometry/haskell/geometry/figs/angle4.svg>>
+-- 
+reflex :: Angular an => an -> an
+reflex an = asAngle $ Angle (refPoint an) e s
+  where s = angleStart an
+        e = angleEnd an
+
+
+-- | Returns the inner angle (less than `pi`) for a given one.
+innerAngle :: Angular an => an -> an
+innerAngle an | deg (angleValue an) > 180 = reflex an
+              | otherwise = an
+
 ------------------------------------------------------------
 
 -- | Constructs a parametric graph as a `Polyline`.
@@ -328,8 +394,8 @@ height p n = aSegment
              # at' (vertex p n)
              #! normalTo (asLine (side p n))
 
-vertexAngle :: PiecewiseLinear p => p -> Int -> Angle
-vertexAngle p j = side p j `angleBetween` side p (j-1)
+vertexAngle' :: PiecewiseLinear p => p -> Int -> Angle
+vertexAngle' p j = side p j `angleBetween` side p (j-1)
 
 ------------------------------------------------------------
 
@@ -404,7 +470,7 @@ instance WithOptions Angle where
   defaultOptions an = mkOptions
     [ Stroke "white"
     , Fill "none"
-    , Thickness "1"
+    , Thickness "1.25"
     , MultiStroke 1
-    , LabelPosition $ refPoint an + scale 27 (cmp (bisectrisse an)) ]
+    , LabelPosition $ refPoint an + scale 30 (cmp (bisectrisse an)) ]
 

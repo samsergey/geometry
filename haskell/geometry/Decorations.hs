@@ -153,10 +153,9 @@ instance PiecewiseLinear a => PiecewiseLinear (Decorated a) where
   asPolyline = asPolyline . fromDecorated
 
 instance Angular a => Angular (Decorated a) where
-  angleValue = angleValue . fromDecorated
+  asAngle = pure . asAngle
+  toAngle = toAngle . fromDecorated
   setValue v = fmap (setValue v)
-  angleStart = angleStart . fromDecorated
-  angleEnd = angleEnd . fromDecorated
 
 ------------------------------------------------------------
 -- | A wrapped decoration function with monoidal properties,

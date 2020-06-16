@@ -54,7 +54,7 @@ instance Eq Line where
 instance Figure Line where
   isTrivial = isZero
   refPoint = fst . refPoints
-  box l = pointBox p1 <> pointBox p2
+  box l = pointBox (p1 - p2) <> pointBox p2
     where (p1, p2) = refPoints l
    
 
@@ -108,7 +108,6 @@ newtype Ray = Ray (CN, CN)
            , Affine
            , Trans
            , Curve
-           , Figure
            , Linear
            ) via Line
 
@@ -125,6 +124,13 @@ instance Manifold Ray where
   isContaining r p = isContaining (asLine r) p
                      && project r p >= 0
   unit = norm
+
+instance Figure Ray where
+  isTrivial = isZero
+  refPoint = fst . refPoints
+  box l = pointBox p1 <> pointBox p2
+    where (p1, p2) = refPoints l
+
 ------------------------------------------------------------
 
 -- | The line segment, joining two given points.
@@ -137,7 +143,6 @@ newtype Segment = Segment (CN, CN)
            , Affine
            , Trans
            , Curve
-           , Figure
            , Linear
            ) via Line
 
@@ -153,6 +158,13 @@ instance Manifold Segment where
   isContaining r p = isContaining (asRay r) p
                      && project r p <= 1      
   unit = norm
+
+instance Figure Segment where
+  isTrivial = isZero
+  refPoint = fst . refPoints
+  box l = pointBox p1 <> pointBox p2
+    where (p1, p2) = refPoints l
+
 
 end :: Segment -> CN
 end = snd . refPoints

@@ -58,12 +58,15 @@ class (Manifold Direction an, Figure an) => Angular an where
 data Angle = Angle CN Direction Direction
   deriving Eq
 
+
 instance AlmostEq Angle where
   a1 ~== a2 = angleValue a1 ~== angleValue a1
+
 
 instance Angular Angle where
   asAngle = id
   toAngle = id
+
 
 instance Show Angle where
   show an = concat ["<Angle ", val, "(", sx, " ", sy, ")>"]
@@ -71,15 +74,18 @@ instance Show Angle where
           sx = show $ getX $ refPoint an
           sy = show $ getY $ refPoint an
 
+
 instance Affine Angle where
   cmp = cmp . angleStart
   asCmp x = Angle 0 (asCmp x) (asCmp x)
+
 
 instance Trans Angle where
   transform t (Angle p s e) = Angle p' s' e'
     where p' = transform t p
           s' = azimuth p' (transform t (cmp p + cmp s))
           e' = azimuth p' (transform t (cmp p + cmp e))
+
 
 instance Manifold Direction Angle where
   param an x = asCmp (p + cmp (asDeg (deg s + x * v)))
@@ -96,9 +102,6 @@ instance Figure Angle where
   isTrivial a = angleValue a ~== 0
   box (Angle p s e) = box $ mkCircle 0.1 p
            
---instance PiecewiseLinear Angle where
---  vertices (Angle p s e) = [p + cmp s, p, p + cmp e]
-
 ------------------------------------------------------------
 
 

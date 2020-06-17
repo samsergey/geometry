@@ -333,8 +333,8 @@ plotManifold (a, b) m = Polyline pts
     a @->. b = cmp (a @-> b)
     pts = clean $ [m @->. a] <> tree a b <> [m @->. b]
     tree a b | xa `distance` xb < 1e-3 = [xc]
-                 | abs (azimuth xa xc - azimuth xc xb) < asDeg 2 = [xc]
-                 | otherwise = tree a c <> tree c b
+             | abs (azimuth xa xc - azimuth xc xb) < asDeg 2 = [xc]
+             | otherwise = tree a c <> tree c b
           where
             c = (a + b) / 2
             xa = m @->. a

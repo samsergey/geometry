@@ -3,7 +3,8 @@
 {-# Language MultiParamTypeClasses #-}
 {-# Language GeneralizedNewtypeDeriving #-}
 {-# Language ConstraintKinds #-}
-
+{-# Language FlexibleContexts #-}
+{-# Language FunctionalDependencies #-}
 module Base
   ( -- * Types
     CN
@@ -16,7 +17,7 @@ module Base
   , turns, asTurns
   -- ** Linear transformations
   , TMatrix
-  , rotateT, reflectT, translateT, scaleT
+--  , rotateT, reflectT, translateT, scaleT
   , transformOrientation
   -- * Classes
   -- ** Points in affine space
@@ -34,9 +35,10 @@ module Base
   , scale, scaleX, scaleY, scaleAt', scaleXAt', scaleYAt'
   , rotate, rotateAt', reflect, reflectAt
   -- ** Curves
-  , Manifold (..), Curve (..), ClosedCurve(..), PointLocation (..)
+  , Manifold (..)
   , (->@), (->@?), (@->), (@->?)
   , start, paramL, projectL, distanceTo
+  , Curve (..), ClosedCurve(..), PointLocation (..)
   -- ** Figures
   , Figure (..), Box, pointBox
   , figureHeight, figureWidth
@@ -376,7 +378,7 @@ instance Affine a => Affine (Maybe a) where
 
 ------------------------------------------------------------
 
-class Manifold m where
+class Affine a => Manifold a m | m -> a where
   {-# MINIMAL param, project, (isContaining | (paramMaybe, projectMaybe)) #-}
 
   -- | Returns bounds for a parameter of a manifold.
@@ -386,7 +388,7 @@ class Manifold m where
   
   -- | Returns a point on a manifold for given parameter, or Nothing
   -- if parameter runs out of the range defined for a manifold.
-  paramMaybe :: m -> Double -> Maybe CN
+  paramMaybe :: m -> Double -> Maybe a
   paramMaybe m x = if m `isContaining` p then Just p else Nothing
     where p = param m x
 
@@ -403,7 +405,7 @@ class Manifold m where
   -- | Returns a point on a manifold for a given parameter.
   -- If parameter value is out of range [0, 1] for a finite manifolds
   -- the closest boundary value is returned.
-  param :: m -> Double -> CN
+  param :: m -> Double -> a
 
   -- | Returns a parameter, corresponding to a normal point projection on a manifold.
   -- if normal projection doesn't exist returns the parameter of the closest point.
@@ -422,12 +424,12 @@ class Manifold m where
 
 infix 8 @->
 -- | Operator for `param`
-(@->) ::  Manifold m => m -> Double -> CN
+(@->) ::  Manifold a m => m -> Double -> a
 (@->) = param
 
 infix 8 @->?
 -- | Operator for `paramMaybe`
-(@->?) :: Manifold m => m -> Double -> Maybe CN
+(@->?) :: Manifold a m => m -> Double -> Maybe a
 (@->?) = paramMaybe
 
 infix 8 ->@
@@ -435,7 +437,7 @@ infix 8 ->@
 --
 -- prop>  p ->@ c  ==  project c p
 --  
-(->@) :: (Manifold m, Affine p) => p -> m -> Double
+(->@) :: (Manifold a m, Affine p) => p -> m -> Double
 (->@) = flip project
 
 infix 8 ->@?
@@ -443,26 +445,26 @@ infix 8 ->@?
 --
 -- prop>  p ->@? c  ==  projectMaybe c p
 -- 
-(->@?) :: (Manifold m, Affine p) => p -> m -> Maybe Double
+(->@?) :: (Affine a, Manifold a m, Affine p) => p -> m -> Maybe Double
 (->@?) = flip projectMaybe
 
 -- | Point on the curve, parameterized by length.
-paramL :: Manifold m => m -> Double -> CN
+paramL :: Manifold a m => m -> Double -> a
 paramL m l = param m (l / unit m)
 
 -- | Projection on a curve, parameterized by length.
-projectL :: (Affine p, Manifold m) => m -> p -> Double
+projectL :: (Affine p, Affine a, Manifold a m) => m -> p -> Double
 projectL c p = unit c * project c p
 
 -- | The distance between a curve and a point.
-distanceTo :: (Manifold m, Affine p) => p -> m -> Double
+distanceTo :: (Affine a, Manifold a m, Affine p) => p -> m -> Double
 distanceTo p m = p `distance` p'
   where p' = case p ->@? m of
                Just x -> m @-> x
                Nothing -> minimumOn (distance p) (param m <$> bounds m)
 
 -- | The starting point on the curve. 
-start :: Manifold m => m -> CN
+start :: Manifold a m => m -> a
 start m = param m 0
 
 ------------------------------------------------------------
@@ -481,7 +483,7 @@ data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 -- prop>  not isFinite c      ==>  (project c . param c) x == x
 -- prop>  c `isContaining` p  ==>  (param c . project c) p == p
 --
-class (Figure c, Trans c, Manifold c) => Curve c where
+class (Figure c, Trans c, Manifold CN c) => Curve c where
   {-# MINIMAL normal | tangent #-}
 
   -- | The tangent direction for a given parameter on the curve.

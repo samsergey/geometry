@@ -1,3 +1,6 @@
+{-# language MultiParamTypeClasses #-}
+{-# language FlexibleInstances #-}
+{-# language FlexibleContexts #-}
 
 module Circle
   (-- * Types and classes
@@ -15,7 +18,7 @@ import Polygon
 import Data.Semigroup
 
 -- | Class for circle and decorated circle
-class (Trans c, Manifold c, Curve c, ClosedCurve c, Figure c) =>
+class (Trans c, Manifold CN c, Curve c, ClosedCurve c, Figure c) =>
   Circular c where
   -- | Center of the circle.
   center :: c -> CN
@@ -58,7 +61,7 @@ instance Trans Circle where
           o' = transformOrientation t * o
 
 
-instance Manifold Circle where
+instance Manifold CN Circle where
   param c t = center c + mkPolar (radius c) (rad x)
     where
       ph = turns $ phaseShift c

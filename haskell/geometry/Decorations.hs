@@ -4,6 +4,8 @@
 {-# language GeneralizedNewtypeDeriving #-}
 {-# language MultiParamTypeClasses #-}
 {-# language DerivingVia #-}
+{-# language UndecidableInstances #-}
+{-# language FlexibleContexts #-}
 
 module Decorations
   ( -- * Classes
@@ -117,7 +119,7 @@ instance Affine a => Affine (Decorated a) where
 instance Trans a => Trans (Decorated a) where
   transform t = fmap (transform t)
 
-instance Manifold a => Manifold (Decorated a) where
+instance (Affine a,  Manifold a m) => Manifold a (Decorated m) where
   param = param . fromDecorated
   project = project . fromDecorated
   paramMaybe = paramMaybe . fromDecorated
@@ -241,6 +243,6 @@ lpos :: WithOptions a => CN -> Decorator a
 lpos = mkDecorator LabelPosition
 
 -- | The decorator for setting label on a curve at a given parameter value.
-lparam :: (Manifold a, WithOptions a) => Double -> Decorator a
-lparam x = Decorator $ \f -> f #: lpos (f @-> x)
+--lparam :: (Affine a, Manifold a m, WithOptions m) => Double -> Decorator m
+lparam x = Decorator $ \f -> f #: lpos (asCmp (f @-> x))
 

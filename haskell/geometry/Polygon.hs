@@ -33,7 +33,7 @@ import Point
 import Line
 
 -- | A class for polylines and polygons.
-class (Trans p, Manifold p) =>
+class (Trans p, Manifold CN p) =>
   PiecewiseLinear p where
   {-# MINIMAL vertices #-}
   -- | A list of polyline vertices.
@@ -152,7 +152,7 @@ instance Trans Polyline where
   transform t p = Polyline $ transform t <$> vertices p
 
 
-instance Manifold Polyline where
+instance Manifold CN Polyline where
   param p t | t < 0 = param (asLine (side p 0)) t
             | t > 1 = param (asLine (side p (verticesNumber p - 1))) t
             | otherwise = fromJust $  interpolation p (t * unit p) 
@@ -223,7 +223,7 @@ instance Show Polygon where
               else "-" <> show (length vs) <> "-"
 
 
-instance Manifold Polygon where
+instance Manifold CN Polygon where
   param p t = fromJust $ interpolation p $ (t `mod'` 1) * unit p
   project = project . asPolyline
   isContaining = isContaining . asPolyline
@@ -251,7 +251,7 @@ instance ClosedCurve Polygon where
 -- | Representation of a triangle as a list of vertices.
 newtype Triangle = Triangle [CN]
   deriving ( Figure
-           , Manifold
+           , Manifold CN
            , Curve
            , ClosedCurve
            , Trans
@@ -276,7 +276,7 @@ instance Affine Triangle where
 -- | Representation of a rectangle as a list of vertices.
 newtype Rectangle = Rectangle [CN]
   deriving ( Figure
-           , Manifold
+           , Manifold CN
            , Curve
            , ClosedCurve
            , Trans
@@ -320,14 +320,14 @@ instance Figure Plot where
   box = box . asPolyline
   isTrivial = isTrivial . asPolyline
 
-instance Manifold Plot where
+instance Manifold CN Plot where
   bounds (Plot _ (a,b)) = [a,b]
   param (Plot f _) = asCoord . f
   project _ _ = undefined
   isContaining _ _ = undefined
 
 
-plotManifold :: Manifold m => (Double, Double) -> m -> Polyline
+plotManifold :: Manifold CN m => (Double, Double) -> m -> Polyline
 plotManifold (a, b) m = Polyline $ pts
   where
     pts = clean $ [m @-> a] <> tree a b <> [m @-> b]

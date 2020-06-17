@@ -191,8 +191,9 @@ instance SVGable Angle where
         Nothing -> ""
       ctx' = updateOptions (options an <> mkOptions [LabelText label]) ctx
       Just ns = extractOption optMultiStroke (figureOptions ctx')
-      rays = asPolyline an # scaleAt' (refPoint an) 20
-      arc = [ plotManifold (0,1) an # scaleAt' (refPoint an) r
+      Angle p s e = an
+      rays = mkPolyline [p + cmp s, p, p + cmp e] # scaleAt' p 20
+      arc = [ plotManifold (0,1) an # scaleAt' p r
             | i <- [1..ns]
             , let r = 12 + fromIntegral i * 4 ]
 

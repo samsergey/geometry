@@ -1,3 +1,7 @@
+{-# language MultiParamTypeClasses #-}
+{-# language FlexibleInstances #-}
+{-# language FlexibleContexts #-}
+
 module Angle (
   -- * Angular class
   Angular (..)
@@ -14,7 +18,7 @@ import Data.Complex
 
 ------------------------------------------------------------
 -- | Class representing angle mark and decorated angle mark.
-class (Manifold an, Figure an) => Angular an where
+class (Manifold Direction an, Figure an) => Angular an where
   asAngle :: Angle -> an
   -- | Isomorphism for angles.
   toAngle :: an -> Angle
@@ -77,8 +81,8 @@ instance Trans Angle where
           s' = azimuth p' (transform t (cmp p + cmp s))
           e' = azimuth p' (transform t (cmp p + cmp e))
 
-instance Manifold Angle where
-  param an x = p + cmp (asDeg (deg s + x * v))
+instance Manifold Direction Angle where
+  param an x = asCmp (p + cmp (asDeg (deg s + x * v)))
     where Angle p s e = asAngle an
           v = deg (angleValue an)
 
@@ -86,13 +90,14 @@ instance Manifold Angle where
 
   isContaining a p = let x = project a p in 0 <= x && x <= 1 
 
+
 instance Figure Angle where
   refPoint (Angle p _ _) = p
   isTrivial a = angleValue a ~== 0
   box (Angle p s e) = box $ mkCircle 0.1 p
            
-instance PiecewiseLinear Angle where
-  vertices (Angle p s e) = [p + cmp s, p, p + cmp e]
+--instance PiecewiseLinear Angle where
+--  vertices (Angle p s e) = [p + cmp s, p, p + cmp e]
 
 ------------------------------------------------------------
 

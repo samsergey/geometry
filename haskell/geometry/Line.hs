@@ -1,4 +1,6 @@
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE TypeSynonymInstances,FlexibleInstances,MultiParamTypeClasses #-}
+
 module Line
   (-- * Types
     Linear (..)
@@ -70,7 +72,7 @@ instance Trans Line where
           p2' = transformCN t p2
 
 
-instance Manifold Line where
+instance Manifold CN Line where
   bounds l | isTrivial l = [0, 0]
            | otherwise = []
   param l t = let (p1, p2) = refPoints l
@@ -116,7 +118,7 @@ mkRay :: (Affine p1, Affine p2) => (p1, p2) -> Ray
 mkRay = asRay . mkLine
 
 
-instance Manifold Ray where
+instance Manifold CN Ray where
   bounds r | isTrivial r = [0,0]
            | otherwise = [0]
   param = param . asLine
@@ -150,7 +152,7 @@ newtype Segment = Segment (CN, CN)
 mkSegment :: (Affine p1, Affine p2) => (p1, p2) -> Segment
 mkSegment = asSegment . mkLine
 
-instance Manifold Segment where
+instance Manifold CN Segment where
   bounds s | isTrivial s = [0, 0]
            | otherwise = [0, 1]
   param = param . asLine

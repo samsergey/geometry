@@ -264,7 +264,7 @@ normalSegment c x =
 -- >      a3 = vertexAngle t 1 #: "#"
 -- >  in t <+> a1 <+> a2 <+> a3
 --
--- <<file:////home/sergey/work/webinar/geometry/haskell/geometry/figs/angle1.svg>>
+-- <<figs/angle1.svg>>
 --
 -- Angle is a `Manifold` instance, where the angle arc is parameterized
 --
@@ -315,7 +315,7 @@ bisectrisse an = ray' (refPoint an) (an @-> 0.5)
 -- >     b = a # supplementary #: "b"
 -- > in aRay <+> aRay # rotate 60 <+> a <+> b
 --
--- <<file:////home/sergey/work/webinar/geometry/haskell/geometry/figs/angle2.svg>>
+-- <<figs/angle2.svg>>
 -- 
 supplementary :: Angular an => an -> an
 supplementary = asAngle . (\(Angle p s e) -> Angle p e (s + 180)) . toAngle
@@ -326,7 +326,7 @@ supplementary = asAngle . (\(Angle p s e) -> Angle p e (s + 180)) . toAngle
 -- >     b = a # vertical #: "b"
 -- > in aRay <+> aRay # rotate 60 <+> a <+> b
 --
--- <<file:////home/sergey/work/webinar/geometry/haskell/geometry/figs/angle3.svg>>
+-- <<figs/angle3.svg>>
 -- 
 vertical :: Angular an => an -> an
 vertical = rotate 180
@@ -337,7 +337,7 @@ vertical = rotate 180
 -- >     b = a # reflex #: "b"
 -- > in aRay <+> aRay # rotate 60 <+> a <+> b
 --
--- <<file:////home/sergey/work/webinar/geometry/haskell/geometry/figs/angle4.svg>>
+-- <<figs/angle4.svg>>
 -- 
 reflex :: Angular an => an -> an
 reflex an = asAngle $ Angle (refPoint an) e s

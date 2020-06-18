@@ -252,7 +252,7 @@ normalSegment c x =
 
 ------------------------------------------------------------
 
--- | The `Angle` mark looks like a small labeled arc and two segments.
+-- $ang| The `Angle` mark looks like a small labeled arc and two segments.
 --
 -- >>> anAngle 30
 -- <Angle 30 (0.0, 0.0)>
@@ -280,7 +280,8 @@ normalSegment c x =
 -- >>> 180 ->@ Angle 0 0 90
 -- 2.0
 -- >>> 0 ->@ Angle 0 10 30
--- 17.5
+-- 17.5$ang
+
 -- | The template for an angle with given value.
 anAngle :: Direction -> Angle
 anAngle = Angle 0 0.01
@@ -305,7 +306,7 @@ vertexAngle p n = angleWithin p3 p2 p1 # innerAngle
 
 -- | Returns a ray, representng the bisectrisse of a given angle.
 bisectrisse :: Angular a => a -> Ray
-bisectrisse an = ray' (refPoint an) (an @-> 0.5)
+bisectrisse an = aRay # at' (refPoint an) # along' (an @-> 0.5)
 
 -- | The supplementary angle.
 --

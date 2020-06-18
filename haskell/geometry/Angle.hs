@@ -56,7 +56,7 @@ class (Manifold Direction an, Figure an) => Angular an where
 
 -- | Type representing an angle mark on the chart.
 data Angle = Angle CN Direction Direction
-  deriving Eq
+  deriving (Show, Eq)
 
 
 instance AlmostEq Angle where
@@ -66,13 +66,6 @@ instance AlmostEq Angle where
 instance Angular Angle where
   asAngle = id
   toAngle = id
-
-
-instance Show Angle where
-  show an = concat ["<Angle ", val, "(", sx, " ", sy, ")>"]
-    where val = show $ angleValue an
-          sx = show $ getX $ refPoint an
-          sy = show $ getY $ refPoint an
 
 
 instance Affine Angle where
@@ -88,11 +81,11 @@ instance Trans Angle where
 
 
 instance Manifold Direction Angle where
-  param an x = asCmp (p + cmp (asDeg (deg s + x * v)))
+  param an x = asDeg (deg s + x * v)
     where Angle p s e = asAngle an
           v = deg (angleValue an)
 
-  project an p = rad (azimuth (refPoint an) p - angleStart an) / rad (angleValue an)
+  project an p = rad (p - angleStart an) / rad (angleValue an)
 
   isContaining a p = let x = project a p in 0 <= x && x <= 1 
 

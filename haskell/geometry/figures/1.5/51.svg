@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="220.0" width="211.19017293312766" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
+  <polygon points="96.32923872213652,20 52.245344800201025,34.32372542187894 25,71.82372542187895 25,118.17627457812105 52.245344800201025,155.67627457812105 96.3292387221365,170 140.41313264407202,155.67627457812105 167.65847744427302,118.17627457812108 167.65847744427305,71.82372542187895 140.41313264407202,34.32372542187895 " stroke="orange" stroke-width="2" fill="none"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="20" r="3" cx="96.32923872213652"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="92.00300080087399" text-anchor="middle" y="6.68520877187216">0
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="34.32372542187894" r="3" cx="52.24534480020104"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="47.91910687894804" text-anchor="middle" y="21.008934193748004">9
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="71.82372542187895" r="3" cx="25"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="13.673762078754281" text-anchor="middle" y="63.59473188977944">8
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="118.17627457812102" r="3" cx="25"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="11" text-anchor="middle" y="118.17627457812102">7
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="155.67627457812108" r="3" cx="52.24534480020104"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="40.91910687895472" text-anchor="middle" y="163.90526811021977">6
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="170" r="3" cx="96.3292387221365"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="92.00300080088554" text-anchor="middle" y="183.3147912281316">5
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="155.67627457812105" r="3" cx="140.41313264407196"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="144.73937056532668" text-anchor="middle" y="168.99106580625144">4
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="118.17627457812108" r="3" cx="167.65847744427302"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="178.98471536552358" text-anchor="middle" y="126.40526811021391">3
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="71.8237254218789" r="3" cx="167.65847744427305"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="181.65847744427305" text-anchor="middle" y="71.8237254218789">2
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="34.32372542187894" r="3" cx="140.41313264407202"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="151.7393705653226" text-anchor="middle" y="26.094731889786107">1
+  </text>
+</svg>

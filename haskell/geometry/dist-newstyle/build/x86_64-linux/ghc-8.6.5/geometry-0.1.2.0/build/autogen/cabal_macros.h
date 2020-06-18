@@ -187,15 +187,15 @@
   (major1) == 8 && (major2) == 6 && (minor) <= 5)
 #endif /* MIN_TOOL_VERSION_runghc */
 
-/* tool strip-2.30 */
+/* tool strip-2.31 */
 #ifndef TOOL_VERSION_strip
-#define TOOL_VERSION_strip "2.30"
+#define TOOL_VERSION_strip "2.31"
 #endif /* TOOL_VERSION_strip */
 #ifndef MIN_TOOL_VERSION_strip
 #define MIN_TOOL_VERSION_strip(major1,major2,minor) (\
   (major1) <  2 || \
-  (major1) == 2 && (major2) <  30 || \
-  (major1) == 2 && (major2) == 30 && (minor) <= 0)
+  (major1) == 2 && (major2) <  31 || \
+  (major1) == 2 && (major2) == 31 && (minor) <= 0)
 #endif /* MIN_TOOL_VERSION_strip */
 
 #ifndef CURRENT_PACKAGE_KEY

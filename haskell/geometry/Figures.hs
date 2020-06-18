@@ -68,12 +68,12 @@ point' :: Affine a => a -> Point
 point' p = mkPoint (cmp p)
 
 -- | The point on a given curve.
-pointOn :: Manifold a => a -> Double -> Point
+pointOn :: Manifold CN a => a -> Double -> Point
 pointOn c t = mkPoint (c @-> t)
 
 -- | Returns a normal projection of the given point on the curve.
-projectOn :: (Manifold c, Affine p) => p -> c -> Maybe Point
-projectOn p c = pointOn c <$> (p ->@? c)
+projectOn :: (Manifold CN c, Affine p) => p -> c -> Maybe Point
+projectOn p c = pointOn c <$> (cmp p ->@? c)
 
 -- | A point at the origin. Equivalent to `origin`.
 aPoint :: Point
@@ -266,23 +266,21 @@ normalSegment c x =
 --
 -- <<figs/angle1.svg>>
 --
--- Angle is a `Manifold` instance, where the angle arc is parameterized
+-- Angle is a `Manifold Direction` instance:
 --
 -- >>> Angle 0 0 90 @-> 0.5
--- 0.7071067811865476 :+ 0.7071067811865475
--- >>> deg . asCmp $ Angle 0 0 90 @-> 0.5
--- 45.0
--- >>> deg . asCmp $ Angle 0 0 90 @-> 0
--- 0.0
--- >>> deg . asCmp $ Angle 0 0 90 @-> 1
--- 90.0
+-- 45°
+-- >>>  Angle 0 0 90 @-> 0
+-- 0°
+-- >>> Angle 0 0 90 @-> 1
+-- 90°
 --
--- >>> (1.0, 1.0) ->@ Angle 0 0 90
+-- >>> 45 ->@ Angle 0 0 90
 -- 0.5
--- >>> (-1.0, 1.0) ->@ Angle 0 0 90
--- 1.5
--- >>> (1.0, 0.0) ->@ Angle 0 0 90
--- 0.0
+-- >>> 180 ->@ Angle 0 0 90
+-- 2.0
+-- >>> 0 ->@ Angle 0 10 30
+-- 17.5
 -- | The template for an angle with given value.
 anAngle :: Direction -> Angle
 anAngle = Angle 0 0.01
@@ -302,7 +300,7 @@ angleWithin p1 p2 p3 = angleBetween (ray' p2 p1) (ray' p2 p3)
 vertexAngle :: PiecewiseLinear p => p -> Int -> Angle
 vertexAngle p n = angleWithin p3 p2 p1 # innerAngle
   where p1 = vertex p (n-1)
-        p2 = vertex p (n)
+        p2 = vertex p n
         p3 = vertex p (n+1)
 
 -- | Returns a ray, representng the bisectrisse of a given angle.

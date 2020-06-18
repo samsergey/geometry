@@ -1,6 +1,9 @@
 {-# Language FlexibleInstances #-}
 {-# Language GeneralizedNewtypeDeriving #-}
 {-# Language DerivingVia #-}
+{-# Language StandaloneDeriving #-}
+{-# Language MultiParamTypeClasses #-}
+{-# Language UndecidableInstances #-}
 
 module Testing where
 
@@ -159,10 +162,10 @@ newtype Nontrivial a = Nontrivial a deriving
   , Figure
   , Affine
   , Trans
-  , Manifold
   , Curve
   , ClosedCurve )
 
+deriving instance (Affine a, Manifold a m) => Manifold a (Nontrivial m)
 
 instance (Arbitrary a, Figure a) => Arbitrary (Nontrivial a) where
   arbitrary = Nontrivial <$> arbitrary `suchThat` isNontrivial

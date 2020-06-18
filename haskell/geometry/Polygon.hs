@@ -327,18 +327,19 @@ instance Manifold CN Plot where
   isContaining _ _ = undefined
 
 
-plotManifold :: Manifold CN m => (Double, Double) -> m -> Polyline
-plotManifold (a, b) m = Polyline $ pts
+plotManifold :: (Affine a, Manifold a m) => (Double, Double) -> m -> Polyline
+plotManifold (a, b) m = Polyline pts
   where
-    pts = clean $ [m @-> a] <> tree a b <> [m @-> b]
+    a @->. b = cmp (a @-> b)
+    pts = clean $ [m @->. a] <> tree a b <> [m @->. b]
     tree a b | xa `distance` xb < 1e-3 = [xc]
                  | abs (azimuth xa xc - azimuth xc xb) < asDeg 2 = [xc]
                  | otherwise = tree a c <> tree c b
           where
             c = (a + b) / 2
-            xa = m @-> a
-            xb = m @-> b
-            xc = m @-> c
+            xa = m @->. a
+            xb = m @->. b
+            xc = m @->. c
     clean (x:y:z:t) | Segment (x,z) `isContaining` y = clean (x:z:t)
                     | otherwise = x : clean (y:z:t)
     clean xs = xs

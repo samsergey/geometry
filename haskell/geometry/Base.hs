@@ -138,7 +138,7 @@ deg (Direction a) = a `mod'` 360
 
 -- | Constructs a directed value from an angle given in radians.
 asRad :: Double -> Direction
-asRad r = asDeg $ (180 * r / pi)
+asRad r = asDeg (180 * r / pi)
 
 -- | Returns a representation of a directed value as an angle in radians.
 rad :: Direction -> Double
@@ -394,7 +394,7 @@ class Affine a => Manifold a m | m -> a where
 
   -- | Returns a parameter for a point on a manifold, or nothing
   -- if parameter could not be found.
-  projectMaybe :: Affine p => m -> p -> Maybe Double
+  projectMaybe :: m -> a -> Maybe Double
   projectMaybe m p = if inBounds x then Just x else Nothing
     where x = project m p
           inBounds x = case bounds m of
@@ -409,10 +409,10 @@ class Affine a => Manifold a m | m -> a where
 
   -- | Returns a parameter, corresponding to a normal point projection on a manifold.
   -- if normal projection doesn't exist returns the parameter of the closest point.
-  project :: Affine p => m -> p -> Double
+  project :: m -> a -> Double
 
   -- | Returns `True` if point belongs to the manifold.
-  isContaining :: Affine p => m -> p -> Bool
+  isContaining :: m -> a -> Bool
   isContaining c p = case param c <$> projectMaybe c p of
                        Just p' -> cmp p' ~== cmp p
                        Nothing -> False
@@ -437,7 +437,7 @@ infix 8 ->@
 --
 -- prop>  p ->@ c  ==  project c p
 --  
-(->@) :: (Manifold a m, Affine p) => p -> m -> Double
+(->@) :: (Manifold a m) => a -> m -> Double
 (->@) = flip project
 
 infix 8 ->@?
@@ -445,7 +445,7 @@ infix 8 ->@?
 --
 -- prop>  p ->@? c  ==  projectMaybe c p
 -- 
-(->@?) :: (Affine a, Manifold a m, Affine p) => p -> m -> Maybe Double
+(->@?) :: (Affine a, Manifold a m) => a -> m -> Maybe Double
 (->@?) = flip projectMaybe
 
 -- | Point on the curve, parameterized by length.
@@ -453,11 +453,11 @@ paramL :: Manifold a m => m -> Double -> a
 paramL m l = param m (l / unit m)
 
 -- | Projection on a curve, parameterized by length.
-projectL :: (Affine p, Affine a, Manifold a m) => m -> p -> Double
+projectL :: (Affine a, Manifold a m) => m -> a -> Double
 projectL c p = unit c * project c p
 
 -- | The distance between a curve and a point.
-distanceTo :: (Affine a, Manifold a m, Affine p) => p -> m -> Double
+distanceTo :: (Affine a, Manifold a m) => a -> m -> Double
 distanceTo p m = p `distance` p'
   where p' = case p ->@? m of
                Just x -> m @-> x
@@ -472,17 +472,7 @@ start m = param m 0
 -- | The type representing the relation 'belongs to' between a point and a curve.
 data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 
--- | Class representing a curve parameterized by a real number.
--- For finite curves parameter runs from 0 to 1, where 0 is a start
--- and 1 is the end of the curve. The length scale is given by `unit`
--- function.
---
--- All implementations must obay isomorphisms laws:
---
--- prop>  isFinite c          ==>  (project c . param c) x == x `mod'` 1
--- prop>  not isFinite c      ==>  (project c . param c) x == x
--- prop>  c `isContaining` p  ==>  (param c . project c) p == p
---
+-- | Class representing a curve as a 1-dimensional manifold in affine space.
 class (Figure c, Trans c, Manifold CN c) => Curve c where
   {-# MINIMAL normal | tangent #-}
 
@@ -500,8 +490,8 @@ class Curve c => ClosedCurve c where
   
   -- | Returns the location of a point with respect to the region.
   location :: Affine p => c -> p -> PointLocation
-  location c p | isContaining c p = OnCurve
-               | isEnclosing c p = Inside
+  location c p | isContaining c (cmp p) = OnCurve
+               | isEnclosing c (cmp p) = Inside
                | otherwise = Outside
 
   -- | Returns `True` if point belongs to the region.

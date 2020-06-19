@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="315.0" width="299.9800372195819" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
+  <polygon points="149.9922366965041,45 65.79500012302395,85.54725210752099 45,176.65610057991077 103.26629556076703,249.71972423564512 196.71817783224108,249.71972423564512 254.98447339300813,176.65610057991088 234.1894732699842,85.54725210752102 " stroke="orange" stroke-width="2" fill="none"/>
+  <circle stroke="orange" stroke-width="2" fill="none" cy="152.69230769230768" r="102.30769230769232" cx="149.99223669650408"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="79.35009009140973" r="3" cx="78.66353964750441"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="51.19716201611131" r="3" cx="137.12369717202364"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="162.73120392877587" r="3" cx="48.178266792178725"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="99.47214875865572" r="3" cx="62.6167333308452"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="238.5528241439178" r="3" cx="94.36098990130606"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="187.82300067163806" r="3" cx="53.90530565946099"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="249.71972423564512" r="3" cx="182.43517651784478"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="249.71972423564512" r="3" cx="117.54929687516339"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="187.82300067163823" r="3" cx="246.07916773354708"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="238.5528241439178" r="3" cx="205.6234834917021"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="99.47214875865578" r="3" cx="237.367740062163"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="162.7312039287762" r="3" cx="251.8062066008294"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="51.197162016111314" r="3" cx="162.86077622098458"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="79.35009009140973" r="3" cx="221.32093374550374"/>
+</svg>

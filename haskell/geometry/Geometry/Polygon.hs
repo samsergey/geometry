@@ -33,8 +33,7 @@ import Geometry.Point
 import Geometry.Line
 
 -- | A class for polylines and polygons.
-class (Trans p, Manifold CN p) =>
-  PiecewiseLinear p where
+class (Trans p, Manifold CN p) => PiecewiseLinear p where
   {-# MINIMAL vertices #-}
   -- | A list of polyline vertices.
   vertices :: p -> [CN]
@@ -66,6 +65,9 @@ class (Trans p, Manifold CN p) =>
   side p i = segments p !! j
     where j = (0 `max` i) `min` (n - 1)
           n = verticesNumber p         
+
+instance PiecewiseLinear p => PiecewiseLinear (Maybe p) where
+  vertices = maybe mempty vertices
 
 -- | A predicate. Returns `True` if any of polyline's segment has zero length.
 isDegenerate :: PiecewiseLinear p => p -> Bool
@@ -140,7 +142,6 @@ instance Semigroup Polyline where
 instance Monoid Polyline where
   mempty = Polyline []
   
-
 instance Affine Polyline where
   cmp p = case segments p of
             [] -> 0
@@ -332,8 +333,11 @@ instance Figure Plot where
 instance Manifold CN Plot where
   bounds (Plot _ (a,b)) = [a,b]
   param (Plot f _) = asCoord . f
-  project _ _ = undefined
-  isContaining _ _ = undefined
+  project = project . asPolyline
+  paramMaybe = paramMaybe . asPolyline
+  projectMaybe = projectMaybe . asPolyline
+  isContaining = isContaining . asPolyline
+  unit = unit . asPolyline
 
 
 plotManifold :: (Affine a, Manifold a m) => (Double, Double) -> m -> Polyline

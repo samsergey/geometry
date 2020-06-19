@@ -21,24 +21,41 @@ import Geometry.Polygon
 -- | Class for circle and decorated circle
 class (Trans c, Manifold CN c, Curve c, ClosedCurve c, Figure c) =>
   Circular c where
+  {-# MINIMAL toCircle, asCircle #-}
+  toCircle :: c -> Circle
+  asCircle :: Circle -> c
+  
   -- | Center of the circle.
   center :: c -> CN
+  center = center . toCircle
+  
   -- | Radius of the circle
   radius :: c -> Double
+  radius = radius . toCircle
+  
   -- | The angle of the starting point.
   phaseShift :: c -> Direction
+  phaseShift = phaseShift . toCircle
+
   -- | The orientation of the circle (positive -- CCW).
   orientation :: c -> Direction
+  orientation = orientation . toCircle
 
 -- | Represents a circle with given center, radius vector and tangent direction.
 data Circle = Circle CN CN Double
   deriving Show
 
 instance Circular Circle where
+  toCircle = id
+  asCircle = id
   center (Circle c _ _) = c
   radius (Circle _ r _) = norm r
   orientation (Circle _ _ o) = asDeg (signum o)
   phaseShift (Circle _ r _) = angle r
+
+instance Circular c => Circular (Maybe c) where
+  toCircle = maybe trivialCircle toCircle
+  asCircle = Just . asCircle
 
 -- | The trivial circle with zero radius.
 trivialCircle :: Circle

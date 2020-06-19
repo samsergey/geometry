@@ -4,25 +4,16 @@ Description : Reexporting all internal stuff.
 Stability   : experimental
 -}
 module Geometry
-( -- * Main interface
+( 
   writeSVG, showSVG, (<+>), group, beside, abowe, (<||>)
-  -- ** Definitions for figures and modifiers
-  , module Geometry.Figures
-  -- ** Main classes  for affine computations and transformations
   , module Geometry.Base
-   -- ** Definitions of a point-like primitives.
+  , module Geometry.Figures
   , module Geometry.Point
-   -- ** Definitions of a line-like primitives.
   , module Geometry.Line
-   -- ** Definition of a circle primitive.
   , module Geometry.Circle
-   -- ** Definitions of a polygons and triangles.
   , module Geometry.Polygon
-   -- ** Definitions of an angle mark
   , module Geometry.Angle
-   -- ** Style settings.
   , module Geometry.Decorations
-   -- ** Curve intersections.
   , module Geometry.Intersections
 )
 where

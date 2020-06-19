@@ -7,48 +7,44 @@
 {-# Language FunctionalDependencies #-}
 module Geometry.Base
   ( -- * Types
+    -- ** Point represenations
     CN
   , XY
   -- ** Directed values
   , Direction (..)
-  -- ** Direction isomorphisms
+  -- *** Direction isomorphisms
   , deg, asDeg
   , rad, asRad
   , turns, asTurns
-  -- ** Linear transformations
-  , TMatrix
---  , rotateT, reflectT, translateT, scaleT
-  , transformOrientation
-  -- * Classes
-  -- ** Points in affine space
-  , Affine (..)
-  , roundUp
-  -- *** Predicates
+  -- * Points in affine space
+  , Affine (..), roundUp
+  -- ** Predicates
   , isOrthogonal, isCollinear, isOpposite, isZero
-  -- *** Vector and point operations
+  -- ** Vector and point operations
   , dot, det, cross, norm, distance, angle, normalize, columns, azimuth
-  -- ** Linear transformations
+  -- * Linear transformations
+  , TMatrix, transformOrientation
   , Trans (..)
   , transformCN, transformXY, transformAt
-  -- *** transformations
+  -- ** transformations
   , translate', superpose
   , scale, scaleX, scaleY, scaleAt', scaleXAt', scaleYAt'
   , rotate, rotateAt', reflect, reflectAt
-  -- ** Curves
+  -- * Manifolds and curves
   , Manifold (..)
   , (->@), (->@?), (@->), (@->?)
   , start, paramL, projectL, distanceTo
-  , Curve (..), ClosedCurve(..), PointLocation (..)
-  -- ** Figures
+  , Curve (..), PointLocation (..), ClosedCurve(..)
+  -- * Figures
   , Figure (..), Box, pointBox
+  -- ** Figures' size and bounding box corners.
   , figureHeight, figureWidth
   , corner, left, right, lower, upper
-  -- ** Fuzzy equality
+  -- * Fuzzy equality
   , AlmostEq
-  -- *** Fuzzy inequalities
+  -- ** Fuzzy inequalities
   , (~<=), (~>=), (~==)
-  -- * Misc
-  , (#), (#!)
+  , (#)
   )
 where
 
@@ -75,10 +71,6 @@ type XY = (Double, Double)
 -- | Flipped application used for right chaining of transformations.
 infixl 5 #
 (#) = flip ($)
-
--- | Non-total application for partial transformers, such as `normalTo`.
-infixl 5 #!
-x #! f = fromJust $ f x
 
 both f (a,b) = (f a, f b)
 
@@ -111,6 +103,10 @@ instance (AlmostEq a, AlmostEq b, AlmostEq c) => AlmostEq (a, b, c) where
 instance (AlmostEq a) => AlmostEq [a] where
   as ~== bs = and $ zipWith (~==) as bs
 
+instance AlmostEq a => AlmostEq (Maybe a) where
+  Just a ~== Just b = a ~== b
+  _ ~== _ = False
+  
 infix 4 ~<=
 -- | The less or almost equal relation.
 (~<=) :: (AlmostEq a, Ord a) => a -> a -> Bool
@@ -173,13 +169,13 @@ class Trans a where
   transform :: TMatrix -> a -> a
 
 instance Trans CN where
-  transform t = cmp . transformXY t . coord
+  transform = transformCN
 
 instance Trans XY where
   transform  = transformXY
 
 instance Trans Direction where
-  transform t  = asCmp . cmp . transformXY t . coord
+  transform t  = asCmp . transformCN t . cmp
 
 instance Trans a => Trans (Maybe a) where
   transform t  = fmap (transform t)
@@ -296,27 +292,27 @@ class Affine a where
   getY :: a -> Double
   getY = snd . coord
     
--- | Returns True if two points represent orthogonal vectors.
+-- | Returns `True` if two points represent orthogonal vectors.
 isOrthogonal :: (Affine a, Affine b) => a -> b -> Bool
-isOrthogonal  a b = cmp a `dot` cmp b ~== 0
+isOrthogonal a b = not (isZero a || isZero b) && cmp a `dot` cmp b ~== 0
 
--- | Returns True if two points represent collinear vectors.
+-- | Returns `True` if two points represent collinear vectors.
 isCollinear :: (Affine a, Affine b) => a -> b -> Bool
-isCollinear a b = cmp a `cross` cmp b ~== 0
+isCollinear a b = not (isZero a || isZero b) && cmp a `cross` cmp b ~== 0
 
--- | Returns True if two points represent collinear opposite vectors.
+-- | Returns `True` if two points represent collinear opposite vectors.
 isOpposite :: (Affine a, Affine b) => a -> b -> Bool
-isOpposite a b = cmp a + cmp b ~== 0
+isOpposite a b = not (isZero a || isZero b) && cmp a + cmp b ~== 0
 
--- | Returns True if the vector is trivial or a point is equal to the origin.
+-- | Returns `True` if the vector is trivial or a point is equal to the origin.
 isZero :: Affine a => a -> Bool
 isZero a = cmp a ~== 0
 
--- | The ngle between tho two points
+-- | Returns the deriection given by two points.
 azimuth :: (Affine a, Affine b) => a -> b -> Direction
 azimuth p1 p2 = asCmp (cmp p2 - cmp p1)
 
--- | The dot product of two points.
+-- | The dot product of two vectors (points).
 dot :: (Affine a, Affine b) => a -> b -> Double
 dot a b = let (xa, ya) = coord a
               (xb, yb) = coord b
@@ -374,18 +370,25 @@ instance Affine Direction where
 
 instance Affine a => Affine (Maybe a) where
   cmp = maybe 0 cmp
-  asCmp = Just . asCmp
-
+  asCmp = pure . asCmp
 ------------------------------------------------------------
 
-class Affine a => Manifold a m | m -> a where
+-- | Class representing 1-dimensional manifolds, e.g. lines, curves of angles, parameterized by real value.
+class AlmostEq a => Manifold a m | m -> a where
   {-# MINIMAL param, project, (isContaining | (paramMaybe, projectMaybe)) #-}
 
-  -- | Returns bounds for a parameter of a manifold.
-  -- [a, b] for finite, [a] for semibound manifolds (a is lower bound), [] for unbound manifolds
-  bounds :: m -> [Double]
-  bounds _ = [0, 1]
-  
+  -- | Returns a point on a manifold for a given parameter.
+  param :: m -> Double -> a
+
+  -- | Returns a parameter, corresponding to a normal point projection on a manifold.
+  project :: m -> a -> Double
+
+  -- | Returns `True` if point belongs to the manifold.
+  isContaining :: m -> a -> Bool
+  isContaining c p = case projectMaybe c p >>= paramMaybe c  of
+                       Just p' -> p' ~== p
+                       Nothing -> False
+
   -- | Returns a point on a manifold for given parameter, or Nothing
   -- if parameter runs out of the range defined for a manifold.
   paramMaybe :: m -> Double -> Maybe a
@@ -402,38 +405,40 @@ class Affine a => Manifold a m | m -> a where
             [a] -> x >= a
             [a, b] -> x >= a && x <= b
 
-  -- | Returns a point on a manifold for a given parameter.
-  -- If parameter value is out of range [0, 1] for a finite manifolds
-  -- the closest boundary value is returned.
-  param :: m -> Double -> a
-
-  -- | Returns a parameter, corresponding to a normal point projection on a manifold.
-  -- if normal projection doesn't exist returns the parameter of the closest point.
-  project :: m -> a -> Double
-
-  -- | Returns `True` if point belongs to the manifold.
-  isContaining :: m -> a -> Bool
-  isContaining c p = case param c <$> projectMaybe c p of
-                       Just p' -> cmp p' ~== cmp p
-                       Nothing -> False
-
+  -- | Returns bounds for a parameter of a manifold.
+  -- [a, b] for finite, [a] for semibound manifolds (a is lower bound), [] for unbound manifolds
+  bounds :: m -> [Double]
+  bounds _ = [0, 1]
+  
   -- | The internal length unit of the curve,
   --  which maps the parameter to the length of the curve.
   unit :: m -> Double
   unit _ = 1
 
+instance (Affine a,  Manifold a m) => Manifold a (Maybe m) where
+  param m' x = case m' of
+                Just m -> param m x
+                Nothing -> asCmp 0
+  project m' p = case m' of
+                   Just m -> project m p
+                   Nothing -> 0
+
+  isContaining m' p = case m' of
+                        Just m -> isContaining m p
+                        Nothing -> False
+
 infix 8 @->
--- | Operator for `param`
+-- | Operator form of the `param` function.
 (@->) ::  Manifold a m => m -> Double -> a
 (@->) = param
 
 infix 8 @->?
--- | Operator for `paramMaybe`
+-- | Operator form of the `paramMaybe` function.
 (@->?) :: Manifold a m => m -> Double -> Maybe a
 (@->?) = paramMaybe
 
 infix 8 ->@
--- | Operator for `project` with flipped arguments:
+-- | Operator form for `project` with flipped arguments:
 --
 -- prop>  p ->@ c  ==  project c p
 --  
@@ -452,27 +457,24 @@ infix 8 ->@?
 paramL :: Manifold a m => m -> Double -> a
 paramL m l = param m (l / unit m)
 
--- | Projection on a curve, parameterized by length.
-projectL :: (Affine a, Manifold a m) => m -> a -> Double
+-- | Projection on a manifold, parameterized by length.
+projectL :: (Manifold a m) => m -> a -> Double
 projectL c p = unit c * project c p
 
--- | The distance between a curve and a point.
+-- | The distance between a manifold and a given point.
 distanceTo :: (Affine a, Manifold a m) => a -> m -> Double
 distanceTo p m = p `distance` p'
   where p' = case p ->@? m of
                Just x -> m @-> x
                Nothing -> minimumOn (distance p) (param m <$> bounds m)
 
--- | The starting point on the curve. 
+-- | The starting point on the manifold. 
 start :: Manifold a m => m -> a
 start m = param m 0
 
 ------------------------------------------------------------
 
--- | The type representing the relation 'belongs to' between a point and a curve.
-data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
-
--- | Class representing a curve as a 1-dimensional manifold in affine space.
+-- | Class representing a curve as a  continuous locally smooth manifold in affine space.
 class (Figure c, Trans c, Manifold CN c) => Curve c where
   {-# MINIMAL normal | tangent #-}
 
@@ -484,6 +486,14 @@ class (Figure c, Trans c, Manifold CN c) => Curve c where
   normal :: c -> Double -> Direction
   normal c t = tangent c t + 90
 
+instance Curve c => Curve (Maybe c) where
+  tangent c t = case c of
+                  Just c -> tangent c t
+                  Nothing -> 0
+  normal c t = case c of
+                  Just c -> normal c t
+                  Nothing -> 0
+                  
 -- |  Class representing a closed region
 class Curve c => ClosedCurve c where
   {-# MINIMAL location | isEnclosing #-}
@@ -497,7 +507,17 @@ class Curve c => ClosedCurve c where
   -- | Returns `True` if point belongs to the region.
   isEnclosing :: Affine p => c -> p -> Bool
   isEnclosing c p = location c p == Inside
+
+instance ClosedCurve c => ClosedCurve (Maybe c) where
+  location c p = case c of
+                   Just c -> location c p
+                   Nothing -> Outside
+  isEnclosing c p = case c of
+                   Just c -> isEnclosing c p
+                   Nothing -> False
   
+-- | The type representing the relation 'belongs to' between a point and a curve.
+data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
 
 ------------------------------------------------------------
 
@@ -510,7 +530,10 @@ pointBox p = ((Min x, Min y), (Max x, Max y))
            
 -- | Class representing the interface for a figure on a chart
 class (Trans a) => Figure a where
-  {-# MINIMAL isTrivial, refPoint, box #-}
+  {-# MINIMAL isTrivial, box #-}
+
+  -- | A rectangular bounding box enclosing a figure.
+  box :: a -> Box
 
   -- | Returns `True` is figure is trivial in a certain sence.
   isTrivial :: a -> Bool
@@ -521,12 +544,15 @@ class (Trans a) => Figure a where
 
   -- | Returns a refference point using for superposing and figure locataion.
   refPoint :: a -> CN
-
-  box :: a -> Box
+  refPoint = left . lower . corner
 
 instance Bounded Double where
   minBound = -1/0
   maxBound = 1/0
+
+instance Figure f => Figure (Maybe f) where
+  box = maybe mempty box
+  isTrivial  = maybe False isTrivial
 
 figureWidth :: Figure f => f -> Double
 figureWidth f = let ((Min xmin, Min ymin), (Max xmax, Max ymax)) = box f

@@ -50,10 +50,10 @@ extra-source-files:  CHANGELOG.md
 
 library
   -- Modules exported by the library.
-  exposed-modules:  Geometry, Geometry.Line, Geometry.Decorations,  Geometry.Angle, Geometry.Circle, Geometry.Polygon, Geometry.SVG, Geometry.Figures, Geometry.Base,  Geometry.Point, Geometry.Intersections
+  exposed-modules:  Geometry
 
   -- Modules included in this library but not exported.
-  -- other-modules:
+  other-modules: Geometry.Line, Geometry.Decorations,  Geometry.Angle, Geometry.Circle, Geometry.Polygon, Geometry.SVG, Geometry.Figures, Geometry.Base,  Geometry.Point, Geometry.Intersections
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    ConstraintKinds, OverloadedStrings, GADTs, FlexibleInstances

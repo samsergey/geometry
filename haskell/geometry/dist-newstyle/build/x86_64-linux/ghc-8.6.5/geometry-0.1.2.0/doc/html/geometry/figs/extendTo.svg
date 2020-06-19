@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="415.0" width="400.0" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
+  <polygon points="45,355 355,355 200.00000000000006,86.532124826824 " stroke="orange" stroke-width="2" fill="none"/>
+  <line x2="207.10072140850605" y1="45" stroke="orange" stroke-width="2" fill="none" y2="98.83093507674836" x1="355"/>
+  <line x2="220.76606241341204" y1="45" stroke="orange" stroke-width="2" fill="none" y2="122.5" x1="355"/>
+  <line x2="234.4314034183181" y1="45" stroke="orange" stroke-width="2" fill="none" y2="146.16906492325154" x1="355"/>
+  <line x2="248.97375556904268" y1="45" stroke="orange" stroke-width="2" fill="none" y2="171.3571577098652" x1="355"/>
+  <line x2="265.51070827560784" y1="45" stroke="orange" stroke-width="2" fill="none" y2="199.9999999999998" x1="355"/>
+  <line x2="285.79628382965114" y1="45" stroke="orange" stroke-width="2" fill="none" y2="235.1356475203799" x1="355"/>
+  <line x2="313.1269658394633" y1="45" stroke="orange" stroke-width="2" fill="none" y2="282.47377736688327" x1="355"/>
+  <line x2="354.99999999999994" y1="45" stroke="orange" stroke-width="2" fill="none" y2="355" x1="355"/>
+  <line x2="301.30642496536484" y1="262" stroke="orange" stroke-width="2" fill="none" y2="262" x1="138"/>
+  <line x2="286.21752117424" y1="262" stroke="orange" stroke-width="2" fill="none" y2="235.86525200325326" x1="138"/>
+  <line x2="272.94856186882794" y1="262" stroke="orange" stroke-width="2" fill="none" y2="212.88274032271556" x1="138"/>
+  <line x2="260.47981872402363" y1="262" stroke="orange" stroke-width="2" fill="none" y2="191.2862436893884" x1="138"/>
+  <line x2="248.01107557921938" y1="262" stroke="orange" stroke-width="2" fill="none" y2="169.68974705606115" x1="138"/>
+  <line x2="234.74211627380723" y1="262" stroke="orange" stroke-width="2" fill="none" y2="146.70723537552357" x1="138"/>
+  <line x2="219.6532124826824" y1="262" stroke="orange" stroke-width="2" fill="none" y2="120.57248737877676" x1="138"/>
+  <line x2="201.14393188462944" y1="262" stroke="orange" stroke-width="2" fill="none" y2="88.51347297140006" x1="138"/>
+  <line x2="155.28274500674593" y1="262" stroke="orange" stroke-width="2" fill="none" y2="163.98468245015323" x1="138"/>
+  <line x2="138" y1="262" stroke="orange" stroke-width="2" fill="none" y2="193.91927489609446" x1="138"/>
+  <line x2="128.80404345822598" y1="262" stroke="orange" stroke-width="2" fill="none" y2="209.84713885064247" x1="138"/>
+  <line x2="122.80180910721865" y1="262" stroke="orange" stroke-width="2" fill="none" y2="220.24331370552233" x1="138"/>
+  <line x2="118.34678751731761" y1="262" stroke="orange" stroke-width="2" fill="none" y2="227.95963744804723" x1="138"/>
+  <line x2="114.71502064224676" y1="262" stroke="orange" stroke-width="2" fill="none" y2="234.2500421969156" x1="138"/>
+  <line x2="111.52129845148008" y1="262" stroke="orange" stroke-width="2" fill="none" y2="239.78173129658367" x1="138"/>
+  <line x2="108.5201812759764" y1="262" stroke="orange" stroke-width="2" fill="none" y2="244.97981872402366" x1="138"/>
+  <line x2="105.51906410047275" y1="262" stroke="orange" stroke-width="2" fill="none" y2="250.1779061514636" x1="138"/>
+  <line x2="102.32534190970605" y1="262" stroke="orange" stroke-width="2" fill="none" y2="255.70959525113165" x1="138"/>
+  <line x2="98.69357503463522" y1="262" stroke="orange" stroke-width="2" fill="none" y2="261.99999999999994" x1="138"/>
+  <line x2="94.23855344473417" y1="262" stroke="orange" stroke-width="2" fill="none" y2="269.7163237425249" x1="138"/>
+  <line x2="88.23631909372682" y1="262" stroke="orange" stroke-width="2" fill="none" y2="280.1124985974048" x1="138"/>
+  <line x2="79.04036255195281" y1="262" stroke="orange" stroke-width="2" fill="none" y2="296.0403625519528" x1="138"/>
+  <line x2="61.757617545206884" y1="262" stroke="orange" stroke-width="2" fill="none" y2="325.97495499789403" x1="138"/>
+  <line x2="59.96373430051293" y1="262" stroke="orange" stroke-width="2" fill="none" y2="355" x1="138"/>
+  <line x2="84.30642496536473" y1="262" stroke="orange" stroke-width="2" fill="none" y2="355" x1="138"/>
+  <line x2="104.15076821324311" y1="262" stroke="orange" stroke-width="2" fill="none" y2="355" x1="138"/>
+  <line x2="121.60159079411275" y1="262" stroke="orange" stroke-width="2" fill="none" y2="355" x1="138"/>
+  <line x2="138" y1="262" stroke="orange" stroke-width="2" fill="none" y2="355" x1="138"/>
+  <line x2="154.39840920588722" y1="262" stroke="orange" stroke-width="2" fill="none" y2="355" x1="138"/>
+  <line x2="171.84923178675683" y1="262" stroke="orange" stroke-width="2" fill="none" y2="355" x1="138"/>
+  <line x2="191.6935750346352" y1="262" stroke="orange" stroke-width="2" fill="none" y2="355" x1="138"/>
+  <line x2="216.03626569948702" y1="262" stroke="orange" stroke-width="2" fill="none" y2="355" x1="138"/>
+  <line x2="248.83308411126143" y1="262" stroke="orange" stroke-width="2" fill="none" y2="355" x1="138"/>
+  <line x2="299.0807251039051" y1="262" stroke="orange" stroke-width="2" fill="none" y2="355" x1="138"/>
+  <line x2="344.75319185302664" y1="262" stroke="orange" stroke-width="2" fill="none" y2="337.25200767403135" x1="138"/>
+  <line x2="319.8157055634179" y1="262" stroke="orange" stroke-width="2" fill="none" y2="294.05901440737676" x1="138"/>
+  <line x2="301.30642496536484" y1="262" stroke="orange" stroke-width="2" fill="none" y2="262" x1="138"/>
+</svg>

@@ -19,13 +19,14 @@ import Data.Complex
 ------------------------------------------------------------
 -- | Class representing angle mark and decorated angle mark.
 class (Manifold Direction an, Figure an) => Angular an where
+  {-# MINIMAL asAngle, toAngle #-}
   asAngle :: Angle -> an
   -- | Isomorphism for angles.
   toAngle :: an -> Angle
 
   -- | The setter for an angle.
   setValue :: Direction -> an -> an
-  setValue v = asAngle . (\(Angle p s _) -> Angle p s (s + v)) . toAngle
+  setValue v = asAngle . setValue v . toAngle
   
   -- | The starting direction for an angle.
   --
@@ -33,7 +34,7 @@ class (Manifold Direction an, Figure an) => Angular an where
   -- 45°
   --
   angleStart :: an -> Direction
-  angleStart = (\(Angle _ s _) -> s) . toAngle
+  angleStart = angleStart . toAngle
 
   -- | The final direction for an angle.
   --
@@ -41,7 +42,7 @@ class (Manifold Direction an, Figure an) => Angular an where
   -- 75°
   --
   angleEnd :: an -> Direction
-  angleEnd = (\(Angle _ _ e) -> e) . toAngle
+  angleEnd = angleEnd . toAngle
   
   -- | The value of an angle.
   --
@@ -51,7 +52,10 @@ class (Manifold Direction an, Figure an) => Angular an where
   angleValue :: an -> Direction
   angleValue an = angleEnd an - angleStart an
 
-
+instance Angular a => Angular (Maybe a) where
+  toAngle = maybe (asCmp 0) toAngle
+  asAngle = Just . asAngle
+  
 ------------------------------------------------------------
 
 -- | Type representing an angle mark on the chart.
@@ -66,7 +70,9 @@ instance AlmostEq Angle where
 instance Angular Angle where
   asAngle = id
   toAngle = id
-
+  setValue v (Angle p s _) = Angle p s (s + v)
+  angleStart (Angle _ s _) = s
+  angleEnd (Angle _ _ e) = e
 
 instance Affine Angle where
   cmp = cmp . angleStart

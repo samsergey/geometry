@@ -36,3 +36,38 @@ main = do
         t = aTriangle # scale 2
         s2 = group $ modularScale 9 t
     in (c <+> s1) `beside` space 0.3 `beside` (s2 <+> t)
+
+  writeSVG 300 (path <> "points.svg") $
+    aPoint #: "O" <+>
+    point' (45 :: Direction) #: "A" <+>
+    point' (1 :: CN) #: "B" 
+
+  writeSVG 300 (path <> "pointOn.svg") $
+    aCircle <+>
+    pointOn aCircle 0 #: "A" <+>
+    pointOn aCircle 0.25 #: "B" <+>
+    pointOn aCircle 0.667 #: "C"
+
+  writeSVG 500 (path <> "projectOn.svg") $
+    let c = Plot (\t -> (t, sin t)) (0,6) # asPolyline
+        pA = point (1,0) #: "A"
+        pB = point (2,0) #: "B"
+        pC = point (4,0) #: "C"
+        pD = point (6,1) #: "D"
+    in c <+> (pA <+> pA # projectOn c #: "A'" <+>
+              pB <+> pB # projectOn c #: "B'" <+>
+              pB <+> pC # projectOn c #: "C'" <+>
+              pD <+> pD # projectOn c #: "D'")
+
+  writeSVG 300 (path <> "intersectionPoints.svg") $
+    let p = regularPoly 7
+        c = aCircle # scale 0.95
+    in p <+> c <+> group (intersectionPoints c p)
+
+  writeSVG 400 (path <> "extendTo.svg") $
+    let t = aTriangle
+        s1 = aSegment # at (1,1)
+        s2 = aSegment # at (0.3,0.3)
+    in t <+>
+       group [s1 # along a # extendTo t | a <- [0,10..360] ] <+>
+       group [s2 # along a # extendTo t | a <- [0,10..360] ]

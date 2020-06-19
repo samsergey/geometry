@@ -24,7 +24,7 @@ module Geometry.Figures (
   , parametricPoly, polarPoly, regularPoly
   -- ** Circle constructors
   , aCircle, circle, circle'
-  -- ** Misc
+  -- ** Scalers
   , linearScale, modularScale
   -- * Modificators
   , at, at', along, along', through, through'
@@ -34,6 +34,7 @@ module Geometry.Figures (
  ) where
 
 import Data.Complex
+import Data.Maybe
 import Data.List.Extra (minimumOn, sortOn)
 import Control.Applicative
 
@@ -45,7 +46,7 @@ import Geometry.Angle
 import Geometry.Polygon
 import Geometry.Intersections
 import Geometry.Decorations
- 
+
 ------------------------------------------------------------
 -- | The origin point. Equivalent to `aPoint`.
 origin :: Point
@@ -59,31 +60,67 @@ oY = oX # rotate 90
 
 ------------------------------------------------------------
 
+-- | A point at the origin. Equivalent to `origin`.
+aPoint :: Point
+aPoint = asCmp 0
+
+-- | A label: the invisible point which could be labeled using `#:` operator.
+aLabel :: Label
+aLabel = mkLabel origin
+
 -- | The constructor for a point with given coordinates.
+--
+-- >>> point (1,2)
+-- <Point (1.0 2.0)>
+--
 point :: XY -> Point
 point = point'
 
 -- | The generalized version of `point`.
+--
+-- > point' 0 #: "O" <+>
+-- > point' (45 :: Direction) #: "A" <+>
+-- > point' (1 :: CN) #: "B"
+-- << figs/points.svg >>
+--
 point' :: Affine a => a -> Point
 point' p = mkPoint (cmp p)
 
 -- | The point on a given curve.
-pointOn :: Manifold CN a => a -> Double -> Point
-pointOn c t = mkPoint (c @-> t)
+--
+-- > let c = aCircle
+-- > in c <+>
+-- >    pointOn c 0 #: "A" <+>
+-- >    pointOn c 0.25 #: "B" <+>
+-- >    pointOn c 0.667 #: "C"
+-- << figs/pointOn.svg >>
+--
+pointOn :: Curve a => a -> Double -> Decorated Point
+pointOn c t = mkPoint (c @-> t) #: loffs (cmp (normal c t))
 
 -- | Returns a normal projection of the given point on the curve.
-projectOn :: (Manifold CN c, Affine p) => p -> c -> Maybe Point
-projectOn p c = pointOn c <$> (cmp p ->@? c)
-
--- | A point at the origin. Equivalent to `origin`.
-aPoint :: Point
-aPoint = mkPoint (0 :: CN)
-
--- | A label: the invisible point which coul be labeled using `#:` operator.
-aLabel :: Label
-aLabel = mkLabel origin
+--
+-- > let c = Plot (\t -> (t, sin t)) (0,6) # asPolyline
+-- >     pA = point (1,0) #: "A"
+-- >     pB = point (2,0) #: "B"
+-- >     pC = point (4,0) #: "C"
+-- >     pD = point (6,1) #: "D"
+-- > in c <+> (pA <+> pA # projectOn c #: "A'" <+>
+-- >           pB <+> pB # projectOn c #: "B'" <+>
+-- >           pB <+> pC # projectOn c #: "C'" <+>
+-- >           pD <+> pD # projectOn c #: "D'")
+-- << figs/projectOn.svg >>
+--
+projectOn :: (APoint p, Curve c, Affine p) => c -> p -> Maybe (Decorated Point)
+projectOn c p = pointOn c <$> (cmp p ->@? c)
 
 -- | Returns a list of intersection points as `Point` objects.
+--
+-- > let p1 = regularPoly 7
+-- >     c = aCircle
+-- > in p1 <+> c <+> group (intersectionPoints c p1)
+-- << figs/intersectionPoints.svg >>
+--
 intersectionPoints :: ( Curve a, Curve b, Intersections a b )
                    => a -> b -> [Point]
 intersectionPoints c1 c2 = point' <$> intersections c1 c2
@@ -149,12 +186,27 @@ extendToLength :: Double -> Segment -> Segment
 extendToLength l s = s # through' (paramL (asLine s) l)
 
 -- | Returns a segment extended to a closest intersection point with a given curve.
+--
+-- > let t = aTriangle
+-- >     s1 = aSegment # at (1,1)
+-- >     s2 = aSegment # at (0.3,0.3)
+-- > in t <+>
+-- >    group [s1 # along a # extendTo t | a <- [0,10..360] ] <+>
+-- >    group [s2 # along a # extendTo t | a <- [0,10..360] ]
+-- << figs/extendTo.svg >>
+--
 extendTo :: (Curve c, Intersections Ray c)
          => c -> Segment -> Maybe Segment
 extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
   where extend p = s # through' p
 
 -- | Returns a segment normal to a given curve starting at given point.
+--
+-- >>> point (1,1) # heightTo oX
+-- Just (Segment (1.0 :+ 1.0, 1.0 :+ 0.0))
+-- >>> point (-1,1) # heightTo aRay
+-- Nothing
+--
 heightTo :: (Affine p, Curve c, Intersections Ray c)
          => c -> p -> Maybe Segment
 heightTo c p = (aSegment # at' p # normalTo c) >>= extendTo c
@@ -235,7 +287,7 @@ normalTo c l = turn <*> Just l
   where s = start l
         turn = if c `isContaining` s
                then along' . normal c <$> (s ->@? c)
-               else along' . ray' s <$> (s `projectOn` c)
+               else along' . ray' s <$> (c `projectOn` s)
 
 
 -- | Reflects the curve  at a given parameter against the normal, if it exists, or does nothing otherwise.
@@ -394,7 +446,7 @@ triangle2a a1 a2 = case intersections r1 r2 of
 height :: PiecewiseLinear p => p -> Int -> Segment
 height p n = aSegment
              # at' (vertex p n)
-             #! normalTo (asLine (side p n))
+             # fromJust . normalTo (asLine (side p n))
 
 vertexAngle' :: PiecewiseLinear p => p -> Int -> Angle
 vertexAngle' p j = side p j `angleBetween` side p (j-1)
@@ -407,8 +459,7 @@ linearScale :: (Show a, Curve c)
             -> [Double] -- ^ range of the curve parameter
             -> c -- ^ the curve
             -> [Decorated Point]
-linearScale fn rng c = [ pointOn c x
-                         #: label (show (fn x)) <> loffs (cmp (normal c x))
+linearScale fn rng c = [ pointOn c x #:: label (show (fn x))
                        | x <- rng ]
 
 -- | Creates a circular integer scale, representing modular arithmetics.

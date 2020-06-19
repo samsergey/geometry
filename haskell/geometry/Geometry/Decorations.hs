@@ -16,7 +16,7 @@ module Geometry.Decorations
   , Decorated(..), fromDecorated
   -- * Decorators
   , Decorator(..)
-  , (#:)
+  , (#:), (#::)
   , visible, invisible
   , stroke, white, fill
   , thickness, thin
@@ -127,6 +127,10 @@ instance (Affine a,  Manifold a m) => Manifold a (Decorated m) where
   isContaining = isContaining . fromDecorated
   unit = unit . fromDecorated
 
+instance APoint p => APoint (Decorated p) where
+  toPoint = toPoint . fromDecorated
+  asPoint = pure . asPoint
+
 instance Curve a => Curve (Decorated a) where
   tangent = tangent . fromDecorated
   normal = normal . fromDecorated
@@ -145,10 +149,8 @@ instance Linear l => Linear (Decorated l) where
   refPoints = refPoints . fromDecorated
 
 instance Circular a => Circular (Decorated a) where
-  radius = radius . fromDecorated
-  center = center . fromDecorated
-  phaseShift = phaseShift . fromDecorated
-  orientation = orientation . fromDecorated
+  toCircle = toCircle . fromDecorated
+  asCircle = pure . asCircle
 
 instance PiecewiseLinear a => PiecewiseLinear (Decorated a) where
   vertices = vertices . fromDecorated
@@ -187,6 +189,9 @@ infixl 5 #:
 --
 (#:) :: WithOptions a => a -> Decorator a -> Decorated a
 a #: (Decorator d) = d a
+
+(#::) :: Decorated a -> Decorator (Decorated a) -> Decorated a
+a #:: (Decorator d) = join (d a)
 
 -- | The stroke color decorator.
 stroke :: WithOptions a => String -> Decorator a
@@ -246,3 +251,8 @@ lpos = mkDecorator LabelPosition
 --lparam :: (Affine a, Manifold a m, WithOptions m) => Double -> Decorator m
 lparam x = Decorator $ \f -> f #: lpos (asCmp (f @-> x))
 
+------------------------------------------------------------
+
+instance WithOptions a => WithOptions (Maybe a) where
+  options = maybe mempty options
+  setOptions o f = setOptions o <$> f

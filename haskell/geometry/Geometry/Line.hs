@@ -20,6 +20,7 @@ import Geometry.Base
 
 -- | Class representing a linear object: line, ray or segment.
 class (Curve l, Affine l, Figure l) => Linear l where
+  {-# MINIMAL refPoints #-}
   refPoints :: l -> (CN, CN)
 
   asLine :: l -> Line
@@ -31,6 +32,9 @@ class (Curve l, Affine l, Figure l) => Linear l where
   asSegment :: l -> Segment
   asSegment = Segment . refPoints
 
+instance Linear l => Linear (Maybe l) where
+  refPoints = maybe (0,0) refPoints
+  
 ------------------------------------------------------------
 
 -- | The straight line, passing through two given points.
@@ -83,10 +87,8 @@ instance Manifold CN Line where
                      || l `isCollinear` azimuth (refPoint l) p
   unit = norm
 
-
 instance Curve Line where
   tangent l _ = angle l
-  
 
 intersectionLL (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
   [ (v1x*d2 - v2x*d1) :+ (v1y*d2 - v2y*d1) | d0 /= 0 ]

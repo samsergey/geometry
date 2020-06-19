@@ -86,6 +86,9 @@ instance SVGable [CN] where
 instance SVGable XY where
   fmtSVG = fmtSVG . cmp
 
+instance SVGable a => SVGable (Maybe a) where
+  toSVG = maybe mempty toSVG
+
 ------------------------------------------------------------
 
 instance SVGable a => SVGable (Decorated a) where

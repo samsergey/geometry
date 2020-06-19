@@ -4,7 +4,7 @@
 {-# language UndecidableInstances #-}
 {-# language DerivingVia #-}
 
-module Polygon
+module Geometry.Polygon
   (
     PiecewiseLinear (..)
   , isDegenerate
@@ -28,9 +28,9 @@ import Data.Monoid
 import Data.Maybe
 import Data.Fixed
 
-import Base
-import Point
-import Line
+import Geometry.Base
+import Geometry.Point
+import Geometry.Line
 
 -- | A class for polylines and polygons.
 class (Trans p, Manifold CN p) =>

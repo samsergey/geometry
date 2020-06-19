@@ -5,7 +5,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
-module Intersections
+module Geometry.Intersections
   ( -- ** Intersections of curves
     Intersections (..)
   , intersections, isIntersecting
@@ -13,11 +13,11 @@ module Intersections
 
 import Data.Complex
 
-import Base
-import Line
-import Circle
-import Polygon
-import Decorations
+import Geometry.Base
+import Geometry.Line
+import Geometry.Circle
+import Geometry.Polygon
+import Geometry.Decorations
 
 ------------------------------------------------------------
 -- | Class provides `intersections` function returning a list (possible empty)

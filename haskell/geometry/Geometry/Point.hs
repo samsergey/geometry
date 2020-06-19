@@ -1,5 +1,5 @@
 {-# language DerivingVia #-}
-module Point
+module Geometry.Point
   (-- * Types
     Point (..), Label (..)
     -- * Constructors
@@ -9,7 +9,7 @@ module Point
 import Data.Complex
 import Data.Bool
 
-import Base
+import Geometry.Base
 
 ------------------------------------------------------------
 

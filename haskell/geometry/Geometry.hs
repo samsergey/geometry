@@ -1,40 +1,45 @@
+{-|
+Module      : W
+Description : Reexporting all internal stuff.
+Stability   : experimental
+-}
 module Geometry
 ( -- * Main interface
   writeSVG, showSVG, (<+>), group, beside, abowe, (<||>)
   -- ** Definitions for figures and modifiers
-  , module Figures
+  , module Geometry.Figures
   -- ** Main classes  for affine computations and transformations
-  , module Base
+  , module Geometry.Base
    -- ** Definitions of a point-like primitives.
-  , module Point
+  , module Geometry.Point
    -- ** Definitions of a line-like primitives.
-  , module Line
+  , module Geometry.Line
    -- ** Definition of a circle primitive.
-  , module Circle
+  , module Geometry.Circle
    -- ** Definitions of a polygons and triangles.
-  , module Polygon
+  , module Geometry.Polygon
    -- ** Definitions of an angle mark
-  , module Angle
+  , module Geometry.Angle
    -- ** Style settings.
-  , module Decorations
+  , module Geometry.Decorations
    -- ** Curve intersections.
-  , module Intersections
+  , module Geometry.Intersections
 )
 where
 
 import Prelude hiding (writeFile)
 import Data.Text.Lazy.IO (writeFile)
 
-import Base
-import Point
-import Circle
-import Line
-import Polygon
-import Angle
-import Decorations
-import Intersections
-import Figures
-import SVG
+import Geometry.Base
+import Geometry.Point
+import Geometry.Circle
+import Geometry.Line
+import Geometry.Polygon
+import Geometry.Angle
+import Geometry.Decorations
+import Geometry.Intersections
+import Geometry.Figures
+import Geometry.SVG
 
 ------------------------------------------------------------
 

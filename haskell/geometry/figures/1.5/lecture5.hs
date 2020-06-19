@@ -10,7 +10,7 @@ main = do
   let romashka =
         group [ aSegment # rotate (18 * fromIntegral i) #: label (show i) <> white
               | i <- [1..20] ]
-      clock = aCircle <+> group (modularScale 24 aCircle) # rotate 90
+      clock = aCircle <+> group (modularScale 24 (aCircle # rotate 90 ))
       hand h = mkTriangle @CN [0.03:+0, 0:+0.9, (-0.03):+0] #: fill "red" # rotate (-15 * h)
                <+> aCircle # scale 0.05 #: fill "red"
         
@@ -61,7 +61,7 @@ main = do
                   #: label l
     in group $ zipWith dow ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"] [1..]
 
-  writeSVG 200 "figures/1.5/51.svg" $
+  writeSVG 300 "figures/1.5/51.svg" $
     let dec = regularPoly 10
         sc = group $ modularScale 10 dec
     in dec <+> sc
@@ -72,6 +72,10 @@ main = do
           | i <- asDeg <$> [10,20..360] ]
 
   writeSVG 450 "figures/1.5/54.svg" $
-    group [ aSegment # scale 0.9 # rotate i <+>
-            aLabel # at' i #: label (show i)
-          | i <- asDeg <$> [10,20..360] ]
+    anAngle 180 #: "#" <+> aPoint <+>
+    aSegment <+> aSegment # rotate 180
+
+  writeSVG 450 "figures/1.5/55.svg" $
+    anAngle 90 #: "#" <+> aPoint <+>
+    aSegment <+> aSegment # rotate 180 <+>
+    aSegment # rotate 90

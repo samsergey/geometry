@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE TypeSynonymInstances,FlexibleInstances,MultiParamTypeClasses #-}
 
-module Line
+module Geometry.Line
   (-- * Types
     Linear (..)
   , Line (..), trivialLine, mkLine, lineIntersection
@@ -14,7 +14,7 @@ import Data.List
 import Data.Maybe
 import Control.Monad
 
-import Base
+import Geometry.Base
 
 ------------------------------------------------------------
 

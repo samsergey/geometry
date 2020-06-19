@@ -5,7 +5,7 @@
 {-# Language ConstraintKinds #-}
 {-# Language FlexibleContexts #-}
 {-# Language FunctionalDependencies #-}
-module Base
+module Geometry.Base
   ( -- * Types
     CN
   , XY

@@ -7,7 +7,7 @@
 {-# language UndecidableInstances #-}
 {-# language FlexibleContexts #-}
 
-module Decorations
+module Geometry.Decorations
   ( -- * Classes
     WithOptions (..)
     -- * Types and records
@@ -33,12 +33,12 @@ import Data.String( IsString(..) )
 import Control.Monad
 import Data.Functor.Identity
 
-import Base
-import Point
-import Line
-import Circle
-import Angle
-import Polygon
+import Geometry.Base
+import Geometry.Point
+import Geometry.Line
+import Geometry.Circle
+import Geometry.Angle
+import Geometry.Polygon
 
 
 -- | Possible SVG options for a figure.

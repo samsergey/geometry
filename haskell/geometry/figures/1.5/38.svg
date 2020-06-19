@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="215.48702419272823" width="220.0" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="160.14533018536287" text-anchor="middle" y="48.96446445706908">Пн
+<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="210.73774507090997" width="200.0" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="144.1065754692661" text-anchor="middle" y="66.24060726851732">Пн
   </text>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="175" text-anchor="middle" y="114.04702532470279">Вт
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="155" text-anchor="middle" y="113.96781857144872">Вт
   </text>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="133.37814009344714" text-anchor="middle" y="166.2391868272735">Ср
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="124.47730273519457" text-anchor="middle" y="152.24207034000057">Ср
   </text>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="66.62185990655283" text-anchor="middle" y="166.2391868272735">Чт
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="75.5226972648054" text-anchor="middle" y="152.24207034000057">Чт
   </text>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="25" text-anchor="middle" y="114.04702532470273">Пт
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="45" text-anchor="middle" y="113.96781857144867">Пт
   </text>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="39.85466981463712" text-anchor="middle" y="48.964464457069084">Сб
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="55.89342453073389" text-anchor="middle" y="66.24060726851732">Сб
   </text>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="100" text-anchor="middle" y="20">Вс
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="100" text-anchor="middle" y="45">Вс
   </text>
 </svg>

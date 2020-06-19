@@ -3,7 +3,7 @@
 {-# language DerivingVia #-}
 {-# language StandaloneDeriving #-}
 
-module Figures (
+module Geometry.Figures (
   -- * Constructors for geometric objects
   -- ** Point constructors
   origin
@@ -37,14 +37,14 @@ import Data.Complex
 import Data.List.Extra (minimumOn, sortOn)
 import Control.Applicative
 
-import Base
-import Point
-import Circle
-import Line
-import Angle
-import Polygon
-import Intersections
-import Decorations
+import Geometry.Base
+import Geometry.Point
+import Geometry.Circle
+import Geometry.Line
+import Geometry.Angle
+import Geometry.Polygon
+import Geometry.Intersections
+import Geometry.Decorations
  
 ------------------------------------------------------------
 -- | The origin point. Equivalent to `aPoint`.

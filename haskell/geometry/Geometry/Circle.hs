@@ -2,7 +2,7 @@
 {-# language FlexibleInstances #-}
 {-# language FlexibleContexts #-}
 
-module Circle
+module Geometry.Circle
   (-- * Types and classes
     Circle, Circular (..)
     -- * Constructors
@@ -11,11 +11,12 @@ module Circle
 
 import Data.Complex
 import Data.Bool
-
-import Base
-import Line
-import Polygon
 import Data.Semigroup
+
+import Geometry.Base
+import Geometry.Line
+import Geometry.Polygon
+
 
 -- | Class for circle and decorated circle
 class (Trans c, Manifold CN c, Curve c, ClosedCurve c, Figure c) =>

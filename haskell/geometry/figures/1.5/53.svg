@@ -1,113 +1,113 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="470.0" width="470.0" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
-  <line x2="402.26539554219744" y1="220" stroke="orange" stroke-width="2" fill="none" y2="188.74332801995254" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="421.9615506024416" text-anchor="middle" y="185.27036446661393">10°
+<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="465.0" width="450.0" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
+  <line x2="384.5388559879777" y1="225" stroke="orange" stroke-width="2" fill="none" y2="196.8689952179573" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="402.26539554219744" text-anchor="middle" y="193.74332801995254">10°
   </text>
-  <line x2="394.1446717414635" y1="220" stroke="orange" stroke-width="2" fill="none" y2="158.4363742013796" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="412.9385241571817" text-anchor="middle" y="151.59597133486628">20°
+  <line x2="377.2302045673172" y1="225" stroke="orange" stroke-width="2" fill="none" y2="169.59273678124165" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="394.1446717414635" text-anchor="middle" y="163.43637420137964">20°
   </text>
-  <line x2="380.884572681199" y1="220" stroke="orange" stroke-width="2" fill="none" y2="130" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="398.20508075688775" text-anchor="middle" y="120">30°
+  <line x2="365.2961154130791" y1="225" stroke="orange" stroke-width="2" fill="none" y2="144" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="380.88457268119896" text-anchor="middle" y="135">30°
   </text>
-  <line x2="362.88799976141604" y1="220" stroke="orange" stroke-width="2" fill="none" y2="104.29823025642294" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="378.2088886237956" text-anchor="middle" y="91.44247806269215">40°
+  <line x2="349.09919978527444" y1="225" stroke="orange" stroke-width="2" fill="none" y2="120.86840723078065" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="362.88799976141604" text-anchor="middle" y="109.29823025642294">40°
   </text>
-  <line x2="340.70176974357713" y1="220" stroke="orange" stroke-width="2" fill="none" y2="82.11200023858396" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="353.55752193730785" text-anchor="middle" y="66.7911113762044">50°
+  <line x2="329.1315927692194" y1="225" stroke="orange" stroke-width="2" fill="none" y2="100.90080021472556" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="340.7017697435771" text-anchor="middle" y="87.11200023858396">50°
   </text>
-  <line x2="315.00000000000006" y1="220" stroke="orange" stroke-width="2" fill="none" y2="64.11542731880104" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="325" text-anchor="middle" y="46.79491924311228">60°
+  <line x2="306.00000000000006" y1="225" stroke="orange" stroke-width="2" fill="none" y2="84.70388458692094" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="315" text-anchor="middle" y="69.11542731880105">60°
   </text>
-  <line x2="286.56362579862036" y1="220" stroke="orange" stroke-width="2" fill="none" y2="50.855328258536495" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="293.40402866513375" text-anchor="middle" y="32.06147584281834">70°
+  <line x2="280.4072632187583" y1="225" stroke="orange" stroke-width="2" fill="none" y2="72.76979543268286" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="286.56362579862036" text-anchor="middle" y="55.8553282585365">70°
   </text>
-  <line x2="256.2566719800475" y1="220" stroke="orange" stroke-width="2" fill="none" y2="42.734604457802554" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="259.7296355333861" text-anchor="middle" y="23.038449397558395">80°
+  <line x2="253.1310047820427" y1="225" stroke="orange" stroke-width="2" fill="none" y2="65.4611440120223" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="256.2566719800475" text-anchor="middle" y="47.734604457802554">80°
   </text>
-  <line x2="225" y1="220" stroke="orange" stroke-width="2" fill="none" y2="40" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="225" text-anchor="middle" y="20">90°
+  <line x2="225" y1="225" stroke="orange" stroke-width="2" fill="none" y2="63" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="225" text-anchor="middle" y="45">90°
   </text>
-  <line x2="193.74332801995254" y1="220" stroke="orange" stroke-width="2" fill="none" y2="42.734604457802554" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="190.27036446661393" text-anchor="middle" y="23.038449397558395">100°
+  <line x2="196.8689952179573" y1="225" stroke="orange" stroke-width="2" fill="none" y2="65.4611440120223" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="193.74332801995254" text-anchor="middle" y="47.734604457802554">100°
   </text>
-  <line x2="163.4363742013796" y1="220" stroke="orange" stroke-width="2" fill="none" y2="50.855328258536474" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="156.59597133486628" text-anchor="middle" y="32.06147584281831">110°
+  <line x2="169.59273678124165" y1="225" stroke="orange" stroke-width="2" fill="none" y2="72.76979543268283" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="163.43637420137964" text-anchor="middle" y="55.85532825853648">110°
   </text>
-  <line x2="135.00000000000006" y1="220" stroke="orange" stroke-width="2" fill="none" y2="64.11542731880103" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="125.00000000000004" text-anchor="middle" y="46.79491924311226">120°
+  <line x2="144.00000000000006" y1="225" stroke="orange" stroke-width="2" fill="none" y2="84.70388458692092" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="135.00000000000006" text-anchor="middle" y="69.11542731880104">120°
   </text>
-  <line x2="109.29823025642291" y1="220" stroke="orange" stroke-width="2" fill="none" y2="82.11200023858396" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="96.44247806269213" text-anchor="middle" y="66.7911113762044">130°
+  <line x2="120.86840723078062" y1="225" stroke="orange" stroke-width="2" fill="none" y2="100.90080021472556" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="109.29823025642291" text-anchor="middle" y="87.11200023858396">130°
   </text>
-  <line x2="87.11200023858396" y1="220" stroke="orange" stroke-width="2" fill="none" y2="104.2982302564229" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="71.79111137620441" text-anchor="middle" y="91.4424780626921">140°
+  <line x2="100.90080021472556" y1="225" stroke="orange" stroke-width="2" fill="none" y2="120.8684072307806" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="87.11200023858397" text-anchor="middle" y="109.2982302564229">140°
   </text>
-  <line x2="69.11542731880103" y1="220" stroke="orange" stroke-width="2" fill="none" y2="130" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="51.79491924311226" text-anchor="middle" y="120">150°
+  <line x2="84.70388458692092" y1="225" stroke="orange" stroke-width="2" fill="none" y2="144" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="69.11542731880104" text-anchor="middle" y="135">150°
   </text>
-  <line x2="55.855328258536495" y1="220" stroke="orange" stroke-width="2" fill="none" y2="158.4363742013796" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="37.06147584281834" text-anchor="middle" y="151.59597133486622">160°
+  <line x2="72.76979543268286" y1="225" stroke="orange" stroke-width="2" fill="none" y2="169.59273678124163" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="55.8553282585365" text-anchor="middle" y="163.4363742013796">160°
   </text>
-  <line x2="47.734604457802554" y1="220" stroke="orange" stroke-width="2" fill="none" y2="188.7433280199525" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="28.038449397558395" text-anchor="middle" y="185.27036446661384">170°
+  <line x2="65.4611440120223" y1="225" stroke="orange" stroke-width="2" fill="none" y2="196.86899521795723" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="47.734604457802554" text-anchor="middle" y="193.74332801995246">170°
   </text>
-  <line x2="45" y1="220" stroke="orange" stroke-width="2" fill="none" y2="219.99999999999997" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="25" text-anchor="middle" y="219.99999999999997">180°
+  <line x2="63" y1="225" stroke="orange" stroke-width="2" fill="none" y2="224.99999999999997" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="45" text-anchor="middle" y="224.99999999999997">180°
   </text>
-  <line x2="47.734604457802554" y1="220" stroke="orange" stroke-width="2" fill="none" y2="251.25667198004746" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="28.038449397558395" text-anchor="middle" y="254.7296355333861">190°
+  <line x2="65.4611440120223" y1="225" stroke="orange" stroke-width="2" fill="none" y2="253.1310047820427" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="47.734604457802554" text-anchor="middle" y="256.2566719800475">190°
   </text>
-  <line x2="55.855328258536474" y1="220" stroke="orange" stroke-width="2" fill="none" y2="281.56362579862036" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="37.06147584281831" text-anchor="middle" y="288.40402866513375">200°
+  <line x2="72.76979543268283" y1="225" stroke="orange" stroke-width="2" fill="none" y2="280.4072632187583" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="55.85532825853648" text-anchor="middle" y="286.56362579862036">200°
   </text>
-  <line x2="69.11542731880104" y1="220" stroke="orange" stroke-width="2" fill="none" y2="310.00000000000006" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="51.79491924311228" text-anchor="middle" y="320">210°
+  <line x2="84.70388458692094" y1="225" stroke="orange" stroke-width="2" fill="none" y2="306.00000000000006" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="69.11542731880105" text-anchor="middle" y="315">210°
   </text>
-  <line x2="87.11200023858396" y1="220" stroke="orange" stroke-width="2" fill="none" y2="335.7017697435771" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="71.7911113762044" text-anchor="middle" y="348.55752193730785">220°
+  <line x2="100.90080021472556" y1="225" stroke="orange" stroke-width="2" fill="none" y2="329.13159276921937" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="87.11200023858396" text-anchor="middle" y="340.7017697435771">220°
   </text>
-  <line x2="109.2982302564229" y1="220" stroke="orange" stroke-width="2" fill="none" y2="357.88799976141604" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="96.4424780626921" text-anchor="middle" y="373.2088886237956">230°
+  <line x2="120.8684072307806" y1="225" stroke="orange" stroke-width="2" fill="none" y2="349.09919978527444" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="109.2982302564229" text-anchor="middle" y="362.88799976141604">230°
   </text>
-  <line x2="134.99999999999991" y1="220" stroke="orange" stroke-width="2" fill="none" y2="375.8845726811989" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="124.99999999999991" text-anchor="middle" y="393.2050807568877">240°
+  <line x2="143.99999999999994" y1="225" stroke="orange" stroke-width="2" fill="none" y2="365.296115413079" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="134.99999999999991" text-anchor="middle" y="380.8845726811989">240°
   </text>
-  <line x2="163.43637420137952" y1="220" stroke="orange" stroke-width="2" fill="none" y2="389.14467174146347" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="156.59597133486614" text-anchor="middle" y="407.93852415718163">250°
+  <line x2="169.59273678124157" y1="225" stroke="orange" stroke-width="2" fill="none" y2="377.2302045673171" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="163.43637420137952" text-anchor="middle" y="394.14467174146347">250°
   </text>
-  <line x2="193.74332801995254" y1="220" stroke="orange" stroke-width="2" fill="none" y2="397.26539554219744" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="190.27036446661393" text-anchor="middle" y="416.9615506024416">260°
+  <line x2="196.8689952179573" y1="225" stroke="orange" stroke-width="2" fill="none" y2="384.5388559879777" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="193.74332801995254" text-anchor="middle" y="402.26539554219744">260°
   </text>
-  <line x2="224.99999999999997" y1="220" stroke="orange" stroke-width="2" fill="none" y2="400" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="224.99999999999994" text-anchor="middle" y="420">270°
+  <line x2="224.99999999999997" y1="225" stroke="orange" stroke-width="2" fill="none" y2="387" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="224.99999999999997" text-anchor="middle" y="405">270°
   </text>
-  <line x2="256.2566719800474" y1="220" stroke="orange" stroke-width="2" fill="none" y2="397.26539554219744" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="259.72963553338604" text-anchor="middle" y="416.9615506024416">280°
+  <line x2="253.13100478204265" y1="225" stroke="orange" stroke-width="2" fill="none" y2="384.5388559879777" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="256.25667198004743" text-anchor="middle" y="402.26539554219744">280°
   </text>
-  <line x2="286.5636257986204" y1="220" stroke="orange" stroke-width="2" fill="none" y2="389.1446717414635" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="293.40402866513375" text-anchor="middle" y="407.9385241571817">290°
+  <line x2="280.4072632187584" y1="225" stroke="orange" stroke-width="2" fill="none" y2="377.2302045673172" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="286.56362579862036" text-anchor="middle" y="394.1446717414635">290°
   </text>
-  <line x2="315.00000000000006" y1="220" stroke="orange" stroke-width="2" fill="none" y2="375.88457268119896" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="325" text-anchor="middle" y="393.2050807568877">300°
+  <line x2="306.00000000000006" y1="225" stroke="orange" stroke-width="2" fill="none" y2="365.29611541307906" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="315" text-anchor="middle" y="380.88457268119896">300°
   </text>
-  <line x2="340.7017697435771" y1="220" stroke="orange" stroke-width="2" fill="none" y2="357.88799976141604" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="353.55752193730785" text-anchor="middle" y="373.20888862379564">310°
+  <line x2="329.13159276921937" y1="225" stroke="orange" stroke-width="2" fill="none" y2="349.09919978527444" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="340.7017697435771" text-anchor="middle" y="362.88799976141604">310°
   </text>
-  <line x2="362.88799976141604" y1="220" stroke="orange" stroke-width="2" fill="none" y2="335.70176974357713" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="378.2088886237956" text-anchor="middle" y="348.5575219373079">320°
+  <line x2="349.09919978527444" y1="225" stroke="orange" stroke-width="2" fill="none" y2="329.1315927692194" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="362.88799976141604" text-anchor="middle" y="340.70176974357713">320°
   </text>
-  <line x2="380.8845726811989" y1="220" stroke="orange" stroke-width="2" fill="none" y2="310.00000000000006" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="398.2050807568877" text-anchor="middle" y="320.0000000000001">330°
+  <line x2="365.296115413079" y1="225" stroke="orange" stroke-width="2" fill="none" y2="306.00000000000006" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="380.8845726811989" text-anchor="middle" y="315.00000000000006">330°
   </text>
-  <line x2="394.1446717414634" y1="220" stroke="orange" stroke-width="2" fill="none" y2="281.56362579862054" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="412.9385241571816" text-anchor="middle" y="288.40402866513386">340°
+  <line x2="377.2302045673171" y1="225" stroke="orange" stroke-width="2" fill="none" y2="280.40726321875843" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="394.1446717414634" text-anchor="middle" y="286.5636257986205">340°
   </text>
-  <line x2="402.26539554219744" y1="220" stroke="orange" stroke-width="2" fill="none" y2="251.25667198004746" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="421.9615506024416" text-anchor="middle" y="254.72963553338607">350°
+  <line x2="384.5388559879777" y1="225" stroke="orange" stroke-width="2" fill="none" y2="253.1310047820427" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="402.26539554219744" text-anchor="middle" y="256.2566719800475">350°
   </text>
-  <line x2="405" y1="220" stroke="orange" stroke-width="2" fill="none" y2="220" x1="225"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="425" text-anchor="middle" y="220">0°
+  <line x2="387" y1="225" stroke="orange" stroke-width="2" fill="none" y2="225" x1="225"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="405" text-anchor="middle" y="225">0°
   </text>
 </svg>

@@ -8,7 +8,7 @@
 {-# language StandaloneDeriving #-}
 
 -- | This module defines representation of all figures as SVG elements. as well as default style settings.
-module SVG ( -- * Classes
+module Geometry.SVG ( -- * Classes
              Groupable, Group (..)
            , (<+>), group
            , beside, (<||>), abowe
@@ -30,14 +30,14 @@ import Data.Text (Text, pack, unwords)
 import qualified Data.Text.Lazy as LT
 import Data.Double.Conversion.Text (toShortest, toPrecision)
 
-import Base
-import Decorations
-import Point
-import Circle
-import Polygon
-import Line
-import Angle
-import Figures
+import Geometry.Base
+import Geometry.Decorations
+import Geometry.Point
+import Geometry.Circle
+import Geometry.Polygon
+import Geometry.Line
+import Geometry.Angle
+import Geometry.Figures
 
 showt :: Show a => a -> Text
 showt = pack . show

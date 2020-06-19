@@ -2,17 +2,17 @@
 {-# language FlexibleInstances #-}
 {-# language FlexibleContexts #-}
 
-module Angle (
+module Geometry.Angle (
   -- * Angular class
   Angular (..)
   -- * Data types
   , Angle(..)
   ) where
 
-import Base
-import Polygon
-import Circle
-import Line
+import Geometry.Base
+import Geometry.Polygon
+import Geometry.Circle
+import Geometry.Line
 
 import Data.Complex
 

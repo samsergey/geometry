@@ -29,3 +29,10 @@ main = do
         b = reflex a
     in aRay <+> aRay # rotate 60 <+>
        a #: "a" <+> b #: "b"
+
+  writeSVG 400 (path <> "modularScale.svg") $
+    let c = aCircle # rotate 90
+        s1 = group $ modularScale 12 c
+        t = aTriangle # scale 2
+        s2 = group $ modularScale 9 t
+    in (c <+> s1) `beside` space 0.3 `beside` (s2 <+> t)

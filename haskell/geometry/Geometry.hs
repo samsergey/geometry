@@ -1,6 +1,6 @@
 module Geometry
 ( -- * Main interface
-  writeSVG, showSVG, (<+>), group
+  writeSVG, showSVG, (<+>), group, beside, abowe, (<||>)
   -- ** Definitions for figures and modifiers
   , module Figures
   -- ** Main classes  for affine computations and transformations

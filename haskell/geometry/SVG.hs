@@ -11,6 +11,7 @@
 module SVG ( -- * Classes
              Groupable, Group (..)
            , (<+>), group
+           , beside, (<||>), abowe
            , SVGable (..), ImageSize, SVGContext(..)
            -- * Functions
            , showSVG
@@ -252,7 +253,7 @@ instance Semigroup Group where (<>) = Append
 
 instance Monoid Group where mempty = EmptyFig
 
-infixl 2 <+>
+infixl 3 <+>
 -- | The appending operator for groupable objects.
 (<+>) :: (Groupable a, Groupable b) => a -> b -> Group
 a <+> b = G a <> G b
@@ -286,6 +287,17 @@ instance Figure Group where
 group :: Groupable a => [a] -> Group
 group = foldMap G
 
+beside :: (Groupable a, Groupable b) => a -> b -> Group
+beside f1 f2 = f1 <+> f2 # superpose (refPoint f2) (right . lower . corner $ f1)
+
+infixl 2 <||>
+(<||>) :: (Groupable a, Groupable b) => a -> b -> Group
+(<||>) = beside
+
+abowe :: (Groupable a, Groupable b) => a -> b -> Group
+abowe f1 f2 = f2 <+> f1 # superpose (refPoint f2) (left . upper . corner $ f2)
+
+
 ------------------------------------------------------------
 -- | Type alias for explicit image settings
 type ImageSize = Int
@@ -294,6 +306,7 @@ type ImageSize = Int
 data SVGContext = SVGContext
   { imageSize :: ImageSize
   , figureBox :: Rectangle
+  , border :: Double
   , figureOptions :: Options }
 
 updateOptions :: Options -> SVGContext -> SVGContext
@@ -304,26 +317,27 @@ wrapSVG content ctx =
   doctype <>
   with (svg11_ content) 
   [ Version_ <<- "1.1"
-  , Width_ <<- showt (40 + figureWidth (figureBox ctx))
-  , Height_ <<- showt (40 + figureHeight (figureBox ctx))
+  , Width_ <<- showt (border ctx + figureWidth (figureBox ctx))
+  , Height_ <<- showt (1.5*border ctx + figureHeight (figureBox ctx))
   , Style_ <<- "background : #444;" ]
 
 -- | Creates a SVG contents for geometric objects.
 showSVG :: (Figure a, SVGable a) => ImageSize -> a -> LT.Text
 showSVG size obj = prettyText (contents ctx)
   where
+    brd = 30
     contents = toSVG obj' >>= wrapSVG
-    ctx = SVGContext size fb mempty
+    ctx = SVGContext size fb brd mempty
     obj' = obj
            # superpose p0 (0 :: CN)
            # reflect 0
-           # scale ((fromIntegral size - 50) / ((w `max` h) `min` paperSize))
-           # translate' ((25, 20) :: XY)
+           # scale ((fromIntegral size - brd*3) / ((w `max` h) `min` paperSize))
+           # translate' ((brd*1.5, brd*1.5) :: XY)
     fb = boxRectangle obj
          # superpose p0 (0 :: CN)
          # reflect 0
-         # scale ((fromIntegral size - 20) / ((w `max` h) `min` paperSize))
-         # translate' ((10, 10) :: XY)
+         # scale ((fromIntegral size - brd) / ((w `max` h) `min` paperSize))
+         # translate' ((brd/2, brd/2) :: XY)
     paperSize = 50
     w = figureWidth obj
     h = figureHeight obj

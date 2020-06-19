@@ -169,8 +169,9 @@ instance Manifold CN Polyline where
 
 
 instance Curve Polyline where
-  tangent p t =  (p @-> (t + dt)) `azimuth` (p @-> (t - dt))
+  tangent p t =  asCmp $ (p @-> (t + dt)) - (p @-> (t - dt))
     where dt = 1e-5
+  normal p t = tangent p t # rotate (-90)
 
  
 instance Figure Polyline where
@@ -188,7 +189,6 @@ newtype Polygon = Polygon [CN]
   deriving ( Eq
            , Trans
            , Affine
-           , Curve
            , Figure
            ) via Polyline
 
@@ -210,9 +210,14 @@ instance PiecewiseLinear Polygon where
   asPolyline p = Polyline $ take (length vs + 1) (cycle vs)
     where vs = vertices p
   vertices (Polygon vs) = vs
-  vertex = vertex . asPolyline
   segments = segments . asPolyline
-  side = side . asPolyline
+
+  vertex p i = vs !! (i `mod` n)
+    where vs = vertices (asPolyline p)
+          n = verticesNumber p
+
+  side p i = segments p !! (i `mod` n)
+    where n = verticesNumber (asPolyline p)
 
 
 instance Show Polygon where
@@ -224,11 +229,15 @@ instance Show Polygon where
 
 
 instance Manifold CN Polygon where
-  param p t = fromJust $ interpolation p $ (t `mod'` 1) * unit p
+  param p t = fromJust $ interpolation (asPolyline p) $ (t `mod'` 1) * unit p
   project = project . asPolyline
   isContaining = isContaining . asPolyline
   unit = unit . asPolyline
 
+instance Curve Polygon where
+  tangent p t =  asCmp $ (p @-> (t + dt)) - (p @-> (t - dt))
+    where dt = 1e-5
+  normal p t = tangent p t # rotate (-90)
   
 instance ClosedCurve Polygon where
   location p pt = case foldMap go (segments p') of

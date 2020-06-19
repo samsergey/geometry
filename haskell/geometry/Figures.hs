@@ -20,7 +20,7 @@ module Figures (
   , supplementary, vertical, reflex
   -- ** Polygon constructors
   , aTriangle, triangle2a
-  , aSquare, aRectangle
+  , aSquare, aRectangle, space
   , parametricPoly, polarPoly, regularPoly
   -- ** Circle constructors
   , aCircle, circle, circle'
@@ -34,7 +34,7 @@ module Figures (
  ) where
 
 import Data.Complex
-import Data.List.Extra
+import Data.List.Extra (minimumOn, sortOn)
 import Control.Applicative
 
 import Base
@@ -376,6 +376,9 @@ aTriangle = asCmp 1
 aSquare :: Rectangle
 aSquare = asCmp 1
 
+space :: Double -> Decorated Rectangle
+space a = aSquare # scale a #: invisible
+
 -- | The template for a Rectangle.
 aRectangle :: Double -> Double -> Rectangle
 aRectangle a b = aSquare # scaleX a . scaleY b
@@ -405,10 +408,18 @@ linearScale :: (Show a, Curve c)
             -> c -- ^ the curve
             -> [Decorated Point]
 linearScale fn rng c = [ pointOn c x
-                     #: label (show (fn x)) <> loffs (cmp (normal c x))
-                   | x <- rng ]
+                         #: label (show (fn x)) <> loffs (cmp (normal c x))
+                       | x <- rng ]
 
 -- | Creates a circular integer scale, representing modular arithmetics.
+--
+-- > let c  = aCircle # rotate 90
+-- >     s1 = group $ modularScale 12 c
+-- >     t  = aTriangle # scale 2
+-- >     s2 = group $ modularScale 9 t
+-- > in (c <+> s1) `beside` space 1 `beside` (s2 <+> t)
+--
+-- << figs/modularScale.svg>>
 modularScale :: (Trans c, Curve c) => Int -> c -> [Decorated Point]
 modularScale n = linearScale lf rng
   where n' = fromIntegral n

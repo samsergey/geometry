@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# language DerivingVia #-}
+{-# language DeriveFunctor #-}
 {-# language StandaloneDeriving #-}
 
 -- | This module defines representation of all figures as SVG elements. as well as default style settings.
@@ -25,6 +26,7 @@ import Graphics.Svg.Elements
 import Graphics.Svg.Attributes
 import Data.Complex
 import Data.Monoid
+import Data.Functor.Const
 import Data.Maybe
 import Data.Text (Text, pack, unwords)
 import qualified Data.Text.Lazy as LT
@@ -265,6 +267,11 @@ infixl 3 <+>
 -- | The appending operator for groupable objects.
 (<+>) :: (Groupable a, Groupable b) => a -> b -> Group
 a <+> b = G a <> G b
+
+newtype Fig a = Fig {fig :: a} deriving (Functor, Show)
+
+instance Applicative (Fig) where
+  pure f = Fig (G f)
 
 instance Trans Group where
   transform t EmptyFig = EmptyFig

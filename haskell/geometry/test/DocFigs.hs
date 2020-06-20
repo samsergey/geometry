@@ -1,6 +1,7 @@
 {-# language OverloadedStrings #-}
 import Geometry
 import Data.Complex
+import Data.Functor.Const
 
 path = "dist-newstyle/build/x86_64-linux/ghc-8.6.5/geometry-0.1.2.0/doc/html/geometry/figs/"
 
@@ -62,7 +63,7 @@ main = do
   writeSVG 300 (path <> "intersectionPoints.svg") $
     let p = regularPoly 7
         c = aCircle # scale 0.95
-    in p <+> c <+> group (intersectionPoints c p)
+    in p <+> c  <+> group (intersectionPoints c p)
 
   writeSVG 400 (path <> "extendTo.svg") $
     let t = aTriangle

@@ -11,7 +11,7 @@
 module Geometry.SVG ( -- * Classes
              Groupable, Group (..)
            , (<+>), group
-           , beside, (<||>), abowe
+           , beside, (<||>), above
            , SVGable (..), ImageSize, SVGContext(..)
            -- * Functions
            , showSVG
@@ -244,6 +244,12 @@ labelElement ff ctx = case lb of
 type Groupable a = (SVGable a, Show a, Trans a, Figure a, Eq a)
 
 -- | The group of inhomogeneous Groupable objects.
+--
+-- > let f = G . translate (1,0) . scale 0.7 . rotate 30 <>
+-- >         G . translate (1,0) . scale 0.6 . rotate (-45)
+-- > in G aSegment # iterate f # take 8 # mconcat # rotate 90
+-- << figs/compose.svg >>
+--
 data Group where
   EmptyFig :: Group
   G :: Groupable a => a -> Group
@@ -253,7 +259,6 @@ instance Eq Group where
   _ == _ = False
 
 instance Semigroup Group where (<>) = Append
-
 instance Monoid Group where mempty = EmptyFig
 
 infixl 3 <+>
@@ -287,18 +292,37 @@ instance Figure Group where
   box (Append a b) = box a <> box b
   
 -- | Returns a group of homogeneous list of objects.
+--
+-- > group $ take 5 $ iterate (rotate 5 . scale 1.1) aTriangle
+-- <<figs/groups.svg>>
+--
 group :: Groupable a => [a] -> Group
 group = foldMap G
 
+-- | Places one figure beside the other.
+--
+-- > aTriangle `beside` aSquare
+-- <<figs/beside.svg>>
+--
 beside :: (Groupable a, Groupable b) => a -> b -> Group
 beside f1 f2 = f1 <+> f2 # superpose (refPoint f2) (right . lower . corner $ f1)
 
+-- | The operator form of the `beside` function.
 infixl 2 <||>
 (<||>) :: (Groupable a, Groupable b) => a -> b -> Group
 (<||>) = beside
 
-abowe :: (Groupable a, Groupable b) => a -> b -> Group
-abowe f1 f2 = f2 <+> f1 # superpose (refPoint f2) (left . upper . corner $ f2)
+-- | Places one figure above the other.
+--
+-- > aTriangle `above` aSquare
+-- <<figs/above.svg>>
+--
+-- > let tr t = t `above` (t `beside` t)
+-- > in G aCircle # iterate tr # take 5 # mconcat # rotate 225 # scaleX 0.6
+-- <<figs/serp.svg>>
+--
+above :: (Groupable a, Groupable b) => a -> b -> Group
+above f1 f2 = f2 <+> f1 # superpose (refPoint f2) (left . upper . corner $ f2)
 
 
 ------------------------------------------------------------

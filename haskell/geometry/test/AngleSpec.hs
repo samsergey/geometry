@@ -6,7 +6,7 @@ import Data.Complex
 import Data.Fixed (mod')
 
 import Geometry
-import Testing
+import Geometry.Testing
 
 main :: IO ()
 main = hspec $ 

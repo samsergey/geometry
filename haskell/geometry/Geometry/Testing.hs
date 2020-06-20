@@ -5,7 +5,7 @@
 {-# Language MultiParamTypeClasses #-}
 {-# Language UndecidableInstances #-}
 
-module Testing where
+module Geometry.Testing where
 
 import Data.Complex
 import Data.Foldable

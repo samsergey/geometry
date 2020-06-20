@@ -5,7 +5,7 @@ Stability   : experimental
 -}
 module Geometry
 ( 
-  writeSVG, showSVG, (<+>), group, beside, abowe, (<||>)
+  writeSVG, showSVG, (<+>), group, beside, above, (<||>), Group (..)
   , module Geometry.Base
   , module Geometry.Figures
   , module Geometry.Point

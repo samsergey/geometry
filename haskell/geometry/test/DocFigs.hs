@@ -56,7 +56,7 @@ main = do
         pD = point (6,1) #: "D"
     in c <+> (pA <+> pA # projectOn c #: "A'" <+>
               pB <+> pB # projectOn c #: "B'" <+>
-              pB <+> pC # projectOn c #: "C'" <+>
+              pC <+> pC # projectOn c #: "C'" <+>
               pD <+> pD # projectOn c #: "D'")
 
   writeSVG 300 (path <> "intersectionPoints.svg") $
@@ -71,3 +71,21 @@ main = do
     in t <+>
        group [s1 # along a # extendTo t | a <- [0,10..360] ] <+>
        group [s2 # along a # extendTo t | a <- [0,10..360] ]
+
+  writeSVG 300 (path <> "groups.svg") $
+    group $ take 10 $ iterate (rotate 3 . scale 1.1) $ regularPoly 3
+
+  writeSVG 300 (path <> "compose.svg") $
+    let f = G . translate (1,0) . scale 0.7 . rotate 30 <>
+            G . translate (1,0) . scale 0.6 . rotate (-45)
+    in G aSegment # iterate f # take 8 # mconcat # rotate 90
+
+  writeSVG 300 (path <> "beside.svg") $
+    aTriangle `beside` aSquare
+
+  writeSVG 300 (path <> "above.svg") $
+    aTriangle `above` aSquare
+
+  writeSVG 300 (path <> "serp.svg") $
+    let tr t = t `above` (t `beside` t)
+    in G aCircle # iterate tr # take 5 # mconcat # rotate 225 # scaleX 0.6

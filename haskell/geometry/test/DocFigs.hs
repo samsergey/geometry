@@ -91,3 +91,16 @@ main = do
   writeSVG 300 (path <> "serp.svg") $
     let tr t = t `above` (t `beside` t)
     in G aCircle # iterate tr # take 5 # mconcat # rotate 225 # scaleX 0.6
+
+  writeSVG 400 (path <> "extendToLength.svg") $
+   group [aSegment # rotate x # extendToLength r
+         | x <- [0,5..360] 
+         , let r = 2 + sin (7 * rad x) ]
+
+  writeSVG 400 (path <> "normalTo.svg") $
+   let c = Plot (\t -> (t, sin t)) (0,6) 
+   in c <+>
+      group [ aSegment # at (x,1.25) # normalTo c
+            | x <- [0,1..6] ]
+
+    

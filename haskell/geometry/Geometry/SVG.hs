@@ -183,6 +183,8 @@ instance SVGable Polygon where
 deriving via Polygon instance SVGable Triangle
 deriving via Polygon instance SVGable Rectangle
 
+instance SVGable Plot where
+  toSVG = toSVG . asPolyline
 ------------------------------------------------------------
 
 instance SVGable Angle where
@@ -375,11 +377,3 @@ showSVG size obj = prettyText (contents ctx)
     p0 = left . upper . corner $ obj
 
 ------------------------------------------------------------
-
-data Fig a where
-  P :: APoint a => a -> Fig a
-  L :: Linear a => a -> Fig a
-  E :: Fig ()
-  App :: Fig a -> Fig b -> Fig (a, b)
-
-

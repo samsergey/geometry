@@ -315,6 +315,12 @@ boxRectangle f = Rectangle [ p4, p3, p2, p1 ]
 
 data Plot = Plot (Double -> XY) (Double, Double)
 
+instance Show Plot where
+  show (Plot _ bnd) = "<Plot "<> show bnd <> ">"
+
+instance Eq Plot where
+  p1 == p2 = asPolyline p1 == asPolyline p2
+
 instance Trans Plot where
   transform t (Plot f b) = Plot (transform t <$> f) b
 

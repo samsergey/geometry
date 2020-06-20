@@ -122,7 +122,7 @@ a ~>= b = a ~== b || a > b
 -- | The representation of a directed value isomorphic either to an angle
 -- or to a complex number or coordinates.
 newtype Direction = Direction Double
-  deriving (Num, Fractional, Floating, Real)
+  deriving (Num, Fractional, Floating, Real, Enum)
 
 -- | Constructs a directed value from an angle given in degrees.
 asDeg :: Double -> Direction

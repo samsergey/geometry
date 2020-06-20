@@ -182,6 +182,13 @@ aRay :: Ray
 aRay = asCmp 1
 
 -- | Returns a line, ray or a segment with given unit, in case of a segment -- with given length.
+--
+-- > group [aSegment # rotate x # extendToLength r
+-- >       | x <- [0,5..360] 
+-- >       , let r = 2 + sin (7 * rad x) ]
+--
+-- << figs/extendToLength.svg >>
+--
 extendToLength :: Double -> Segment -> Segment
 extendToLength l s = s # through' (paramL (asLine s) l)
 
@@ -282,12 +289,15 @@ through :: Linear l => XY -> (l -> l)
 through = through'
 
 -- | If possible, turns the line so that it becomes normal to a given curve, pointing towards a curve.
+--
+-- << figs/normalTo.svg >>
+--
 normalTo :: (Curve c, Linear l) => c -> l -> Maybe l
 normalTo c l = turn <*> Just l
   where s = start l
         turn = if c `isContaining` s
                then along' . normal c <$> (s ->@? c)
-               else along' . ray' s <$> (c `projectOn` s)
+               else along' . ray' s <$> (s # projectOn c)
 
 
 -- | Reflects the curve  at a given parameter against the normal, if it exists, or does nothing otherwise.

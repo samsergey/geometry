@@ -15,7 +15,7 @@ module Geometry.SVG ( -- * Classes
            , beside, (<||>), above
            , SVGable (..), ImageSize, SVGContext(..)
            -- * Functions
-           , showSVG
+           , showSVG, put, chart
            ) where
 
 import Prelude hiding (writeFile, unwords)
@@ -26,7 +26,6 @@ import Graphics.Svg.Elements
 import Graphics.Svg.Attributes
 import Data.Complex
 import Data.Monoid
-import Data.Functor.Const
 import Data.Maybe
 import Data.Text (Text, pack, unwords)
 import qualified Data.Text.Lazy as LT
@@ -268,10 +267,8 @@ infixl 3 <+>
 (<+>) :: (Groupable a, Groupable b) => a -> b -> Group
 a <+> b = G a <> G b
 
-newtype Fig a = Fig {fig :: a} deriving (Functor, Show)
-
-instance Applicative (Fig) where
-  pure f = Fig (G f)
+put x = (G x,())
+chart = fst
 
 instance Trans Group where
   transform t EmptyFig = EmptyFig
@@ -376,3 +373,13 @@ showSVG size obj = prettyText (contents ctx)
     w = figureWidth obj
     h = figureHeight obj
     p0 = left . upper . corner $ obj
+
+------------------------------------------------------------
+
+data Fig a where
+  P :: APoint a => a -> Fig a
+  L :: Linear a => a -> Fig a
+  E :: Fig ()
+  App :: Fig a -> Fig b -> Fig (a, b)
+
+

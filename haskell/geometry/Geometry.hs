@@ -6,6 +6,7 @@ Stability   : experimental
 module Geometry
 ( 
   writeSVG, showSVG, (<+>), group, beside, above, (<||>), Group (..)
+  , put, chart
   , module Geometry.Base
   , module Geometry.Figures
   , module Geometry.Point

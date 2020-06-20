@@ -183,8 +183,8 @@ instance SVGable Polygon where
 deriving via Polygon instance SVGable Triangle
 deriving via Polygon instance SVGable Rectangle
 
-instance SVGable Plot where
-  toSVG = toSVG . asPolyline
+instance (AlmostEq a, Affine a, Trans a) => SVGable (Plot a) where
+  toSVG = toSVG . plotManifold
 ------------------------------------------------------------
 
 instance SVGable Angle where
@@ -201,7 +201,7 @@ instance SVGable Angle where
       Just ns = extractOption optMultiStroke (figureOptions ctx')
       Angle p s e = an
       rays = mkPolyline [p + cmp s, p, p + cmp e] # scaleAt' p 20
-      arc = [ plotManifold (0,1) an # at' (p + cmp s) # scaleAt' p r
+      arc = [ plotManifold an # at' (p + cmp s) # scaleAt' p r
             | i <- [1..ns]
             , let r = 12 + fromIntegral i * 4 ]
 

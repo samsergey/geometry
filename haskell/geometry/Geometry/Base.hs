@@ -475,7 +475,7 @@ start m = param m 0
 ------------------------------------------------------------
 
 -- | Class representing a curve as a  continuous locally smooth manifold in affine space.
-class (Figure c, Trans c, Manifold CN c) => Curve c where
+class (Figure c, Trans c, Affine a, Manifold a c) => Curve a c | c -> a  where
   {-# MINIMAL normal | tangent #-}
 
   -- | The tangent direction for a given parameter on the curve.
@@ -486,7 +486,7 @@ class (Figure c, Trans c, Manifold CN c) => Curve c where
   normal :: c -> Double -> Direction
   normal c t = tangent c t + 90
 
-instance Curve c => Curve (Maybe c) where
+instance Curve a c => Curve a (Maybe c) where
   tangent c t = case c of
                   Just c -> tangent c t
                   Nothing -> 0
@@ -495,20 +495,20 @@ instance Curve c => Curve (Maybe c) where
                   Nothing -> 0
                   
 -- |  Class representing a closed region
-class Curve c => ClosedCurve c where
+class Curve a c => ClosedCurve a c | c -> a where
   {-# MINIMAL location | isEnclosing #-}
   
   -- | Returns the location of a point with respect to the region.
-  location :: Affine p => c -> p -> PointLocation
-  location c p | isContaining c (cmp p) = OnCurve
-               | isEnclosing c (cmp p) = Inside
+  location :: c -> a -> PointLocation
+  location c p | isContaining c p = OnCurve
+               | isEnclosing c p = Inside
                | otherwise = Outside
 
   -- | Returns `True` if point belongs to the region.
-  isEnclosing :: Affine p => c -> p -> Bool
+  isEnclosing :: c -> a -> Bool
   isEnclosing c p = location c p == Inside
 
-instance ClosedCurve c => ClosedCurve (Maybe c) where
+instance ClosedCurve a c => ClosedCurve a (Maybe c) where
   location c p = case c of
                    Just c -> location c p
                    Nothing -> Outside

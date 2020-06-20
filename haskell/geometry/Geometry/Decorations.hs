@@ -131,11 +131,11 @@ instance APoint p => APoint (Decorated p) where
   toPoint = toPoint . fromDecorated
   asPoint = pure . asPoint
 
-instance Curve a => Curve (Decorated a) where
+instance Curve a c => Curve a (Decorated c) where
   tangent = tangent . fromDecorated
   normal = normal . fromDecorated
 
-instance ClosedCurve a => ClosedCurve (Decorated a) where
+instance ClosedCurve a c => ClosedCurve a (Decorated c) where
   isEnclosing = isEnclosing . fromDecorated
   location = location . fromDecorated
 

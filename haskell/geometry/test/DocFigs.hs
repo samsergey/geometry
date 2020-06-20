@@ -50,7 +50,7 @@ main = do
     <+> pointOn aCircle 0.667 #: "C"
 
   writeSVG 500 (path <> "projectOn.svg") $
-    let c = Plot (\t -> (t, sin t)) (0,6) # asPolyline
+    let c = Plot  $ (\t -> t :+ sin t) . (*6)
         pA = point (1,0) #: "A"
         pB = point (2,0) #: "B"
         pC = point (4,0) #: "C"
@@ -98,9 +98,9 @@ main = do
          , let r = 2 + sin (7 * rad x) ]
 
   writeSVG 400 (path <> "normalTo.svg") $
-   let c = Plot (\t -> (t, sin t)) (0,6) 
+   let c = Plot $ (\t -> t :+ sin t) . (*6)
    in c <+>
-      group [ aSegment # at (x,1.25) # normalTo c
-            | x <- [0,1..6] ]
+      group [ aSegment # at (x,0) # normalTo c
+            | x <- [0,1..7] ]
 
     

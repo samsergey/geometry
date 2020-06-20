@@ -19,7 +19,7 @@ import Geometry.Polygon
 
 
 -- | Class for circle and decorated circle
-class (Trans c, Manifold CN c, Curve c, ClosedCurve c, Figure c) =>
+class (Trans c, Manifold CN c, Curve CN c, ClosedCurve CN c, Figure c) =>
   Circular c where
   {-# MINIMAL toCircle, asCircle #-}
   toCircle :: c -> Circle
@@ -94,12 +94,12 @@ instance Manifold CN Circle where
   unit _ = 2 * pi
 
 
-instance Curve Circle where
+instance Curve CN Circle where
   normal c t = azimuth (center c) (c @-> t)
   tangent c t = normal c t + 90 * orientation c
 
 
-instance ClosedCurve Circle where
+instance ClosedCurve CN Circle where
   location c p = res
     where res | r' ~== radius c = OnCurve
               | r' < radius c   = Inside

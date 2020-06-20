@@ -1,6 +1,8 @@
 {-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE TypeSynonymInstances,FlexibleInstances,MultiParamTypeClasses #-}
-
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Geometry.Line
   (-- * Types
     Linear (..)
@@ -19,7 +21,7 @@ import Geometry.Base
 ------------------------------------------------------------
 
 -- | Class representing a linear object: line, ray or segment.
-class (Curve l, Affine l, Figure l) => Linear l where
+class (Curve CN l, Affine l, Figure l) => Linear l where
   {-# MINIMAL refPoints #-}
   refPoints :: l -> (CN, CN)
 
@@ -87,7 +89,7 @@ instance Manifold CN Line where
                      || l `isCollinear` azimuth (refPoint l) p
   unit = norm
 
-instance Curve Line where
+instance Curve CN Line where
   tangent l _ = angle l
 
 intersectionLL (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
@@ -111,7 +113,7 @@ newtype Ray = Ray (CN, CN)
   deriving ( Eq
            , Affine
            , Trans
-           , Curve
+           , Curve CN
            , Linear
            ) via Line
 
@@ -146,7 +148,7 @@ newtype Segment = Segment (CN, CN)
   deriving ( Eq
            , Affine
            , Trans
-           , Curve
+           , Curve CN
            , Linear
            ) via Line
 
@@ -173,6 +175,7 @@ instance Figure Segment where
 end :: Segment -> CN
 end = snd . refPoints
 
+midPerpendicular :: Segment -> Line
 midPerpendicular s = mkLine (p1, p2)
   where p1 = s @-> 0.5
         p2 = p1 + cmp (normal s 0.5)

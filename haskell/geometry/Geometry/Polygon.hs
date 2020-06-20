@@ -3,6 +3,8 @@
 {-# language FlexibleContexts #-}
 {-# language UndecidableInstances #-}
 {-# language DerivingVia #-}
+{-# language GeneralizedNewtypeDeriving #-}
+
 
 module Geometry.Polygon
   (
@@ -76,7 +78,7 @@ isDegenerate = any isZero . segments
 interpolation :: PiecewiseLinear p => p -> Double -> Maybe CN
 interpolation p x = param' <$> find interval tbl
   where
-    interval ((a, b), _) = a ~<= x && x ~<= b
+    interval ((a, b), _) = a <= x && x <= b
     param' ((a, b), s) = s @-> ((x - a)/(b-a))
     tbl = zip (zip ds (tail ds)) $ segments p
     ds = scanl (+) 0 $ unit <$> segments p
@@ -169,7 +171,7 @@ instance Manifold CN Polyline where
   unit p = sum $ unit <$> segments p
 
 
-instance Curve Polyline where
+instance Curve CN Polyline where
   tangent p t =  asCmp $ (p @-> (t + dt)) - (p @-> (t - dt))
     where dt = 1e-5
   normal p t = tangent p t # rotate (-90)
@@ -235,12 +237,12 @@ instance Manifold CN Polygon where
   isContaining = isContaining . asPolyline
   unit = unit . asPolyline
 
-instance Curve Polygon where
+instance Curve CN Polygon where
   tangent p t =  asCmp $ (p @-> (t + dt)) - (p @-> (t - dt))
     where dt = 1e-5
   normal p t = tangent p t # rotate (-90)
   
-instance ClosedCurve Polygon where
+instance ClosedCurve CN Polygon where
   location p pt = case foldMap go (segments p') of
                     (Any True, _) -> OnCurve
                     (_, Sum n) | odd n -> Inside
@@ -262,8 +264,8 @@ instance ClosedCurve Polygon where
 newtype Triangle = Triangle [CN]
   deriving ( Figure
            , Manifold CN
-           , Curve
-           , ClosedCurve
+           , Curve CN
+           , ClosedCurve CN
            , Trans
            , Eq
            , PiecewiseLinear
@@ -287,8 +289,8 @@ instance Affine Triangle where
 newtype Rectangle = Rectangle [CN]
   deriving ( Figure
            , Manifold CN
-           , Curve
-           , ClosedCurve
+           , Curve CN
+           , ClosedCurve CN
            , Trans
            , Eq
            , PiecewiseLinear
@@ -313,45 +315,53 @@ boxRectangle f = Rectangle [ p4, p3, p2, p1 ]
 
 ------------------------------------------------------------
 
-data Plot = Plot (Double -> XY) (Double, Double)
+newtype Plot a = Plot { plotFn :: Double -> a }
+  deriving Functor
 
-instance Show Plot where
-  show (Plot _ bnd) = "<Plot "<> show bnd <> ">"
+instance Show (Plot a) where
+  show _ = "<Plot>"
 
-instance Eq Plot where
-  p1 == p2 = asPolyline p1 == asPolyline p2
+instance (AlmostEq a, Affine a, Trans a)=> Eq (Plot a) where
+  p1 == p2 = plotManifold p1 == plotManifold p2
 
-instance Trans Plot where
-  transform t (Plot f b) = Plot (transform t <$> f) b
+instance (AlmostEq a, Affine a, Trans a) => Trans (Plot a) where
+  transform = fmap . transform
 
-instance PiecewiseLinear Plot where
-  vertices p@(Plot _ b) = vertices $ plotManifold b p
+instance PiecewiseLinear (Plot CN) where
+  vertices = vertices . plotManifold
+  asPolyline = plotManifold
 
-instance Curve Plot where
-  tangent p t = asCmp $ (p @-> (t + dt)) - (p @-> (t - dt))
+instance (AlmostEq a, Affine a, Trans a) => Curve a (Plot a) where
+  tangent p t = asCmp $ cmp (p @-> (t + dt)) - cmp (p @-> (t - dt))
     where dt = 1e-5
 
-instance Figure Plot where
-  refPoint = start
-  box = box . asPolyline
-  isTrivial = isTrivial . asPolyline
+instance (AlmostEq a, Affine a, Trans a) => Figure (Plot a) where
+  refPoint = cmp . start
+  box = box . plotManifold
+  isTrivial = isTrivial . plotManifold
 
-instance Manifold CN Plot where
-  bounds (Plot _ (a,b)) = [a,b]
-  param (Plot f _) = asCoord . f
-  project = project . asPolyline
-  paramMaybe = paramMaybe . asPolyline
-  projectMaybe = projectMaybe . asPolyline
-  isContaining = isContaining . asPolyline
-  unit = unit . asPolyline
+instance (AlmostEq a, Affine a, Trans a) => Manifold a (Plot a) where
+  bounds _ = [0,1]
+  param = plotFn
+  project p pt = findZero (\x -> (azimuth (p @-> x) pt) `dot` tangent p x) x0
+    where x0 = project pl (cmp pt)
+          pl = plotManifold p
+          p0 = pl @-> x0
+  isContaining p = isContaining (plotManifold p) . cmp
+  unit = unit . plotManifold
 
+findZero f x = go x (x+dx) (f x) (f $ x + dx) 
+  where go x1 x2 y1 y2 | abs (x2 - x1) < 1e-12 = x2
+                       | otherwise = let x = (x1*y2 - x2*y1)/(y2-y1)
+                                     in go x2 x y2 (f x)
+        dx = 1e-5
 
-plotManifold :: (Affine a, Manifold a m) => (Double, Double) -> m -> Polyline
-plotManifold (a, b) m = Polyline pts
+plotManifold :: (Affine a, Manifold a m) => m -> Polyline
+plotManifold m = Polyline pts
   where
-    a @->. b = cmp (a @-> b)
-    pts = clean $ [m @->. a] <> tree a b <> [m @->. b]
-    tree a b | xa `distance` xb < 1e-3 = [xc]
+    mf @->. x = cmp (mf @-> x) 
+    pts = clean $ [m @->. 0] <> tree 0 1 <> [m @->. 1]
+    tree a b | xa `distance` xb < 1e-4 = [xc]
              | abs (azimuth xa xc - azimuth xc xb) < asDeg 2 = [xc]
              | otherwise = tree a c <> tree c b
           where

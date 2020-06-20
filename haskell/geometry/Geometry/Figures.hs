@@ -95,7 +95,7 @@ point' p = mkPoint (cmp p)
 -- >    pointOn c 0.667 #: "C"
 -- << figs/pointOn.svg >>
 --
-pointOn :: Curve a => a -> Double -> Decorated Point
+pointOn :: Curve a c => c -> Double -> Decorated Point
 pointOn c t = mkPoint (c @-> t) #: loffs (cmp (normal c t))
 
 -- | Returns a normal projection of the given point on the curve.
@@ -111,7 +111,7 @@ pointOn c t = mkPoint (c @-> t) #: loffs (cmp (normal c t))
 -- >           pD <+> pD # projectOn c #: "D'")
 -- << figs/projectOn.svg >>
 --
-projectOn :: (APoint p, Curve c, Affine p) => c -> p -> Maybe (Decorated Point)
+projectOn :: (APoint p, Curve CN c, Affine p) => c -> p -> Maybe (Decorated Point)
 projectOn c p = pointOn c <$> (cmp p ->@? c)
 
 -- | Returns a list of intersection points as `Point` objects.
@@ -121,7 +121,7 @@ projectOn c p = pointOn c <$> (cmp p ->@? c)
 -- > in p1 <+> c <+> group (intersectionPoints c p1)
 -- << figs/intersectionPoints.svg >>
 --
-intersectionPoints :: ( Curve a, Curve b, Intersections a b )
+intersectionPoints :: ( Curve CN a, Curve CN b, Intersections a b )
                    => a -> b -> [Point]
 intersectionPoints c1 c2 = point' <$> intersections c1 c2
 
@@ -202,7 +202,7 @@ extendToLength l s = s # through' (paramL (asLine s) l)
 -- >    group [s2 # along a # extendTo t | a <- [0,10..360] ]
 -- << figs/extendTo.svg >>
 --
-extendTo :: (Curve c, Intersections Ray c)
+extendTo :: (Curve CN c, Intersections Ray c)
          => c -> Segment -> Maybe Segment
 extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
   where extend p = s # through' p
@@ -214,13 +214,13 @@ extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
 -- >>> point (-1,1) # heightTo aRay
 -- Nothing
 --
-heightTo :: (Affine p, Curve c, Intersections Ray c)
+heightTo :: (Affine p, Curve CN c, Intersections Ray c)
          => c -> p -> Maybe Segment
 heightTo c p = (aSegment # at' p # normalTo c) >>= extendTo c
 
 -- | Returns a list of segments as a result of clipping the line
 -- by a closed curve.
-clipBy :: (Linear l, Intersections l c, Figure c, ClosedCurve c)
+clipBy :: (Linear l, Intersections l c, Figure c, ClosedCurve CN c)
        => l -> c -> [Segment]
 clipBy l c = filter internal $ Segment <$> zip ints (tail ints) 
   where
@@ -274,7 +274,7 @@ along d = along' (asDeg d)
 
 -- | Locates an affine object on a given curve at
 -- given parameter and aligns it along a tangent to a curve at this point.
-on :: (Figure f, Affine f, Curve c) => c -> Double -> (f -> f)
+on :: (Figure f, Affine f, Curve a c) => c -> Double -> (f -> f)
 on c x = along' (tangent c x) . at' (c @-> x)
 
 -- | A generalized version of `through`.
@@ -292,7 +292,7 @@ through = through'
 --
 -- << figs/normalTo.svg >>
 --
-normalTo :: (Curve c, Linear l) => c -> l -> Maybe l
+normalTo :: (Curve CN c, Linear l) => c -> l -> Maybe l
 normalTo c l = turn <*> Just l
   where s = start l
         turn = if c `isContaining` s
@@ -301,13 +301,13 @@ normalTo c l = turn <*> Just l
 
 
 -- | Reflects the curve  at a given parameter against the normal, if it exists, or does nothing otherwise.
-flipAt :: (Curve c) => Double -> c -> c
+flipAt :: (Curve CN c) => Double -> c -> c
 flipAt x c = case normalSegment c x of
                Just n -> c # reflectAt n
                Nothing -> c
 
 -- | If possible, returns a line segment normal to the curve starting at a given parameter
-normalSegment :: Curve c => c -> Double -> Maybe Segment
+normalSegment :: Curve CN c => c -> Double -> Maybe Segment
 normalSegment c x =
   do p <- paramMaybe c x
      aSegment # at' p # normalTo c
@@ -464,8 +464,8 @@ vertexAngle' p j = side p j `angleBetween` side p (j-1)
 ------------------------------------------------------------
 
 -- | Creates a scale as a list of labeled points on a given curve
-linearScale :: (Show a, Curve c)
-            => (Double -> a) -- ^ labeling function
+linearScale :: (Show s, Curve a c)
+            => (Double -> s) -- ^ labeling function
             -> [Double] -- ^ range of the curve parameter
             -> c -- ^ the curve
             -> [Decorated Point]
@@ -481,7 +481,7 @@ linearScale fn rng c = [ pointOn c x #:: label (show (fn x))
 -- > in (c <+> s1) `beside` space 1 `beside` (s2 <+> t)
 --
 -- << figs/modularScale.svg>>
-modularScale :: (Trans c, Curve c) => Int -> c -> [Decorated Point]
+modularScale :: (Trans c, Affine a, Curve a c) => Int -> c -> [Decorated Point]
 modularScale n = linearScale lf rng
   where n' = fromIntegral n
         rng = (/n') <$> [0..n'-1]

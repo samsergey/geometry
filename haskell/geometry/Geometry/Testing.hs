@@ -15,6 +15,7 @@ import Test.QuickCheck.Modifiers
 import Data.Tuple.Extra (second)
 
 import Geometry
+import Geometry.Circle
 
 infix 0 <==>
 a <==> b = (a ==> b) .&&. (b ==> a)
@@ -70,7 +71,7 @@ newtype AnyPoint = AnyPoint Point
 
 instance Arbitrary Circle where
   arbitrary = do (Position c) <- arbitrary
-                 (Position r) <- arbitrary :: Gen (Position CN)
+                 (Position r) <- arbitrary :: Gen (Position Cmp)
                  return $ (mkCircle (norm r) c # rotateAt' c (angle r))
                  
   shrink cir =
@@ -162,8 +163,11 @@ newtype Nontrivial a = Nontrivial a deriving
   , Figure
   , Affine
   , Trans
-  , Curve
-  , ClosedCurve )
+  )
+
+deriving instance Curve a f => Curve a (Nontrivial f) 
+
+deriving instance ClosedCurve a f => ClosedCurve a (Nontrivial f) 
 
 deriving instance (Affine a, Manifold a m) => Manifold a (Nontrivial m)
 

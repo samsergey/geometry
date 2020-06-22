@@ -35,10 +35,10 @@ import Geometry.Point
 import Geometry.Line
 
 -- | A class for polylines and polygons.
-class (Trans p, Manifold CN p) => PiecewiseLinear p where
+class (Trans p, Manifold Cmp p) => PiecewiseLinear p where
   {-# MINIMAL vertices #-}
   -- | A list of polyline vertices.
-  vertices :: p -> [CN]
+  vertices :: p -> [Cmp]
   
   -- | A representation of the instance as a polyline.
   asPolyline :: p -> Polyline
@@ -56,7 +56,7 @@ class (Trans p, Manifold CN p) => PiecewiseLinear p where
     vs -> Segment <$> zip vs (tail vs)
 
   -- | The indexed selector for vertices of a polyline.
-  vertex :: p -> Int -> CN
+  vertex :: p -> Int -> Cmp
   vertex p i = vs !! j
     where vs = vertices p
           n = verticesNumber p
@@ -75,7 +75,7 @@ instance PiecewiseLinear p => PiecewiseLinear (Maybe p) where
 isDegenerate :: PiecewiseLinear p => p -> Bool
 isDegenerate = any isZero . segments 
 
-interpolation :: PiecewiseLinear p => p -> Double -> Maybe CN
+interpolation :: PiecewiseLinear p => p -> Double -> Maybe Cmp
 interpolation p x = param' <$> find interval tbl
   where
     interval ((a, b), _) = a <= x && x <= b
@@ -102,7 +102,7 @@ instance PiecewiseLinear Segment where
 -- >>> asCmp (1) :: Rectangle
 -- <Rectangle (0.0,0.0) (1.0,0.0) (1.0,1.0) (0.0,1.0)>
 --
-newtype Polyline = Polyline [CN]
+newtype Polyline = Polyline [Cmp]
 
 instance PiecewiseLinear Polyline where
   vertices (Polyline vs) = vs
@@ -122,7 +122,7 @@ instance Show Polyline where
   show p = concat ["<Polyline ", n, ">"]
     where vs = vertices p
           n = if length vs < 5
-              then unwords $ show . coord <$> vs
+              then unwords $ show . xy <$> vs
               else "-" <> show (length vs) <> "-"
 
 
@@ -155,7 +155,7 @@ instance Trans Polyline where
   transform t p = Polyline $ transform t <$> vertices p
 
 
-instance Manifold CN Polyline where
+instance Manifold Cmp Polyline where
   param p t | t < 0 = param (asLine (side p 0)) t
             | t > 1 = param (asLine (side p (verticesNumber p - 1))) t
             | otherwise = fromJust $  interpolation p (t * unit p) 
@@ -171,7 +171,7 @@ instance Manifold CN Polyline where
   unit p = sum $ unit <$> segments p
 
 
-instance Curve CN Polyline where
+instance Curve Cmp Polyline where
   tangent p t =  asCmp $ (p @-> (t + dt)) - (p @-> (t - dt))
     where dt = 1e-5
   normal p t = tangent p t # rotate (-90)
@@ -188,7 +188,7 @@ instance Figure Polyline where
 ------------------------------------------------------------
 
 -- | Representation of a closed polygon as a list of vertices.
-newtype Polygon = Polygon [CN]
+newtype Polygon = Polygon [Cmp]
   deriving ( Eq
            , Trans
            , Affine
@@ -227,22 +227,22 @@ instance Show Polygon where
   show p = concat ["<Polygon ", n, ">"]
     where vs = vertices p
           n = if length vs < 5
-              then unwords $ show . coord <$> vs
+              then unwords $ show . xy <$> vs
               else "-" <> show (length vs) <> "-"
 
 
-instance Manifold CN Polygon where
+instance Manifold Cmp Polygon where
   param p t = fromJust $ interpolation (asPolyline p) $ (t `mod'` 1) * unit p
   project = project . asPolyline
   isContaining = isContaining . asPolyline
   unit = unit . asPolyline
 
-instance Curve CN Polygon where
+instance Curve Cmp Polygon where
   tangent p t =  asCmp $ (p @-> (t + dt)) - (p @-> (t - dt))
     where dt = 1e-5
   normal p t = tangent p t # rotate (-90)
   
-instance ClosedCurve CN Polygon where
+instance ClosedCurve Cmp Polygon where
   location p pt = case foldMap go (segments p') of
                     (Any True, _) -> OnCurve
                     (_, Sum n) | odd n -> Inside
@@ -261,11 +261,11 @@ instance ClosedCurve CN Polygon where
 ------------------------------------------------------------
 
 -- | Representation of a triangle as a list of vertices.
-newtype Triangle = Triangle [CN]
+newtype Triangle = Triangle [Cmp]
   deriving ( Figure
-           , Manifold CN
-           , Curve CN
-           , ClosedCurve CN
+           , Manifold Cmp
+           , Curve Cmp
+           , ClosedCurve Cmp
            , Trans
            , Eq
            , PiecewiseLinear
@@ -277,7 +277,7 @@ mkTriangle = Triangle . fmap cmp
 
 instance Show Triangle where
   show t = concat ["<Triangle ", ss, ">"]
-    where ss = unwords $ show . coord <$> vertices t
+    where ss = unwords $ show . xy <$> vertices t
 
 instance Affine Triangle where
   cmp = cmp . asPolyline
@@ -286,11 +286,11 @@ instance Affine Triangle where
 ------------------------------------------------------------
 
 -- | Representation of a rectangle as a list of vertices.
-newtype Rectangle = Rectangle [CN]
+newtype Rectangle = Rectangle [Cmp]
   deriving ( Figure
-           , Manifold CN
-           , Curve CN
-           , ClosedCurve CN
+           , Manifold Cmp
+           , Curve Cmp
+           , ClosedCurve Cmp
            , Trans
            , Eq
            , PiecewiseLinear
@@ -303,7 +303,7 @@ mkRectangle a b = (asCmp 1 :: Rectangle) # scaleX a # scaleY b
 
 instance Show Rectangle where
   show t = concat ["<Rectangle ", ss, ">"]
-    where ss = unwords $ show . coord <$> vertices t
+    where ss = unwords $ show . xy <$> vertices t
 
 instance Affine Rectangle where
   cmp = cmp . asPolyline
@@ -327,7 +327,7 @@ instance (AlmostEq a, Affine a, Trans a)=> Eq (Plot a) where
 instance (AlmostEq a, Affine a, Trans a) => Trans (Plot a) where
   transform = fmap . transform
 
-instance PiecewiseLinear (Plot CN) where
+instance PiecewiseLinear (Plot Cmp) where
   vertices = vertices . plotManifold
   asPolyline = plotManifold
 

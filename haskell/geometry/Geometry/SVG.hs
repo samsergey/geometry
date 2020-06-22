@@ -12,7 +12,7 @@ module Geometry.SVG
   ( Groupable, Group (..)
   , (<+>), group
   , (<||>), beside, above
-  , SVGable (..), ImageSize, SVGContext(..)
+  , SVGable (..), SVGContext(..)
   , showSVG, put, chart
   ) where
 
@@ -75,15 +75,14 @@ class SVGable a where
 instance SVGable Double where
   fmtSVG n = if n ~== 0 then "0" else toShortest n
 
-instance SVGable CN where
-  fmtSVG p = fmtSVG x <> "," <> fmtSVG y <> " "
-    where (x, y) = coord p
+instance SVGable Cmp where
+  fmtSVG = fmtSVG . xy
 
-instance SVGable [CN] where
+instance SVGable [Cmp] where
   fmtSVG = foldMap fmtSVG
 
 instance SVGable XY where
-  fmtSVG = fmtSVG . cmp
+  fmtSVG (x, y) = fmtSVG x <> "," <> fmtSVG y <> " "
 
 instance SVGable a => SVGable (Maybe a) where
   toSVG = maybe mempty toSVG
@@ -330,12 +329,10 @@ above f1 f2 = f2 <+> f1 # superpose (refPoint f2) (left . upper . corner $ f2)
 
 
 ------------------------------------------------------------
--- | Type alias for explicit image settings
-type ImageSize = Int
 
 -- | The record containing image parameters and options.
 data SVGContext = SVGContext
-  { imageSize :: ImageSize
+  { imageSize :: Int
   , figureBox :: Rectangle
   , border :: Double
   , figureOptions :: Options }
@@ -353,19 +350,19 @@ wrapSVG content ctx =
   , Style_ <<- "background : #444;" ]
 
 -- | Creates a SVG contents for geometric objects.
-showSVG :: (Figure a, SVGable a) => ImageSize -> a -> LT.Text
+showSVG :: (Figure a, SVGable a) => Int -> a -> LT.Text
 showSVG size obj = prettyText (contents ctx)
   where
     brd = 30
     contents = toSVG obj' >>= wrapSVG
     ctx = SVGContext size fb brd mempty
     obj' = obj
-           # superpose p0 (0 :: CN)
+           # superpose p0 (0 :: Cmp)
            # reflect 0
            # scale ((fromIntegral size - brd*3) / ((w `max` h) `min` paperSize))
            # translate' ((brd*1.5, brd*1.5) :: XY)
     fb = boxRectangle obj
-         # superpose p0 (0 :: CN)
+         # superpose p0 (0 :: Cmp)
          # reflect 0
          # scale ((fromIntegral size - brd) / ((w `max` h) `min` paperSize))
          # translate' ((brd/2, brd/2) :: XY)

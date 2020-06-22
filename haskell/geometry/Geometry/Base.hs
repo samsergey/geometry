@@ -8,7 +8,7 @@
 module Geometry.Base
   ( -- * Types
     -- ** Point represenations
-    CN
+    Cmp
   , XY
   -- ** Directed values
   , Direction (..)
@@ -25,7 +25,7 @@ module Geometry.Base
   -- * Linear transformations
   , TMatrix, transformOrientation
   , Trans (..)
-  , transformCN, transformXY, transformAt
+  , transformCmp, transformXY, transformAt
   -- ** transformations
   , translate', translate, superpose, at, at'
   , rotate, rotateAt', reflect, reflectAt
@@ -63,7 +63,7 @@ import Data.Bool
 
 ------------------------------------------------------------
 -- | Type alias for a complex number.
-type CN = Complex Double
+type Cmp = Complex Double
 
 -- | Type alias for a coordinate representation.
 type XY = (Double, Double)
@@ -80,8 +80,7 @@ both f (a,b) = (f a, f b)
 
 infix 4 ~==
 
--- | Type class for values for which equality could be stated
--- with some known tolerance.
+-- | Type class for values for which equality could be stated with some known tolerance.
 class AlmostEq a where
   -- | The equality operator.
   (~==) :: a -> a -> Bool
@@ -93,7 +92,8 @@ instance AlmostEq Integer where  a ~== b = a == b
 instance AlmostEq Double where
   a ~== b = abs (a - b) < 1e-8 || abs (a-b) < 1e-8 * abs(a+b)
 
-instance (RealFloat a, Ord a, Fractional a, Num a, AlmostEq a) => AlmostEq (Complex a) where
+instance (RealFloat a, Ord a, Fractional a, Num a, AlmostEq a) =>
+         AlmostEq (Complex a) where
   a ~== b = magnitude (a - b) < 1e-8 || magnitude (a-b) < 1e-8 * magnitude(a+b)
 
 instance (AlmostEq a, AlmostEq b) => AlmostEq (a, b) where
@@ -121,8 +121,9 @@ a ~>= b = a ~== b || a > b
 
 ------------------------------------------------------------
 
--- | The representation of a directed value isomorphic either to an angle
--- or to a complex number or coordinates.
+{- | The representation of a directed value isomorphic either to an angle
+ or to a complex number or coordinates.
+-}
 newtype Direction = Direction Double
   deriving (Num, Fractional, Floating, Real, Enum)
 
@@ -170,14 +171,14 @@ class Trans a where
   -- | The general linear transformation.
   transform :: TMatrix -> a -> a
 
-instance Trans CN where
-  transform = transformCN
+instance Trans Cmp where
+  transform = transformCmp
 
 instance Trans XY where
   transform  = transformXY
 
 instance Trans Direction where
-  transform t  = asCmp . transformCN t . cmp
+  transform t  = asCmp . transformCmp t . cmp
 
 instance Trans a => Trans (Maybe a) where
   transform t  = fmap (transform t)
@@ -196,7 +197,7 @@ reflectT :: Double -> TMatrix
 reflectT a = ((cos (2*a), sin (2*a), 0), (sin (2*a), -(cos (2*a)), 0))
 
 -- | The translation matrix.
-translateT :: CN -> TMatrix
+translateT :: Cmp -> TMatrix
 translateT (dx :+ dy) = ((1, 0, dx), (0, 1, dy))
 
 -- | The scaling matrix.
@@ -204,8 +205,8 @@ scaleT :: Double -> Double -> TMatrix
 scaleT x y = ((x, 0, 0), (0, y, 0))
 
 -- | The transformation of a complex number. Used in class implementations.
-transformCN :: TMatrix -> CN -> CN
-transformCN t = cmp . transformXY t . coord
+transformCmp :: TMatrix -> Cmp -> Cmp
+transformCmp t = cmp . transformXY t . xy
 
 -- | The transformation of coordinates. Used in class implementations.
 transformXY :: TMatrix -> XY -> XY
@@ -214,8 +215,8 @@ transformXY ((a11, a12, sx), (a21, a22, sy)) (x, y) =
 
 -- | The transformation with shifted origin.
 transformAt :: (Trans a, Affine p) => p -> (a -> a) -> a -> a
-transformAt p t = translate' xy . t . translate' (-xy)
-  where xy = cmp p
+transformAt p t = translate' c . t . translate' (-c)
+  where c = cmp p
 
 -- | The translation of an object.
 translate' :: (Trans a, Affine p) => p -> a -> a
@@ -301,16 +302,16 @@ at = at'
 along' :: (Figure f, Affine v, Affine f) => v -> (f -> f)
 along' v l = rotateAt' (refPoint l) (angle v - angle l) l
 
--- | Rotates the figure which is `Affine` instance against it's `refPoint` so that it's
--- refference angle (given by `angle`) councides with a given one.
---
--- > let a = aSegment # at (1,0) # along 30 #: "a"
--- >     t = aTriangle # along' a
--- >     s = aSquare # at (2,0) # along' t
--- > in a <+> t <+> s
---
--- << figs/along.svg >>
---
+{- | Rotates the figure which is `Affine` instance against it's `refPoint` so that it's
+ refference angle (given by `angle`) councides with a given one.
+
+> let a = aSegment # at (1,0) # along 30 #: "a"
+>     t = aTriangle # along' a
+>     s = aSquare # at (2,0) # along' t
+> in a <+> t <+> s
+
+<< figs/along.svg >>
+-}
 along :: (Figure f, Affine f) => Double -> (f -> f)
 along d = along' (asDeg d)
 
@@ -330,34 +331,35 @@ on :: (Figure f, Affine f, Curve a c) => c -> Double -> (f -> f)
 on c x = along' (tangent c x) . at' (c @-> x)
 
 ------------------------------------------------------------
--- | Class representing points in 2d affine space.
--- Instances may be points, coordinates, complex numbers, 2d-vectors.
+{- | Class representing points in 2d affine space.
+ Instances may be points, coordinates, complex numbers, 2d-vectors.
+-}
 class Affine a where
-  {-# MINIMAL (asCmp, cmp) | (asCoord, coord) #-}
+  {-# MINIMAL (asCmp, cmp) | (asXY, xy) #-}
 
   -- | Constructs an affine point from a complex number.
-  asCmp :: CN -> a
-  asCmp = asCoord . coord
+  asCmp :: Cmp -> a
+  asCmp = asXY . xy
 
   -- | Returns a representation of an afine point as a complex number.
-  cmp :: a -> CN
-  cmp p = let (x, y) = coord p in x :+ y
+  cmp :: a -> Cmp
+  cmp p = let (x, y) = xy p in x :+ y
 
   -- | Constructs an affine point from a coordinates.
-  asCoord :: XY -> a
-  asCoord = asCmp . cmp
+  asXY :: XY -> a
+  asXY = asCmp . cmp
 
   -- | Returns a representation of an afine point as a coordinate.
-  coord :: a -> XY
-  coord p = let x :+ y = cmp p in (x, y)
+  xy :: a -> XY
+  xy p = let x :+ y = cmp p in (x, y)
 
   -- | Returns x-coordinate of an afine point.
   getX :: a -> Double
-  getX = fst . coord
+  getX = fst . xy
 
   -- | Returns y-coordinate of an afine point.
   getY :: a -> Double
-  getY = snd . coord
+  getY = snd . xy
     
 -- | Returns `True` if two points represent orthogonal vectors.
 isOrthogonal :: (Affine a, Affine b) => a -> b -> Bool
@@ -381,14 +383,14 @@ azimuth p1 p2 = asCmp (cmp p2 - cmp p1)
 
 -- | The dot product of two vectors (points).
 dot :: (Affine a, Affine b) => a -> b -> Double
-dot a b = let (xa, ya) = coord a
-              (xb, yb) = coord b
+dot a b = let (xa, ya) = xy a
+              (xb, yb) = xy b
               in xa*xb + ya*yb
 
 -- | Determinant of a matrix, composed of two vector rows.
 det :: (Affine a, Affine b) => (a, b) -> Double
-det (a, b) = let (xa, ya) = coord a
-                 (xb, yb) = coord b
+det (a, b) = let (xa, ya) = xy a
+                 (xb, yb) = xy b
              in xa*yb - ya*xb
 
 -- | Z-component of a cross product of two vectors.
@@ -411,7 +413,7 @@ normalize v
   | otherwise = asCmp $ (1/norm v :+ 0) * cmp v
 
 roundUp :: Affine a => Double -> a -> a
-roundUp d = asCoord . (\(x,y) -> (rounding x, rounding y)) . coord
+roundUp d = asXY . (\(x,y) -> (rounding x, rounding y)) . xy
   where rounding x = fromIntegral (ceiling (x /d)) * d
 
 -- | The direction of the vector or a point.
@@ -420,16 +422,16 @@ angle = asCmp . cmp
 
 -- | The matrix, composed of two vector columns.
 columns :: Affine a => (a, a) -> (a, a)
-columns (a, b) = ( asCoord (getX a, getX b)
-                 , asCoord (getY a, getY b))
+columns (a, b) = ( asXY (getX a, getX b)
+                 , asXY (getY a, getY b))
 
-instance Affine CN where
+instance Affine Cmp where
   cmp = id
   asCmp = id
 
 instance Affine XY where
-  coord = id
-  asCoord = id
+  xy = id
+  asXY = id
 
 instance Affine Direction where
   cmp a = mkPolar 1 (rad a)
@@ -592,7 +594,7 @@ type Box = ((Min Double, Min Double), (Max Double, Max Double))
 
 pointBox :: Affine p => p -> Box
 pointBox p = ((Min x, Min y), (Max x, Max y))
-    where (x, y) = coord p
+    where (x, y) = xy p
 
            
 -- | Class representing the interface for a figure on a chart
@@ -610,7 +612,7 @@ class (Trans a) => Figure a where
   isNontrivial x = not (isTrivial x)
 
   -- | Returns a refference point using for superposing and figure locataion.
-  refPoint :: a -> CN
+  refPoint :: a -> Cmp
   refPoint = left . lower . corner
 
 instance Bounded Double where

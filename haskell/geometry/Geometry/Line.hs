@@ -19,9 +19,9 @@ import Geometry.Base
 ------------------------------------------------------------
 
 -- | Class representing a linear object: line, ray or segment.
-class (Curve CN l, Affine l, Figure l) => Linear l where
+class (Curve Cmp l, Affine l, Figure l) => Linear l where
   {-# MINIMAL refPoints #-}
-  refPoints :: l -> (CN, CN)
+  refPoints :: l -> (Cmp, Cmp)
 
   asLine :: l -> Line
   asLine = Line . refPoints
@@ -41,7 +41,7 @@ instance Linear l => Linear (Maybe l) where
 -- The first point sets the `Figure`'s refference point and a starting point of a line.
 -- The distance between refference points `p1` and `p2` sets the `unit` and internal scale,
 -- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
-newtype Line = Line (CN, CN)
+newtype Line = Line (Cmp, Cmp)
   deriving Show
 
 instance Linear Line where
@@ -67,16 +67,16 @@ instance Figure Line where
 instance Affine Line where
   cmp l =  let (p1, p2) = refPoints l 
            in cmp p2 - cmp p1
-  asCmp p = mkLine (0 :: CN, p)
+  asCmp p = mkLine (0 :: Cmp, p)
 
 
 instance Trans Line where
   transform t (Line (p1, p2)) = Line (p1', p2')
-    where p1' = transformCN t p1
-          p2' = transformCN t p2
+    where p1' = transformCmp t p1
+          p2' = transformCmp t p2
 
 
-instance Manifold CN Line where
+instance Manifold Cmp Line where
   bounds l | isTrivial l = [0, 0]
            | otherwise = []
   param l t = let (p1, p2) = refPoints l
@@ -87,7 +87,7 @@ instance Manifold CN Line where
                      || l `isCollinear` azimuth (refPoint l) p
   unit = norm
 
-instance Curve CN Line where
+instance Curve Cmp Line where
   tangent l _ = angle l
 
 intersectionLL (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
@@ -106,12 +106,12 @@ lineIntersection l1 l2 =
 -- The first point sets the `Figure`'s refference point and a starting point of a ray.
 -- The distance between refference points `p1` and `p2` sets the `unit` and internal scale,
 -- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
-newtype Ray = Ray (CN, CN)
+newtype Ray = Ray (Cmp, Cmp)
   deriving Show
   deriving ( Eq
            , Affine
            , Trans
-           , Curve CN
+           , Curve Cmp
            , Linear
            ) via Line
 
@@ -120,7 +120,7 @@ mkRay :: (Affine p1, Affine p2) => (p1, p2) -> Ray
 mkRay = asRay . mkLine
 
 
-instance Manifold CN Ray where
+instance Manifold Cmp Ray where
   bounds r | isTrivial r = [0,0]
            | otherwise = [0]
   param = param . asLine
@@ -141,12 +141,12 @@ instance Figure Ray where
 -- The first point sets the `Figure`'s refference point and a starting point of a ray.
 -- The distance between refference points `p1` and `p2` sets the `unit` and internal scale,
 -- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
-newtype Segment = Segment (CN, CN)
+newtype Segment = Segment (Cmp, Cmp)
   deriving Show
   deriving ( Eq
            , Affine
            , Trans
-           , Curve CN
+           , Curve Cmp
            , Linear
            ) via Line
 
@@ -154,7 +154,7 @@ newtype Segment = Segment (CN, CN)
 mkSegment :: (Affine p1, Affine p2) => (p1, p2) -> Segment
 mkSegment = asSegment . mkLine
 
-instance Manifold CN Segment where
+instance Manifold Cmp Segment where
   bounds s | isTrivial s = [0, 0]
            | otherwise = [0, 1]
   param = param . asLine
@@ -170,7 +170,7 @@ instance Figure Segment where
     where (p1, p2) = refPoints l
 
 
-end :: Segment -> CN
+end :: Segment -> Cmp
 end = snd . refPoints
 
 midPerpendicular :: Segment -> Line

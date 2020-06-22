@@ -47,8 +47,8 @@ data Option = Invisible Bool
             | MultiStroke Int
             | LabelText String
             | LabelCorner (Int, Int)
-            | LabelPosition CN
-            | LabelOffset CN
+            | LabelPosition Cmp
+            | LabelOffset Cmp
             | LabelAngle Direction
             | SegmentMark Int  deriving (Show)
 
@@ -237,11 +237,11 @@ label :: WithOptions a => String -> Decorator a
 label = mkDecorator LabelText
 
 -- | The decorator for label offset.
-loffs :: WithOptions a => CN -> Decorator a
+loffs :: WithOptions a => Cmp -> Decorator a
 loffs = mkDecorator LabelOffset . conjugate
 
 -- | The decorator for label position.
-lpos :: WithOptions a => CN -> Decorator a
+lpos :: WithOptions a => Cmp -> Decorator a
 lpos = mkDecorator LabelPosition
 
 -- | The decorator for setting label on a curve at a given parameter value.

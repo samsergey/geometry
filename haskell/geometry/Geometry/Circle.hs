@@ -17,14 +17,14 @@ import Geometry.Polygon
 
 
 -- | Class for circle and decorated circle
-class (Trans c, Manifold CN c, Curve CN c, ClosedCurve CN c, Figure c) =>
+class (Trans c, Manifold Cmp c, Curve Cmp c, ClosedCurve Cmp c, Figure c) =>
   Circular c where
   {-# MINIMAL toCircle, asCircle #-}
   toCircle :: c -> Circle
   asCircle :: Circle -> c
   
   -- | Center of the circle.
-  center :: c -> CN
+  center :: c -> Cmp
   center = center . toCircle
   
   -- | Radius of the circle
@@ -40,7 +40,7 @@ class (Trans c, Manifold CN c, Curve CN c, ClosedCurve CN c, Figure c) =>
   orientation = orientation . toCircle
 
 -- | Represents a circle with given center, radius vector and tangent direction.
-data Circle = Circle CN CN Double
+data Circle = Circle Cmp Cmp Double
   deriving Show
 
 instance Circular Circle where
@@ -61,7 +61,7 @@ trivialCircle = mkCircle 0 0
 
 -- | The constructor for a circle with given center and radius.
 -- The radius-vector has zero angle, and circle is CCW-oriented.
-mkCircle :: Double -> CN -> Circle
+mkCircle :: Double -> Cmp -> Circle
 mkCircle r c = Circle c (r:+0) 1 
 
 instance Eq Circle where
@@ -72,12 +72,12 @@ instance Eq Circle where
 
 instance Trans Circle where
   transform t (Circle c r o) = Circle c' r' o'
-    where c' = transformCN t c
-          r' = transformCN t (c + r) - c'
+    where c' = transformCmp t c
+          r' = transformCmp t (c + r) - c'
           o' = transformOrientation t * o
 
 
-instance Manifold CN Circle where
+instance Manifold Cmp Circle where
   param c t = center c + mkPolar (radius c) (rad x)
     where
       ph = turns $ phaseShift c
@@ -92,12 +92,12 @@ instance Manifold CN Circle where
   unit _ = 2 * pi
 
 
-instance Curve CN Circle where
+instance Curve Cmp Circle where
   normal c t = azimuth (center c) (c @-> t)
   tangent c t = normal c t + 90 * orientation c
 
 
-instance ClosedCurve CN Circle where
+instance ClosedCurve Cmp Circle where
   location c p = res
     where res | r' ~== radius c = OnCurve
               | r' < radius c   = Inside

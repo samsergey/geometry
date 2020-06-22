@@ -56,7 +56,7 @@ instance Angular a => Angular (Maybe a) where
 ------------------------------------------------------------
 
 -- | Type representing an angle mark on the chart.
-data Angle = Angle CN Direction Direction
+data Angle = Angle Cmp Direction Direction
   deriving (Show, Eq)
 
 

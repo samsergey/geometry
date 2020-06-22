@@ -60,60 +60,60 @@ aPoint = asCmp 0
 aLabel :: Label
 aLabel = mkLabel origin
 
--- | The constructor for a point with given coordinates.
---
--- >>> point (1,2)
--- <Point (1.0 2.0)>
---
+{- | The constructor for a point with given coordinates.
+
+>>> point (1,2)
+<Point (1.0 2.0)>
+-}
 point :: XY -> Point
 point = point'
 
--- | The generalized version of `point`.
---
--- > point' 0 #: "O" <+>
--- > point' (45 :: Direction) #: "A" <+>
--- > point' (1 :: CN) #: "B"
--- << figs/points.svg >>
---
+{- | The generalized version of `point`.
+
+> point' 0 #: "O" <+>
+> point' (45 :: Direction) #: "A" <+>
+> point' (1 :: Cmp) #: "B"
+<< figs/points.svg >>
+-}
 point' :: Affine a => a -> Point
 point' p = mkPoint (cmp p)
 
--- | The point on a given curve.
---
--- > let c = aCircle
--- > in c <+>
--- >    pointOn c 0 #: "A" <+>
--- >    pointOn c 0.25 #: "B" <+>
--- >    pointOn c 0.667 #: "C"
--- << figs/pointOn.svg >>
---
+{- | Returns the point on a given curve.
+
+> let c = aCircle
+> in c <+>
+>    pointOn c 0 #: "A" <+>
+>    pointOn c 0.25 #: "B" <+>
+>    pointOn c 0.667 #: "C"
+<< figs/pointOn.svg >>
+-}
 pointOn :: Curve a c => c -> Double -> Decorated Point
 pointOn c t = mkPoint (c @-> t) #: loffs (cmp (normal c t))
 
--- | Returns a normal projection of the given point on the curve.
---
--- > let c = Plot (\t -> (t, sin t)) (0,6) # asPolyline
--- >     pA = point (1,0) #: "A"
--- >     pB = point (2,0) #: "B"
--- >     pC = point (4,0) #: "C"
--- >     pD = point (6,1) #: "D"
--- > in c <+> (pA <+> pA # projectOn c #: "A'" <+>
--- >           pB <+> pB # projectOn c #: "B'" <+>
--- >           pB <+> pC # projectOn c #: "C'" <+>
--- >           pD <+> pD # projectOn c #: "D'")
--- << figs/projectOn.svg >>
---
-projectOn :: (APoint p, Curve CN c, Affine p) => c -> p -> Maybe (Decorated Point)
+{- | Returns a normal projection of the given point on the curve.
+
+> let c = Plot (\t -> (t, sin t)) (0,6) # asPolyline
+>     pA = point (1,0) #: "A"
+>     pB = point (2,0) #: "B"
+>     pC = point (4,0) #: "C"
+>     pD = point (6,1) #: "D"
+> in c <+> (pA <+> pA # projectOn c #: "A'" <+>
+>           pB <+> pB # projectOn c #: "B'" <+>
+>           pB <+> pC # projectOn c #: "C'" <+>
+>           pD <+> pD # projectOn c #: "D'")
+<< figs/projectOn.svg >>
+-}
+projectOn :: (APoint p, Curve Cmp c, Affine p) => c -> p -> Maybe (Decorated Point)
 projectOn c p = pointOn c <$> (cmp p ->@? c)
 
--- | Returns a list of intersection points as `Point` objects.
---
--- > let p1 = regularPoly 7
--- >     c = aCircle
--- > in p1 <+> c <+> group (intersectionPoints c p1)
--- << figs/intersectionPoints.svg >>
---
-intersectionPoints :: ( Curve CN a, Curve CN b, Intersections a b )
+{- | Returns a list of intersection points as `Point` objects.
+
+> let p1 = regularPoly 7
+>     c = aCircle
+> in p1 <+> c <+> group (intersectionPoints c p1)
+<< figs/intersectionPoints.svg >>
+-}
+intersectionPoints :: ( Curve Cmp a, Curve Cmp b, Intersections a b )
                    => a -> b -> [Point]
 intersectionPoints c1 c2 = point' <$> intersections c1 c2
 
@@ -173,46 +173,44 @@ aLine = asCmp 1
 aRay :: Ray
 aRay = asCmp 1
 
--- | Returns a line, ray or a segment with given unit, in case of a segment -- with given length.
---
--- > group [aSegment # rotate x # extendToLength r
--- >       | x <- [0,5..360] 
--- >       , let r = 2 + sin (7 * rad x) ]
---
--- << figs/extendToLength.svg >>
---
+{- | Returns a line, ray or a segment with given unit, in case of a segment -- with given length.
+
+> group [aSegment # rotate x # extendToLength r
+>       | x <- [0,5..360] 
+>       , let r = 2 + sin (7 * rad x) ]
+<< figs/extendToLength.svg >>
+-}
 extendToLength :: Double -> Segment -> Segment
 extendToLength l s = s # through' (paramL (asLine s) l)
 
--- | Returns a segment extended to a closest intersection point with a given curve.
---
--- > let t = aTriangle
--- >     s1 = aSegment # at (1,1)
--- >     s2 = aSegment # at (0.3,0.3)
--- > in t <+>
--- >    group [s1 # along a # extendTo t | a <- [0,10..360] ] <+>
--- >    group [s2 # along a # extendTo t | a <- [0,10..360] ]
--- << figs/extendTo.svg >>
---
-extendTo :: (Curve CN c, Intersections Ray c)
+{- | Returns a segment extended to a closest intersection point with a given curve.
+
+> let t = aTriangle
+>     s1 = aSegment # at (1,1)
+>     s2 = aSegment # at (0.3,0.3)
+> in t <+>
+>    group [s1 # along a # extendTo t | a <- [0,10..360] ] <+>
+>    group [s2 # along a # extendTo t | a <- [0,10..360] ]
+<< figs/extendTo.svg >>
+-}
+extendTo :: (Curve Cmp c, Intersections Ray c)
          => c -> Segment -> Maybe Segment
 extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
   where extend p = s # through' p
 
--- | Returns a segment normal to a given curve starting at given point.
---
--- >>> point (1,1) # heightTo oX
--- Just (Segment (1.0 :+ 1.0, 1.0 :+ 0.0))
--- >>> point (-1,1) # heightTo aRay
--- Nothing
---
-heightTo :: (Affine p, Curve CN c, Intersections Ray c)
+{- | Returns a segment normal to a given curve starting at given point.
+
+>>> point (1,1) # heightTo oX
+Just (Segment (1.0 :+ 1.0, 1.0 :+ 0.0))
+>>> point (-1,1) # heightTo aRay
+Nothing
+-}
+heightTo :: (Affine p, Curve Cmp c, Intersections Ray c)
          => c -> p -> Maybe Segment
 heightTo c p = (aSegment # at' p # normalTo c) >>= extendTo c
 
--- | Returns a list of segments as a result of clipping the line
--- by a closed curve.
-clipBy :: (Linear l, Intersections l c, Figure c, ClosedCurve CN c)
+-- | Returns a list of segments as a result of clipping the line by a closed curve.
+clipBy :: (Linear l, Intersections l c, Figure c, ClosedCurve Cmp c)
        => l -> c -> [Segment]
 clipBy l c = filter internal $ Segment <$> zip ints (tail ints) 
   where
@@ -227,29 +225,27 @@ through' p l = l
                # scaleAt' p0 (distance p0 p / unit l)
   where p0 = start l
 
--- | Turns and extends the line so that it passes through a given point.
---
--- > let pA = point (2,3) #: "A"
--- >     pB = point (3,2) #: "B"
--- > in aSegment # through' pA <+>
--- >    aRay # through (3,2) <+>
--- >    pA <+> pB <+> origin
---
--- << figs/through.svg>>
---
+{- | Turns and extends the line so that it passes through a given point.
+
+> let pA = point (2,3) #: "A"
+>     pB = point (3,2) #: "B"
+> in aSegment # through' pA <+>
+>    aRay # through (3,2) <+>
+>    pA <+> pB <+> origin
+<< figs/through.svg>>
+-}
 through :: Linear l => XY -> (l -> l)
 through = through'
 
--- | If possible, turns the line so that it becomes normal to a given curve, pointing towards a curve.
---
--- > let c = Plot $ (\t -> t :+ sin t) . (*6)
--- > in c <+>
--- >    group [ aSegment # at (x,0) # normalTo c
--- >          | x <- [0,1..7] ]
---
--- << figs/normalTo.svg >>
---
-normalTo :: (Curve CN c, Linear l) => c -> l -> Maybe l
+{- | If possible, turns the line so that it becomes normal to a given curve, pointing towards a curve.
+
+> let c = Plot $ (\t -> t :+ sin t) . (*6)
+> in c <+>
+>    group [ aSegment # at (x,0) # normalTo c
+>          | x <- [0,1..7] ]
+<< figs/normalTo.svg >>
+-}
+normalTo :: (Curve Cmp c, Linear l) => c -> l -> Maybe l
 normalTo c l = turn <*> Just l
   where s = start l
         turn = if c `isContaining` s
@@ -257,48 +253,49 @@ normalTo c l = turn <*> Just l
                else along' . ray' s <$> (s # projectOn c)
 
 -- | Reflects the curve  at a given parameter against the normal, if it exists, or does nothing otherwise.
-flipAt :: (Curve CN c) => Double -> c -> c
+flipAt :: (Curve Cmp c) => Double -> c -> c
 flipAt x c = case normalSegment c x of
                Just n -> c # reflectAt n
                Nothing -> c
 
 -- | If possible, returns a line segment normal to the curve starting at a given parameter
-normalSegment :: Curve CN c => c -> Double -> Maybe Segment
+normalSegment :: Curve Cmp c => c -> Double -> Maybe Segment
 normalSegment c x =
   do p <- paramMaybe c x
      aSegment # at' p # normalTo c
 
 ------------------------------------------------------------
 
--- $ang| The `Angle` mark looks like a small labeled arc and two segments.
---
--- >>> anAngle 30
--- <Angle 30 (0.0, 0.0)>
---
--- > writeSVG 400 "figs/angle1.svg" $
--- >   let t = triangle2a 30 60
--- >      a1 = anAngle 30 #: "#" <> loffs ((-1):+1)
--- >      a2 = anAngle 90 # on (side t 2) 0 #: "#"
--- >      a3 = vertexAngle t 1 #: "#"
--- >  in t <+> a1 <+> a2 <+> a3
---
--- <<figs/angle1.svg>>
---
--- Angle is a `Manifold Direction` instance:
---
--- >>> Angle 0 0 90 @-> 0.5
--- 45°
--- >>>  Angle 0 0 90 @-> 0
--- 0°
--- >>> Angle 0 0 90 @-> 1
--- 90°
---
--- >>> 45 ->@ Angle 0 0 90
--- 0.5
--- >>> 180 ->@ Angle 0 0 90
--- 2.0
--- >>> 0 ->@ Angle 0 10 30
--- 17.5$ang
+{- $ang| The `Angle` mark looks like a small labeled arc and two segments.
+
+>>> anAngle 30
+<Angle 30 (0.0, 0.0)>
+
+> writeSVG 400 "figs/angle1.svg" $
+>   let t = triangle2a 30 60
+>      a1 = anAngle 30 #: "#" <> loffs ((-1):+1)
+>      a2 = anAngle 90 # on (side t 2) 0 #: "#"
+>      a3 = vertexAngle t 1 #: "#"
+>  in t <+> a1 <+> a2 <+> a3
+
+<<figs/angle1.svg>>
+
+Angle is a `Manifold Direction` instance:
+
+>>> Angle 0 0 90 @-> 0.5
+45°
+>>>  Angle 0 0 90 @-> 0
+0°
+>>> Angle 0 0 90 @-> 1
+90°
+
+>>> 45 ->@ Angle 0 0 90
+0.5
+>>> 180 ->@ Angle 0 0 90
+2.0
+>>> 0 ->@ Angle 0 10 30
+17.5$ang
+-}
 
 -- | The template for an angle with given value.
 anAngle :: Direction -> Angle
@@ -326,36 +323,33 @@ vertexAngle p n = angleWithin p3 p2 p1 # innerAngle
 bisectrisse :: Angular a => a -> Ray
 bisectrisse an = aRay # at' (refPoint an) # along' (an @-> 0.5)
 
--- | The supplementary angle.
---
--- > let a = anAngle 60 #: "a"
--- >     b = a # supplementary #: "b"
--- > in aRay <+> aRay # rotate 60 <+> a <+> b
---
--- <<figs/angle2.svg>>
--- 
+{- | The supplementary angle.
+
+> let a = anAngle 60 #: "a"
+>     b = a # supplementary #: "b"
+> in aRay <+> aRay # rotate 60 <+> a <+> b
+<<figs/angle2.svg>>
+-} 
 supplementary :: Angular an => an -> an
 supplementary = asAngle . (\(Angle p s e) -> Angle p e (s + 180)) . toAngle
 
--- | The vertical angle.
---
--- > let a = anAngle 60 #: "a"
--- >     b = a # vertical #: "b"
--- > in aRay <+> aRay # rotate 60 <+> a <+> b
---
--- <<figs/angle3.svg>>
--- 
+{- | The vertical angle.
+
+> let a = anAngle 60 #: "a"
+>     b = a # vertical #: "b"
+> in aRay <+> aRay # rotate 60 <+> a <+> b
+<<figs/angle3.svg>>
+-} 
 vertical :: Angular an => an -> an
 vertical = rotate 180
 
--- | The reflex angle.
---
--- > let a = anAngle 60 #: "a"
--- >     b = a # reflex #: "b"
--- > in aRay <+> aRay # rotate 60 <+> a <+> b
---
--- <<figs/angle4.svg>>
--- 
+{- | The reflex angle.
+
+> let a = anAngle 60 #: "a"
+>     b = a # reflex #: "b"
+> in aRay <+> aRay # rotate 60 <+> a <+> b
+<<figs/angle4.svg>>
+-} 
 reflex :: Angular an => an -> an
 reflex an = asAngle $ Angle (refPoint an) e s
   where s = angleStart an
@@ -404,7 +398,7 @@ aRectangle a b = aSquare # scaleX a . scaleY b
 -- | Returns a triangle with base 1 and two given angles.
 triangle2a :: Direction -> Direction -> Triangle
 triangle2a a1 a2 = case intersections r1 r2 of
-                    [p] -> mkTriangle [(0,0), (1,0), coord p]
+                    [p] -> mkTriangle [(0,0), (1,0), xy p]
                     [] -> mkTriangle @XY [(0,0), (1,0), (0,0)]
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
@@ -428,15 +422,15 @@ linearScale :: (Show s, Curve a c)
 linearScale fn rng c = [ pointOn c x #:: label (show (fn x))
                        | x <- rng ]
 
--- | Creates a circular integer scale, representing modular arithmetics.
---
--- > let c  = aCircle # rotate 90
--- >     s1 = group $ modularScale 12 c
--- >     t  = aTriangle # scale 2
--- >     s2 = group $ modularScale 9 t
--- > in (c <+> s1) `beside` space 1 `beside` (s2 <+> t)
---
--- << figs/modularScale.svg>>
+{- | Creates a circular integer scale, representing modular arithmetics.
+
+> let c  = aCircle # rotate 90
+>     s1 = group $ modularScale 12 c
+>     t  = aTriangle # scale 2
+>     s2 = group $ modularScale 9 t
+> in (c <+> s1) `beside` space 1 `beside` (s2 <+> t)
+<< figs/modularScale.svg>>
+-}
 modularScale :: (Trans c, Affine a, Curve a c) => Int -> c -> [Decorated Point]
 modularScale n = linearScale lf rng
   where n' = fromIntegral n

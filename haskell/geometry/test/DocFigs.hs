@@ -41,7 +41,7 @@ main = do
   writeSVG 300 (path <> "points.svg") $
     aPoint #: "O" <+>
     point' (45 :: Direction) #: "A" <+>
-    point' (1 :: CN) #: "B" 
+    point' (1 :: Cmp) #: "B" 
 
   writeSVG 300 (path <> "pointOn.svg") $
     aCircle <+>

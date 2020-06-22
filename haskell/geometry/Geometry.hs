@@ -75,7 +75,7 @@ module Geometry
   , label, loffs, lpos, lparam
   -- * General classes and data types
   -- ** Coordinate represenations
-  , CN, XY
+  , Cmp, XY
   -- ** Directed values
   , Direction (..)
   -- *** Direction isomorphisms
@@ -99,7 +99,7 @@ module Geometry
   , Intersections (..)
   , intersections, isIntersecting
   -- * Miscellaneous classes and functions
-  , SVGable (..), ImageSize, SVGContext(..)
+  , SVGable (..), SVGContext(..)
   -- ** Fuzzy equality
   , AlmostEq
   , (~<=), (~>=), (~==)
@@ -125,7 +125,7 @@ import Geometry.SVG
 ------------------------------------------------------------
 
 -- | Creates SVG for a SVGable object and writes to a file with a given name.
-writeSVG :: (Figure a, SVGable a) => ImageSize -> FilePath -> a -> IO ()
+writeSVG :: (Figure a, SVGable a) => Int -> FilePath -> a -> IO ()
 writeSVG size name = writeFile name . showSVG size
 
 

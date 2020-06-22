@@ -17,13 +17,13 @@ class APoint p where
   toPoint :: p -> Point
   asPoint :: Point -> p
 
-instance APoint CN where
+instance APoint Cmp where
   toPoint = Point 
   asPoint (Point p) = p
 
 instance APoint XY where
   toPoint = Point . cmp
-  asPoint (Point p) = coord p
+  asPoint (Point p) = xy p
 
 instance APoint p => APoint (Maybe p) where
   toPoint = maybe (asCmp 0) toPoint
@@ -32,7 +32,7 @@ instance APoint p => APoint (Maybe p) where
 ------------------------------------------------------------
 
 -- | The type representing a point.
-newtype Point = Point CN
+newtype Point = Point Cmp
 
 -- | The general point constructor.
 mkPoint :: Affine a => a -> Point
@@ -51,7 +51,7 @@ instance Eq Point where
   p1 == p2 = cmp p1 ~== cmp p2
 
 instance Trans Point where
-  transform t (Point p) = Point $ transformCN t p 
+  transform t (Point p) = Point $ transformCmp t p 
 
 instance Affine Point where
   cmp (Point p) = p
@@ -65,7 +65,7 @@ instance Figure Point where
 ------------------------------------------------------------
 
 -- | The type representing a label.
-newtype Label = Label CN
+newtype Label = Label Cmp
   deriving (Eq, Trans, Affine, Figure, APoint) via Point
 
 -- | The general label constructor (the label test is set by `label` decorator).

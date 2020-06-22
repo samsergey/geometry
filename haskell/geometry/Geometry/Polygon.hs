@@ -343,11 +343,11 @@ instance (AlmostEq a, Affine a, Trans a) => Figure (Plot a) where
 instance (AlmostEq a, Affine a, Trans a) => Manifold a (Plot a) where
   bounds _ = [0,1]
   param = plotFn
-  project p pt = findZero (\x -> (azimuth (p @-> x) pt) `dot` tangent p x) x0
-    where x0 = project pl (cmp pt)
-          pl = plotManifold p
-          p0 = pl @-> x0
-  isContaining p = isContaining (plotManifold p) . cmp
+  project p pt = let x0 = project (plotManifold p) (cmp pt)
+                 in findMin (\x -> (p @-> x) `distance` pt) x0
+  isContaining p pt = 0 ~<= x && x ~<= 1 && (p @-> x) `distance` pt <= 1e-5
+    where x = pt ->@ p
+    
   unit = unit . plotManifold
 
 findZero f x = go x (x+dx) (f x) (f $ x + dx) 
@@ -356,6 +356,34 @@ findZero f x = go x (x+dx) (f x) (f $ x + dx)
                                      in go x2 x y2 (f x)
         dx = 1e-5
 
+goldenMean f x1 x2 = go (x1, c, d, x2, 0)
+  where
+    goldenMean = (sqrt 5 - 1)/2
+    c = x2 - (x2 - x1)*goldenMean
+    d = x1 + (x2 - x1)*goldenMean
+    go (a, c, d, b, i) 
+      | abs l < 1e-9 || i > 100 = (d+c)/2 -- quadraticMin f a b ((d+c)/2)
+      | f c < f d = go (a, a + l, c, d, i+1)
+      | otherwise = go (c, d, b - l, b, i+1)
+      where l = d - c 
+
+quadraticMin f x1 x2 x3 | True = x
+                        | otherwise = quadraticMin f x2 x3 x
+  where x | d /= 0 = (x1**2*(y3-y2)-x2**2*y3+x3**2*y2+(x2**2-x3^2)*y1)/d
+          | otherwise = x1
+        d = 2*(x1*(y3-y2)-x2*y3+x3*y2+(x2-x3)*y1)
+        y1 = f x1
+        y2 = f x2
+        y3 = f x3
+
+findMin f x = go x x1 (3*x1 - 2*x)
+  where
+    dx = 1e-3
+    x1 | f x > f (x + dx) = x + dx
+       | otherwise = x - dx
+    go x1 x2 x3 | f x2 <= f x3 = goldenMean f x1 x3
+                | otherwise = go x2 x3 (3*x3 - 2*x2)
+           
 plotManifold :: (Affine a, Manifold a m) => m -> Polyline
 plotManifold m = Polyline pts
   where

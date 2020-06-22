@@ -6,8 +6,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 module Geometry.Intersections
-  ( -- ** Intersections of curves
-    Intersections (..)
+  ( Intersections (..)
   , intersections, isIntersecting
   ) where
 

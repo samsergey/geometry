@@ -1,11 +1,9 @@
 {-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleContexts #-}
 module Geometry.Line
-  (-- * Types
-    Linear (..)
+  ( Linear (..)
   , Line (..), trivialLine, mkLine, lineIntersection
   , Ray (..), mkRay
   , Segment (..), mkSegment, end, midPerpendicular

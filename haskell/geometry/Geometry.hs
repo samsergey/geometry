@@ -4,18 +4,107 @@ Description : Reexporting all internal stuff.
 Stability   : experimental
 -}
 module Geometry
-( 
-  writeSVG, showSVG, (<+>), group, beside, above, (<||>), Group (..)
+(
+  -- * Main interface
+  writeSVG, showSVG,
+  -- * Grouping combinators
+  (<+>), group, beside, above, (<||>)
+  , Groupable (..), Group (..)
   , put, chart
-  , module Geometry.Base
-  , module Geometry.Figures
-  , module Geometry.Point
-  , module Geometry.Line
-  , module Geometry.Circle
-  , module Geometry.Polygon
-  , module Geometry.Angle
-  , module Geometry.Decorations
-  , module Geometry.Intersections
+  -- * Constructors for geometric objects
+  -- ** Figures
+  , Figure (..), Box, pointBox
+  -- ** Figures' size and bounding box corners.
+  , figureHeight, figureWidth
+  , corner, left, right, lower, upper
+  -- ** Point constructors
+  , APoint(..), Point (..), Label (..)
+  , origin
+  , aPoint, aLabel
+  , point, point'
+  , pointOn, projectOn, intersectionPoints, closestTo
+  -- ** Line constructors
+  , Linear (..), Line (..), Ray (..), Segment (..)
+  , aLine, aRay, aSegment, oX, oY
+  , line, line', ray, ray', segment, segment'
+  , end, midPerpendicular
+  , extendToLength, extendTo, normalSegment, heightTo, clipBy
+  -- ** Angle constructors
+  , Angular (..), Angle(..)
+  , anAngle
+  , angleBetween, angleWithin, bisectrisse
+  , supplementary, vertical, reflex
+  -- ** Polygon constructors
+  , PiecewiseLinear (..)
+  , isDegenerate
+  , Polyline (..)
+  , Polygon (..)
+  , closePolyline
+  , Triangle (..), aTriangle, triangle2a
+  , Rectangle (..), aSquare, aRectangle, space
+  , parametricPoly, polarPoly, regularPoly
+  , boxRectangle
+  -- ** Circle constructors
+  , Circular (..), Circle
+  , aCircle, circle, circle'
+  -- ** Scalers
+  , linearScale, modularScale
+  -- * Modificators
+  -- ** Linear transformations
+  , TMatrix, Trans (..)
+  , translate', translate, superpose, at, at'
+  , rotate, rotateAt', reflect, reflectAt
+  , along, along', scale, scaleX, scaleY, scaleAt', scaleAt
+  , scaleXAt', scaleXAt, scaleYAt', scaleYAt, scaleFig
+  -- ** Other modificators
+  , through', through
+  , on, normalTo, flipAt
+  , vertexAngle, height
+  -- * Decorations
+  , WithOptions (..)
+  , Options, Option(..)
+  , Decorated(..)
+  -- ** Decorators
+  , Decorator(..)
+  , (#:), (#::)
+  , visible, invisible
+  , stroke, white, fill
+  , thickness, thin
+  , dashed, dotted
+  , arcs
+  , label, loffs, lpos, lparam
+  -- * General classes and data types
+  -- ** Coordinate represenations
+  , CN, XY
+  -- ** Directed values
+  , Direction (..)
+  -- *** Direction isomorphisms
+  , deg, asDeg
+  , rad, asRad
+  , turns, asTurns
+  -- ** Points in affine space
+  , Affine (..), roundUp
+  -- *** Predicates
+  , isOrthogonal, isCollinear, isOpposite, isZero
+  -- *** Vector and point operations
+  , dot, det, cross, norm, distance, angle, normalize, columns, azimuth
+  -- ** Manifolds and curves
+  , Manifold (..)
+  , (->@), (->@?), (@->), (@->?)
+  , start, paramL, projectL, distanceTo
+  , plotManifold
+  , Plot (..)
+  , Curve (..), PointLocation (..), ClosedCurve(..)
+  -- ** Intersections of curves
+  , Intersections (..)
+  , intersections, isIntersecting
+  -- * Miscellaneous classes and functions
+  , SVGable (..), ImageSize, SVGContext(..)
+  -- ** Fuzzy equality
+  , AlmostEq
+  , (~<=), (~>=), (~==)
+  -- ** Utility fubctions and operators
+  , (#)
 )
 where
 

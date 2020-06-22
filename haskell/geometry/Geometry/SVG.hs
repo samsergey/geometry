@@ -5,18 +5,16 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# language DerivingVia #-}
-{-# language DeriveFunctor #-}
 {-# language StandaloneDeriving #-}
 
 -- | This module defines representation of all figures as SVG elements. as well as default style settings.
-module Geometry.SVG ( -- * Classes
-             Groupable, Group (..)
-           , (<+>), group
-           , beside, (<||>), above
-           , SVGable (..), ImageSize, SVGContext(..)
-           -- * Functions
-           , showSVG, put, chart
-           ) where
+module Geometry.SVG
+  ( Groupable, Group (..)
+  , (<+>), group
+  , (<||>), beside, above
+  , SVGable (..), ImageSize, SVGContext(..)
+  , showSVG, put, chart
+  ) where
 
 import Prelude hiding (writeFile, unwords)
 import Graphics.Svg.Core (Attribute (..))

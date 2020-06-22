@@ -3,10 +3,7 @@
 {-# language FlexibleContexts #-}
 
 module Geometry.Angle (
-  -- * Angular class
-  Angular (..)
-  -- * Data types
-  , Angle(..)
+  Angular (..), Angle(..)
   ) where
 
 import Geometry.Base

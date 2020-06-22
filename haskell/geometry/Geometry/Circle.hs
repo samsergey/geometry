@@ -3,9 +3,7 @@
 {-# language FlexibleContexts #-}
 
 module Geometry.Circle
-  (-- * Types and classes
-    Circle, Circular (..)
-    -- * Constructors
+  ( Circle, Circular (..)
   , trivialCircle, mkCircle
   ) where
 

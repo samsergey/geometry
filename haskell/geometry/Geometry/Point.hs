@@ -1,11 +1,8 @@
 {-# language DerivingVia #-}
-{-# language TypeSynonymInstances #-}
 {-# language FlexibleInstances #-}
 
 module Geometry.Point
-  (-- ** Types
-    APoint(..), Point (..), Label (..)
-    -- ** Constructors
+  ( APoint(..), Point (..), Label (..)
   , mkPoint, mkLabel
   ) where
 

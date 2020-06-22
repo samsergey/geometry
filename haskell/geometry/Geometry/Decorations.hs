@@ -8,13 +8,10 @@
 {-# language FlexibleContexts #-}
 
 module Geometry.Decorations
-  ( -- * Classes
-    WithOptions (..)
-    -- * Types and records
+  ( WithOptions (..)
   , Options, Option(..)
   , mkOptions, getOptions
   , Decorated(..), fromDecorated
-  -- * Decorators
   , Decorator(..)
   , (#:), (#::)
   , visible, invisible

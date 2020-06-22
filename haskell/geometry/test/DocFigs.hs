@@ -44,10 +44,10 @@ main = do
     point' (1 :: CN) #: "B" 
 
   writeSVG 300 (path <> "pointOn.svg") $
-    aCircle
-    <+> pointOn aCircle 0 #: "A"
-    <+> pointOn aCircle 0.25 #: "B" 
-    <+> pointOn aCircle 0.667 #: "C"
+    aCircle <+>
+    pointOn aCircle 0 #: "A" <+>
+    pointOn aCircle 0.25 #: "B" <+>
+    pointOn aCircle 0.667 #: "C"
 
   writeSVG 500 (path <> "projectOn.svg") $
     let c = Plot  $ (\t -> t :+ sin t) . (*6)
@@ -55,11 +55,10 @@ main = do
         pB = point (2,0) #: "B"
         pC = point (4,0) #: "C"
         pD = point (6,1) #: "D"
-    in  c
-    <+> pA <+> pA # projectOn c #: "A'"
-    <+> pB <+> pB # projectOn c #: "B'"
-    <+> pC <+> pC # projectOn c #: "C'"
-    <+> pD <+> pD # projectOn c #: "D'"
+    in  c  <+> pA <+> pA # projectOn c #: "A'" <+>
+        pB <+> pB # projectOn c #: "B'" <+>
+        pC <+> pC # projectOn c #: "C'" <+>
+        pD <+> pD # projectOn c #: "D'"
 
   writeSVG 300 (path <> "intersectionPoints.svg") $
     let p = regularPoly 7
@@ -103,4 +102,25 @@ main = do
       group [ aSegment # at (x,0) # normalTo c
             | x <- [0,1..7] ]
 
-    
+  writeSVG 300 (path <> "on.svg") $
+   let c = aCircle
+   in c <+>
+      aPoint # on c 0.1 <+>
+      aSegment # scale 0.5 # on c 0.3 <+>
+      aSquare # scale 0.5 # on c 0.6 <+>
+      aTriangle # scale 0.5 # on c 0.9
+
+  writeSVG 300 (path <> "through.svg") $
+   let pA = point (2,3) #: "A"
+       pB = point (3,2) #: "B"
+   in aSegment # through' pA <+>
+      aRay # through (3,2) <+>
+      pA <+> pB <+> origin 
+
+  writeSVG 300 (path <> "along.svg") $
+   let a = aSegment #: "a" # at (1,0) # along 20
+       t = aTriangle # along' a
+       s = aSquare # at (1,1) # along' t
+   in a <||> t <||> s
+   
+

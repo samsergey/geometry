@@ -27,9 +27,11 @@ module Geometry.Base
   , Trans (..)
   , transformCN, transformXY, transformAt
   -- ** transformations
-  , translate', superpose
-  , scale, scaleX, scaleY, scaleAt', scaleXAt', scaleYAt'
+  , translate', translate, superpose, at, at'
   , rotate, rotateAt', reflect, reflectAt
+  , along, along', on
+  , scale, scaleX, scaleY, scaleAt', scaleAt
+  , scaleXAt', scaleXAt, scaleYAt', scaleYAt, scaleFig
   -- * Manifolds and curves
   , Manifold (..)
   , (->@), (->@?), (@->), (@->?)
@@ -89,10 +91,10 @@ instance AlmostEq Int where a ~== b = a == b
 instance AlmostEq Integer where  a ~== b = a == b
 
 instance AlmostEq Double where
-  a ~== b = abs (a - b) < 1e-10 || abs (a-b) < 1e-10 * abs(a+b)
+  a ~== b = abs (a - b) < 1e-8 || abs (a-b) < 1e-8 * abs(a+b)
 
 instance (RealFloat a, Ord a, Fractional a, Num a, AlmostEq a) => AlmostEq (Complex a) where
-  a ~== b = magnitude (a - b) < 1e-10 || magnitude (a-b) < 1e-10 * magnitude(a+b)
+  a ~== b = magnitude (a - b) < 1e-8 || magnitude (a-b) < 1e-8 * magnitude(a+b)
 
 instance (AlmostEq a, AlmostEq b) => AlmostEq (a, b) where
   (a1,b1) ~== (a2,b2) = a1 ~== a2 && b1 ~== b2
@@ -261,6 +263,71 @@ reflect d = transform $ reflectT $ rad d
 
 --reflectAt :: (Linear l, Trans a) => l -> a -> a
 reflectAt l = transformAt (start l) (reflect (angle l))
+
+-- | Moves an object along given vector.
+translate :: Trans f => XY -> (f -> f)
+translate = translate'
+
+-- | Scales  an object simmetrically (isotropically) against a given point.
+scaleAt :: Trans f => XY -> Double -> (f -> f)
+scaleAt = scaleAt'
+
+-- | Scales  an object along x-axis against a given point.
+scaleXAt :: Trans f => XY -> Double -> (f -> f)
+scaleXAt = scaleXAt'
+
+-- | Scales  an object along y-axis against a given point.
+scaleYAt :: Trans f => XY -> Double -> (f -> f)
+scaleYAt = scaleYAt'
+
+-- | Scales  an object simmetrically (isotropically) against a given point.
+scaleFig :: (Figure f, Trans f) => Double -> (f -> f)
+scaleFig s f = scaleAt' (refPoint f) s f
+
+
+-- | Rotates  an object  against a given point.
+rotateAt :: Trans f => XY -> Direction -> (f -> f)
+rotateAt = rotateAt'
+
+-- | Generalized version of  `at` transformer.
+at' :: (Affine p, Figure f) => p -> (f -> f)
+at' p fig = superpose (refPoint fig) p fig
+
+-- | Moves an object so that it's `refPoint` coinsides with a given one.
+at :: Figure f => XY -> (f -> f)
+at = at'
+
+-- | Generalized version of  `along` transformer.
+along' :: (Figure f, Affine v, Affine f) => v -> (f -> f)
+along' v l = rotateAt' (refPoint l) (angle v - angle l) l
+
+-- | Rotates the figure which is `Affine` instance against it's `refPoint` so that it's
+-- refference angle (given by `angle`) councides with a given one.
+--
+-- > let a = aSegment # at (1,0) # along 30 #: "a"
+-- >     t = aTriangle # along' a
+-- >     s = aSquare # at (2,0) # along' t
+-- > in a <+> t <+> s
+--
+-- << figs/along.svg >>
+--
+along :: (Figure f, Affine f) => Double -> (f -> f)
+along d = along' (asDeg d)
+
+-- | Locates an affine object on a given curve at
+-- given parameter and aligns it along a tangent to a curve at this point.
+--
+-- > let c = aCircle
+-- > in c <+>
+-- >    aPoint # on c 0.1 <+>
+-- >    aSegment # scale 0.5 # on c 0.3 <+>
+-- >    aSquare # scale 0.5 # on c 0.6 <+>
+-- >    aTriangle # scale 0.5 # on c 0.9
+--
+-- << figs/on.svg>>
+--
+on :: (Figure f, Affine f, Curve a c) => c -> Double -> (f -> f)
+on c x = along' (tangent c x) . at' (c @-> x)
 
 ------------------------------------------------------------
 -- | Class representing points in 2d affine space.

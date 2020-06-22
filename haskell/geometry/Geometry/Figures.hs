@@ -3,32 +3,24 @@
 {-# language DerivingVia #-}
 {-# language StandaloneDeriving #-}
 
-module Geometry.Figures (
-  -- * Constructors for geometric objects
-  -- ** Point constructors
-  origin
+module Geometry.Figures
+  ( origin
   , aPoint, aLabel
   , point, point'
   , pointOn, projectOn, intersectionPoints, closestTo
-  -- ** Line constructors
   , aLine, aRay, aSegment, oX, oY
   , line, line', ray, ray', segment, segment'
   , extendToLength, extendTo, normalSegment, heightTo, clipBy
-  -- ** Angle constructors
   , anAngle
   , angleBetween, angleWithin, bisectrisse
   , supplementary, vertical, reflex
-  -- ** Polygon constructors
   , aTriangle, triangle2a
   , aSquare, aRectangle, space
   , parametricPoly, polarPoly, regularPoly
-  -- ** Circle constructors
   , aCircle, circle, circle'
-  -- ** Scalers
   , linearScale, modularScale
-  -- * Modificators
-  , at, at', along, along', through, through'
   , translate, scaleAt, scaleXAt, scaleYAt, scaleFig
+  , at', at, along', along, through', through
   , on, normalTo, flipAt
   , vertexAngle, height
  ) where
@@ -227,55 +219,6 @@ clipBy l c = filter internal $ Segment <$> zip ints (tail ints)
     ints = sortOn (project l) $ intersections l c <> ends
     internal s = c `isEnclosing` (s @-> 0.5)
     ends = (l @->) <$> bounds l
-  
-
-------------------------------------------------------------
--- | Moves an object along given vector.
-translate :: Trans f => XY -> (f -> f)
-translate = translate'
-
--- | Scales  an object simmetrically (isotropically) against a given point.
-scaleAt :: Trans f => XY -> Double -> (f -> f)
-scaleAt = scaleAt'
-
--- | Scales  an object along x-axis against a given point.
-scaleXAt :: Trans f => XY -> Double -> (f -> f)
-scaleXAt = scaleXAt'
-
--- | Scales  an object along y-axis against a given point.
-scaleYAt :: Trans f => XY -> Double -> (f -> f)
-scaleYAt = scaleYAt'
-
--- | Scales  an object simmetrically (isotropically) against a given point.
-scaleFig :: (Figure f, Trans f) => Double -> (f -> f)
-scaleFig s f = scaleAt' (refPoint f) s f
-
-
--- | Rotates  an object  against a given point.
-rotateAt :: Trans f => XY -> Direction -> (f -> f)
-rotateAt = rotateAt'
-
--- | Generalized version of  `at` transformer.
-at' :: (Affine p, Figure f) => p -> (f -> f)
-at' p fig = superpose (refPoint fig) p fig
-
--- | Moves an object so that it's `refPoint` coinsides with a given one.
-at :: Figure f => XY -> (f -> f)
-at = at'
-
--- | Generalized version of  `along` transformer.
-along' :: (Figure f, Affine v, Affine f) => v -> (f -> f)
-along' v l = rotateAt' (refPoint l) (angle v - angle l) l
-
--- | Rotates the figure which is `Affine` instance against it's `refPoint` so that it's
--- refference angle (given by `angle`) councides with a given one.
-along :: (Figure f, Affine f) => Double -> (f -> f)
-along d = along' (asDeg d)
-
--- | Locates an affine object on a given curve at
--- given parameter and aligns it along a tangent to a curve at this point.
-on :: (Figure f, Affine f, Curve a c) => c -> Double -> (f -> f)
-on c x = along' (tangent c x) . at' (c @-> x)
 
 -- | A generalized version of `through`.
 through' :: (Affine p, Linear l) => p -> (l -> l)
@@ -285,10 +228,24 @@ through' p l = l
   where p0 = start l
 
 -- | Turns and extends the line so that it passes through a given point.
+--
+-- > let pA = point (2,3) #: "A"
+-- >     pB = point (3,2) #: "B"
+-- > in aSegment # through' pA <+>
+-- >    aRay # through (3,2) <+>
+-- >    pA <+> pB <+> origin
+--
+-- << figs/through.svg>>
+--
 through :: Linear l => XY -> (l -> l)
 through = through'
 
 -- | If possible, turns the line so that it becomes normal to a given curve, pointing towards a curve.
+--
+-- > let c = Plot $ (\t -> t :+ sin t) . (*6)
+-- > in c <+>
+-- >    group [ aSegment # at (x,0) # normalTo c
+-- >          | x <- [0,1..7] ]
 --
 -- << figs/normalTo.svg >>
 --
@@ -298,7 +255,6 @@ normalTo c l = turn <*> Just l
         turn = if c `isContaining` s
                then along' . normal c <$> (s ->@? c)
                else along' . ray' s <$> (s # projectOn c)
-
 
 -- | Reflects the curve  at a given parameter against the normal, if it exists, or does nothing otherwise.
 flipAt :: (Curve CN c) => Double -> c -> c

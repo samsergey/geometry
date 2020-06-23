@@ -5,6 +5,8 @@
 {-# Language ConstraintKinds #-}
 {-# Language FlexibleContexts #-}
 {-# Language FunctionalDependencies #-}
+{-# Language TypeFamilies #-}
+
 module Geometry.Base
   ( -- * Types
     -- ** Point represenations
@@ -19,7 +21,7 @@ module Geometry.Base
   -- * Points in affine space
   , Affine (..), roundUp
   -- ** Predicates
-  , isOrthogonal, isCollinear, isOpposite, isZero
+  , isOrthogonal, isCollinear, isOpposite, isZero, opposite
   -- ** Vector and point operations
   , dot, det, cross, norm, distance, angle, normalize, columns, azimuth
   -- * Linear transformations
@@ -74,18 +76,15 @@ type XY = (Double, Double)
 infixl 5 #
 (#) = flip ($)
 
-both f (a,b) = (f a, f b)
-
 ------------------------------------------------------------
 
-infix 4 ~==
+infix 4 ~==, ~<=, ~>=
 
 -- | Type class for values for which equality could be stated with some known tolerance.
 class AlmostEq a where
   -- | The equality operator.
   (~==) :: a -> a -> Bool
 
-instance AlmostEq Bool where  a ~== b = a == b
 instance AlmostEq Int where a ~== b = a == b
 instance AlmostEq Integer where  a ~== b = a == b
 
@@ -94,27 +93,22 @@ instance AlmostEq Double where
 
 instance (RealFloat a, Ord a, Fractional a, Num a, AlmostEq a) =>
          AlmostEq (Complex a) where
-  a ~== b = magnitude (a - b) < 1e-8 || magnitude (a-b) < 1e-8 * magnitude(a+b)
+  a ~== b = magnitude (a - b) < 1e-8 || magnitude (a - b) < 1e-8 * magnitude(a + b)
 
 instance (AlmostEq a, AlmostEq b) => AlmostEq (a, b) where
-  (a1,b1) ~== (a2,b2) = a1 ~== a2 && b1 ~== b2
+  (a1, b1) ~== (a2, b2) = a1 ~== a2 && b1 ~== b2
 
-instance (AlmostEq a, AlmostEq b, AlmostEq c) => AlmostEq (a, b, c) where
-  (a1,b1,c1) ~== (a2,b2,c2) = a1 ~== a2 && b1 ~== b2 && c1 ~== c2
-
-instance (AlmostEq a) => AlmostEq [a] where
+instance AlmostEq a => AlmostEq [a] where
   as ~== bs = and $ zipWith (~==) as bs
 
 instance AlmostEq a => AlmostEq (Maybe a) where
   Just a ~== Just b = a ~== b
-  _ ~== _ = False
-  
-infix 4 ~<=
+  _ ~== _ = False 
+
 -- | The less or almost equal relation.
 (~<=) :: (AlmostEq a, Ord a) => a -> a -> Bool
 a ~<= b = a ~== b || a < b
 
-infix 4 ~>=
 -- | The greater or almost equal relation.
 (~>=) :: (AlmostEq a, Ord a) => a -> a -> Bool
 a ~>= b = a ~== b || a > b
@@ -127,32 +121,32 @@ a ~>= b = a ~== b || a > b
 newtype Direction = Direction Double
   deriving (Num, Fractional, Floating, Real, Enum)
 
--- | Constructs a directed value from an angle given in degrees.
+-- | Constructs a directed value from an angle given in degrees. Invers of `deg`.
 asDeg :: Double -> Direction
 asDeg = Direction . (`mod'` 360)
 
--- | Returns a representation of a directed value as an angle in degrees.
+-- | Returns a representation of a directed value as an angle in degrees. Invers of `asDeg`.
 deg :: Direction -> Double
 deg (Direction a) = a `mod'` 360
 
--- | Constructs a directed value from an angle given in radians.
+-- | Constructs a directed value from an angle given in radians. Invers of `rad`.
 asRad :: Double -> Direction
 asRad r = asDeg (180 * r / pi)
 
--- | Returns a representation of a directed value as an angle in radians.
+-- | Returns a representation of a directed value as an angle in radians. Invers of `asDeg`.
 rad :: Direction -> Double
 rad (Direction a) = (a / 180 * pi) `mod'` (2*pi)
 
--- | Constructs a directed value from a number of turns.
+-- | Constructs a directed value from a number of turns. Invers of `turns`.
 asTurns :: Double -> Direction
 asTurns a = asDeg $ a*360
 
--- | Returns a representation of a directed value as a number of turns.
+-- | Returns a representation of a directed value as a number of turns. Invers of `asTurns`.
 turns :: Direction -> Double
 turns (Direction a) = (a / 360)  `mod'` 1
 
 instance Show Direction where
-  show a = show (round (deg a)) <> "°"
+  show a = show (deg a) <> "°"
 
 instance AlmostEq Direction where  a ~== b = rad a ~== rad b
 
@@ -163,7 +157,26 @@ instance Ord Direction where  a <= b = a == b || rad a < rad b
 ------------------------------------------------------------
 
 -- | The representation of a linear transformation matrix.
-type TMatrix = ((Double, Double, Double),(Double, Double, Double))
+newtype TMatrix = TMatrix ((Double, Double, Double), (Double, Double, Double))
+  deriving Show
+
+instance Semigroup TMatrix where
+  m1 <> m2 = TMatrix ((b1*c2+a1*a2, b1*d2+a1*b2, b1*y2+a1*x2+x1),
+                      (c2*d1+a2*c1, d1*d2+b2*c1, d1*y2+y1+c1*x2))
+    where
+      TMatrix ((a1, b1, x1), (c1, d1, y1)) = m1
+      TMatrix ((a2, b2, x2), (c2, d2, y2)) = m2
+
+instance Monoid TMatrix where
+  mempty = TMatrix ((1,0,0),(0,1,0))
+
+inv (TMatrix ((a, b, x), (c, d, y)))
+  | d == 0 = error "Transformation is not invertible!"
+  | otherwise = res
+  where dt = a*d-b*c
+        res = TMatrix ( (d/dt, -b/dt, (b*y-d*x)/dt)
+                      , (-c/dt, a/dt, (c*x-a*y)/dt))
+      
 
 -- | Class for objects which could be transformed linearly.
 class Trans a where
@@ -181,28 +194,29 @@ instance Trans Direction where
   transform t  = asCmp . transformCmp t . cmp
 
 instance Trans a => Trans (Maybe a) where
-  transform t  = fmap (transform t)
+  transform  = fmap . transform
 
 
--- | Returns 1 if transformation preserves curve orientation, and -1 otherwise.
+-- | Returns @1@ if transformation preserves curve orientation, and @-1@ otherwise.
 transformOrientation :: TMatrix -> Double
-transformOrientation ((a,b,_),(c,d,_)) = signum $ det ((a,b),(c,d))
+transformOrientation (TMatrix ((a,b,_),(c,d,_))) =
+  signum $ det ((a,b),(c,d))
 
 -- | The rotation matrix.
 rotateT :: Double -> TMatrix
-rotateT a = ((cos a, -(sin a), 0), (sin a, cos a, 0))
+rotateT a = TMatrix ((cos a, -(sin a), 0), (sin a, cos a, 0))
 
 -- | The reflection matrix.
 reflectT :: Double -> TMatrix
-reflectT a = ((cos (2*a), sin (2*a), 0), (sin (2*a), -(cos (2*a)), 0))
+reflectT a = TMatrix ((cos (2*a), sin (2*a), 0), (sin (2*a), -(cos (2*a)), 0))
 
 -- | The translation matrix.
-translateT :: Cmp -> TMatrix
-translateT (dx :+ dy) = ((1, 0, dx), (0, 1, dy))
+translateT :: XY -> TMatrix
+translateT (x, y) = TMatrix ((1, 0, x), (0, 1, y))
 
 -- | The scaling matrix.
 scaleT :: Double -> Double -> TMatrix
-scaleT x y = ((x, 0, 0), (0, y, 0))
+scaleT x y = TMatrix ((x, 0, 0), (0, y, 0))
 
 -- | The transformation of a complex number. Used in class implementations.
 transformCmp :: TMatrix -> Cmp -> Cmp
@@ -210,17 +224,16 @@ transformCmp t = cmp . transformXY t . xy
 
 -- | The transformation of coordinates. Used in class implementations.
 transformXY :: TMatrix -> XY -> XY
-transformXY ((a11, a12, sx), (a21, a22, sy)) (x, y) =
+transformXY (TMatrix ((a11, a12, sx), (a21, a22, sy))) (x, y) =
     (a12*y + a11*x + sx, a22*y + a21*x + sy)
 
 -- | The transformation with shifted origin.
 transformAt :: (Trans a, Affine p) => p -> (a -> a) -> a -> a
-transformAt p t = translate' c . t . translate' (-c)
-  where c = cmp p
+transformAt p t = translate' p . t . translate' (opposite p)
 
 -- | The translation of an object.
 translate' :: (Trans a, Affine p) => p -> a -> a
-translate' = transform . translateT . cmp
+translate' = transform . translateT . xy
 
 -- | The translation leading to a superposition of tho points.
 superpose :: (Trans a, Affine p1, Affine p2) => p1 -> p2 -> a -> a
@@ -284,7 +297,6 @@ scaleYAt = scaleYAt'
 -- | Scales  an object simmetrically (isotropically) against a given point.
 scaleFig :: (Figure f, Trans f) => Double -> (f -> f)
 scaleFig s f = scaleAt' (refPoint f) s f
-
 
 -- | Rotates  an object  against a given point.
 rotateAt :: Trans f => XY -> Direction -> (f -> f)
@@ -360,6 +372,23 @@ class Affine a where
   -- | Returns y-coordinate of an afine point.
   getY :: a -> Double
   getY = snd . xy
+
+instance Affine Cmp where
+  cmp = id
+  asCmp = id
+
+instance Affine XY where
+  xy = id
+  asXY = id
+
+instance Affine Direction where
+  cmp a = mkPolar 1 (rad a)
+  asCmp = asRad . phase
+
+instance Affine a => Affine (Maybe a) where
+  cmp = maybe 0 cmp
+  asCmp = pure . asCmp
+
     
 -- | Returns `True` if two points represent orthogonal vectors.
 isOrthogonal :: (Affine a, Affine b) => a -> b -> Bool
@@ -376,6 +405,10 @@ isOpposite a b = not (isZero a || isZero b) && cmp a + cmp b ~== 0
 -- | Returns `True` if the vector is trivial or a point is equal to the origin.
 isZero :: Affine a => a -> Bool
 isZero a = cmp a ~== 0
+
+-- | Returns the opposite vector to a given one.
+opposite :: Affine a => a -> a
+opposite = asCmp . negate . cmp
 
 -- | Returns the deriection given by two points.
 azimuth :: (Affine a, Affine b) => a -> b -> Direction
@@ -425,26 +458,13 @@ columns :: Affine a => (a, a) -> (a, a)
 columns (a, b) = ( asXY (getX a, getX b)
                  , asXY (getY a, getY b))
 
-instance Affine Cmp where
-  cmp = id
-  asCmp = id
-
-instance Affine XY where
-  xy = id
-  asXY = id
-
-instance Affine Direction where
-  cmp a = mkPolar 1 (rad a)
-  asCmp = asRad . phase
-
-instance Affine a => Affine (Maybe a) where
-  cmp = maybe 0 cmp
-  asCmp = pure . asCmp
 ------------------------------------------------------------
 
 -- | Class representing 1-dimensional manifolds, e.g. lines, curves of angles, parameterized by real value.
 class AlmostEq a => Manifold a m | m -> a where
-  {-# MINIMAL param, project, (isContaining | (paramMaybe, projectMaybe)) #-}
+  {-# MINIMAL dom, param, project, (isContaining | (paramMaybe, projectMaybe)) #-}
+
+  dom :: Affine p => m -> p -> a
 
   -- | Returns a point on a manifold for a given parameter.
   param :: m -> Double -> a
@@ -485,6 +505,7 @@ class AlmostEq a => Manifold a m | m -> a where
   unit _ = 1
 
 instance (Affine a,  Manifold a m) => Manifold a (Maybe m) where
+  dom = maybe (const (asCmp 0)) dom
   param m' x = case m' of
                 Just m -> param m x
                 Nothing -> asCmp 0
@@ -530,10 +551,13 @@ paramL m l = param m (l / unit m)
 projectL :: (Manifold a m) => m -> a -> Double
 projectL c p = unit c * project c p
 
--- | The distance between a manifold and a given point.
-distanceTo :: (Affine a, Manifold a m) => a -> m -> Double
+{- | The distance between a manifold and a given point.
+>>> aCircle # distanceTo (point (2,0))
+1.0
+-}
+distanceTo :: (Affine a, Manifold Cmp m) => a -> m -> Double
 distanceTo p m = p `distance` p'
-  where p' = case p ->@? m of
+  where p' = case cmp p ->@? m of
                Just x -> m @-> x
                Nothing -> minimumOn (distance p) (param m <$> bounds m)
 
@@ -640,3 +664,11 @@ right = snd
 left  = fst
 
 ------------------------------------------------------------
+
+bisection f a b
+  | f a * f b > 0       = empty
+  | abs (a - b) < 1e-12 = pure c
+  | otherwise           = bisection f a c <|> bisection f c b
+  where c = (a + b) / 2
+
+findRoot f xs = msum $ zipWith (bisection f) xs (tail xs)

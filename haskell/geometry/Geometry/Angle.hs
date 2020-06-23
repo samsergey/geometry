@@ -84,6 +84,7 @@ instance Trans Angle where
 
 
 instance Manifold Direction Angle where
+  dom = 
   param an x = asDeg (deg s + x * v)
     where Angle p s e = asAngle an
           v = deg (angleValue an)

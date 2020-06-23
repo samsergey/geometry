@@ -8,7 +8,7 @@ path = "dist-newstyle/build/x86_64-linux/ghc-8.6.5/geometry-0.1.2.0/doc/html/geo
 main = do
   writeSVG 400 (path <> "angle1.svg") $
     let t = triangle2a 30 60
-        a1 = anAngle 30 #: "#" <> loffs ((-1):+1)
+        a1 = anAngle 30 #: "#" <> loffs (asDeg 135)
         a2 = anAngle 90 # on (side 2 t) 0 #: "#"
         a3 = t # vertexAngle 1 #: "#"
     in t <+> a1 <+> a2 <+> a3
@@ -146,8 +146,4 @@ main = do
         l3 = t # side 2 # midPerpendicular #: thin <> white
         p = head $ intersectionPoints l1 l2
         c = circle' (p `distance` vertex 0 t) p
-    in t <+> c
-       <+> l1 # clipBy c
-       <+> l2 # clipBy c
-       <+> l3 # clipBy c
-       <+> p
+    in t <+> c <+> l1 <+> l2 <+> l3 <+> p

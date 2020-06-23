@@ -19,19 +19,20 @@ import Geometry.Polygon
 import Geometry.Decorations
 
 --------------------------------------------------------------------------------
--- | Class provides `intersections` function returning a list (possible empty)
--- of intersection points (co-dimension 1).
-class (Manifold Cmp a, Manifold Cmp b) => Intersections a b where
+-- | Class provides `intersections'` function returning a list (possible empty)
+-- of all potential intersection points (co-dimension 1).
+class (Manifold a, Manifold b) => Intersections a b where
   intersections' :: a -> b -> [Cmp]
 
+-- | Filters intersection points, keeping ones belonging to given manifolds.
 intersections :: (Figure a, Figure b, Intersections a b)
   => a -> b -> [Cmp]
 intersections a b  
-  | isTrivial a = filter (isContaining b) [refPoint a]
-  | isTrivial b = filter (isContaining a) [refPoint b]
+  | isTrivial a = filter (isContaining b . dom b) [refPoint a]
+  | isTrivial b = filter (isContaining a . dom a) [refPoint b]
   | otherwise = 
-    filter (isContaining a) $
-    filter (isContaining b) $
+    filter (isContaining a . dom a) $
+    filter (isContaining b . dom b) $
     intersections' a b
 
 -- | Returns `True` if tho curves have intersection points.
@@ -137,7 +138,7 @@ instance Intersections Polyline Polyline where
 --------------------------------------------------------------------------------
 
 deriving via Line instance
-  (Manifold Cmp a, Intersections a Line) => Intersections a Ray
+  (Manifold a, Intersections a Line) => Intersections a Ray
 
 instance Intersections Ray Line where
   intersections' = intersections' . asLine 
@@ -151,7 +152,7 @@ instance Intersections Ray Circle where
 --------------------------------------------------------------------------------
 
 deriving via Line instance
-  (Manifold Cmp a, Intersections a Line) => Intersections a Segment
+  (Manifold a, Intersections a Line) => Intersections a Segment
 
 instance Intersections Segment Line where
   intersections' = intersections' . asLine 
@@ -165,7 +166,7 @@ instance Intersections Segment Circle where
 --------------------------------------------------------------------------------
 
 deriving via Polyline instance
-  (Manifold Cmp a, Intersections a Polyline) => Intersections a Polygon
+  (Manifold a, Intersections a Polyline) => Intersections a Polygon
 
 instance Intersections Polygon Line  where
   intersections' = intersections' . asPolyline
@@ -179,7 +180,7 @@ instance Intersections Polygon Circle  where
 --------------------------------------------------------------------------------
 
 deriving via Polygon instance
-  (Manifold Cmp a, Intersections a Polyline) => Intersections a Triangle
+  (Manifold a, Intersections a Polyline) => Intersections a Triangle
 
 instance Intersections Triangle Line  where
   intersections' = intersections' . asPolyline
@@ -193,7 +194,7 @@ instance Intersections Triangle Circle  where
 --------------------------------------------------------------------------------
 
 deriving via Polygon instance
-  (Manifold Cmp a, Intersections a Polyline) => Intersections a Rectangle
+  (Manifold a, Intersections a Polyline) => Intersections a Rectangle
 
 instance Intersections Rectangle Line  where
   intersections' = intersections' . asPolyline

@@ -13,6 +13,7 @@ import Geometry.Base
 
 ------------------------------------------------------------
 
+-- | The transparent class fot point-like objects.
 class APoint p where
   toPoint :: p -> Point
   asPoint :: Point -> p
@@ -68,7 +69,7 @@ instance Figure Point where
 newtype Label = Label Cmp
   deriving (Eq, Trans, Affine, Figure, APoint) via Point
 
--- | The general label constructor (the label test is set by `label` decorator).
+-- | The general label constructor (the label test is set by @label@ decorator).
 mkLabel :: Affine a => a -> Label
 mkLabel = Label . cmp
 

@@ -1,4 +1,4 @@
-{-# language MultiParamTypeClasses #-}
+{-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
 {-# language FlexibleContexts #-}
 
@@ -15,7 +15,7 @@ import Data.Complex
 
 ------------------------------------------------------------
 -- | Class representing angle mark and decorated angle mark.
-class (Manifold Direction an, Figure an) => Angular an where
+class (Manifold an, Figure an) => Angular an where
   {-# MINIMAL asAngle, toAngle #-}
   asAngle :: Angle -> an
   -- | Isomorphism for angles.
@@ -83,7 +83,8 @@ instance Trans Angle where
           e' = azimuth p' (transform t (cmp p + cmp e))
 
 
-instance Manifold Direction Angle where
+instance Manifold Angle where
+  type Domain Angle = Direction
   param an x = asDeg (deg s + x * v)
     where Angle p s e = asAngle an
           v = deg (angleValue an)

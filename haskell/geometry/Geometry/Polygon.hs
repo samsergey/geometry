@@ -1,10 +1,8 @@
-{-# language MultiParamTypeClasses #-}
+{-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
 {-# language FlexibleContexts #-}
 {-# language UndecidableInstances #-}
 {-# language DerivingVia #-}
-{-# language GeneralizedNewtypeDeriving #-}
-
 
 module Geometry.Polygon
   (
@@ -12,14 +10,13 @@ module Geometry.Polygon
   , isDegenerate
   , Polyline (..)
   , mkPolyline, trivialPolyline
-  , Polygon (..)
+  , Polygonal, Polygon (..)
   , mkPolygon, trivialPolygon, closePolyline
   , Triangle (..)
   , mkTriangle
   , Rectangle (..)
   , mkRectangle
   , boxRectangle
-  , Plot (..), plotManifold
   )
 where
 
@@ -35,7 +32,7 @@ import Geometry.Point
 import Geometry.Line
 
 -- | A class for polylines and polygons.
-class (Trans p, Manifold Cmp p) => PiecewiseLinear p where
+class (Trans p, Manifold p) => PiecewiseLinear p where
   {-# MINIMAL vertices #-}
   -- | A list of polyline vertices.
   vertices :: p -> [Cmp]
@@ -155,7 +152,8 @@ instance Trans Polyline where
   transform t p = Polyline $ transform t <$> vertices p
 
 
-instance Manifold Cmp Polyline where
+instance Manifold Polyline where
+  type Domain Polyline = Cmp
   param p t | t < 0 = param (asLine (side 0 p)) t
             | t > 1 = param (asLine (side (verticesNumber p - 1) p)) t
             | otherwise = fromJust $  interpolation p (t * unit p) 
@@ -171,7 +169,7 @@ instance Manifold Cmp Polyline where
   unit p = sum $ unit <$> segments p
 
 
-instance Curve Cmp Polyline where
+instance Curve Polyline where
   tangent p t =  asCmp $ (p @-> (t + dt)) - (p @-> (t - dt))
     where dt = 1e-5
   normal p t = tangent p t # rotate (-90)
@@ -186,6 +184,8 @@ instance Figure Polyline where
 
 
 ------------------------------------------------------------
+-- | A class for distinguishing `Polygon`s within `PiecewiseLinear` objects.
+class PiecewiseLinear p => Polygonal p where
 
 -- | Representation of a closed polygon as a list of vertices.
 newtype Polygon = Polygon [Cmp]
@@ -194,6 +194,8 @@ newtype Polygon = Polygon [Cmp]
            , Affine
            , Figure
            ) via Polyline
+
+instance Polygonal Polygon where
 
 -- | Creates an empty polyline.
 trivialPolygon :: Polygon
@@ -231,18 +233,19 @@ instance Show Polygon where
               else "-" <> show (length vs) <> "-"
 
 
-instance Manifold Cmp Polygon where
+instance Manifold Polygon where
+  type Domain Polygon = Cmp
   param p t = fromJust $ interpolation (asPolyline p) $ (t `mod'` 1) * unit p
   project = project . asPolyline
   isContaining = isContaining . asPolyline
   unit = unit . asPolyline
 
-instance Curve Cmp Polygon where
+instance Curve Polygon where
   tangent p t =  asCmp $ (p @-> (t + dt)) - (p @-> (t - dt))
     where dt = 1e-5
   normal p t = tangent p t # rotate (-90)
   
-instance ClosedCurve Cmp Polygon where
+instance ClosedCurve Polygon where
   location p pt = case foldMap go (segments p') of
                     (Any True, _) -> OnCurve
                     (_, Sum n) | odd n -> Inside
@@ -263,12 +266,13 @@ instance ClosedCurve Cmp Polygon where
 -- | Representation of a triangle as a list of vertices.
 newtype Triangle = Triangle [Cmp]
   deriving ( Figure
-           , Manifold Cmp
-           , Curve Cmp
-           , ClosedCurve Cmp
+           , Manifold
+           , Curve
+           , ClosedCurve
            , Trans
            , Eq
            , PiecewiseLinear
+           , Polygonal
            ) via Polygon
 
 -- | The main triangle constructor.
@@ -288,12 +292,13 @@ instance Affine Triangle where
 -- | Representation of a rectangle as a list of vertices.
 newtype Rectangle = Rectangle [Cmp]
   deriving ( Figure
-           , Manifold Cmp
-           , Curve Cmp
-           , ClosedCurve Cmp
+           , Manifold
+           , Curve
+           , ClosedCurve
            , Trans
            , Eq
            , PiecewiseLinear
+           , Polygonal
            ) via Polygon
 
 -- | The main rectangle constructor, uses two side lengths and guarantees
@@ -314,90 +319,3 @@ boxRectangle f = Rectangle [ p4, p3, p2, p1 ]
   where ((p4,p3),(p1,p2)) = corner f
 
 ------------------------------------------------------------
-
-newtype Plot a = Plot { plotFn :: Double -> a }
-  deriving Functor
-
-instance Show (Plot a) where
-  show _ = "<Plot>"
-
-instance (AlmostEq a, Affine a, Trans a)=> Eq (Plot a) where
-  p1 == p2 = plotManifold p1 == plotManifold p2
-
-instance (AlmostEq a, Affine a, Trans a) => Trans (Plot a) where
-  transform = fmap . transform
-
-instance PiecewiseLinear (Plot Cmp) where
-  vertices = vertices . plotManifold
-  asPolyline = plotManifold
-
-instance (AlmostEq a, Affine a, Trans a) => Curve a (Plot a) where
-  tangent p t = asCmp $ cmp (p @-> (t + dt)) - cmp (p @-> (t - dt))
-    where dt = 1e-5
-
-instance (AlmostEq a, Affine a, Trans a) => Figure (Plot a) where
-  refPoint = cmp . start
-  box = box . plotManifold
-  isTrivial = isTrivial . plotManifold
-
-instance (AlmostEq a, Affine a, Trans a) => Manifold a (Plot a) where
-  bounds _ = [0,1]
-  param = plotFn
-  project p pt = let x0 = project (plotManifold p) (cmp pt)
-                 in findMin (\x -> (p @-> x) `distance` pt) x0
-  isContaining p pt = 0 ~<= x && x ~<= 1 && (p @-> x) `distance` pt <= 1e-5
-    where x = pt ->@ p
-    
-  unit = unit . plotManifold
-
-findZero f x = go x (x+dx) (f x) (f $ x + dx) 
-  where go x1 x2 y1 y2 | abs (x2 - x1) < 1e-12 = x2
-                       | otherwise = let x = (x1*y2 - x2*y1)/(y2-y1)
-                                     in go x2 x y2 (f x)
-        dx = 1e-5
-
-goldenMean f x1 x2 = go (x1, c, d, x2, 0)
-  where
-    goldenMean = (sqrt 5 - 1)/2
-    c = x2 - (x2 - x1)*goldenMean
-    d = x1 + (x2 - x1)*goldenMean
-    go (a, c, d, b, i) 
-      | abs l < 1e-9 || i > 100 = (d+c)/2 -- quadraticMin f a b ((d+c)/2)
-      | f c < f d = go (a, a + l, c, d, i+1)
-      | otherwise = go (c, d, b - l, b, i+1)
-      where l = d - c 
-
-quadraticMin f x1 x2 x3 | True = x
-                        | otherwise = quadraticMin f x2 x3 x
-  where x | d /= 0 = (x1**2*(y3-y2)-x2**2*y3+x3**2*y2+(x2**2-x3^2)*y1)/d
-          | otherwise = x1
-        d = 2*(x1*(y3-y2)-x2*y3+x3*y2+(x2-x3)*y1)
-        y1 = f x1
-        y2 = f x2
-        y3 = f x3
-
-findMin f x = go x x1 (3*x1 - 2*x)
-  where
-    dx = 1e-3
-    x1 | f x > f (x + dx) = x + dx
-       | otherwise = x - dx
-    go x1 x2 x3 | f x2 <= f x3 = goldenMean f x1 x3
-                | otherwise = go x2 x3 (3*x3 - 2*x2)
-           
-plotManifold :: (Affine a, Manifold a m) => m -> Polyline
-plotManifold m = Polyline pts
-  where
-    mf @->. x = cmp (mf @-> x) 
-    pts = clean $ [m @->. 0] <> tree 0 1 <> [m @->. 1]
-    tree a b | xa `distance` xb < 1e-4 = [xc]
-             | abs (azimuth xa xc - azimuth xc xb) < asDeg 2 = [xc]
-             | otherwise = tree a c <> tree c b
-          where
-            c = (a + b) / 2
-            xa = m @->. a
-            xb = m @->. b
-            xc = m @->. c
-    clean (x:y:z:t) | Segment (x,z) `isContaining` y = clean (x:z:t)
-                    | otherwise = x : clean (y:z:t)
-    clean xs = xs
-    

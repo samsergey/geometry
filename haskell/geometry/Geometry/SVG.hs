@@ -19,7 +19,7 @@ module Geometry.SVG
 import Prelude hiding (writeFile, unwords)
 import Graphics.Svg.Core (Attribute (..))
 import Graphics.Svg (doctype, svg11_, with, prettyText, (<<-))
-import Graphics.Svg (Element, ToElement (..))
+import Graphics.Svg (Element, toElement)
 import Graphics.Svg.Elements
 import Graphics.Svg.Attributes
 import Data.Complex
@@ -34,6 +34,7 @@ import Geometry.Decorations
 import Geometry.Point
 import Geometry.Circle
 import Geometry.Polygon
+import Geometry.Plot
 import Geometry.Line
 import Geometry.Angle
 import Geometry.Figures
@@ -63,7 +64,7 @@ optSegmentMark   = \case {SegmentMark x -> Just x; _ -> Nothing }
 
 ------------------------------------------------------------
 -- | Class for objects that could be represented as SVG elements.
--- Differs from `Graphics.Svg.ToElement` class in adding
+-- Differs from @Graphics.Svg.ToElement@ class in adding
 -- parameter context to a main render function `toSVG`.
 class SVGable a where
   toSVG :: a -> SVGContext -> Element
@@ -77,9 +78,6 @@ instance SVGable Double where
 
 instance SVGable Cmp where
   fmtSVG = fmtSVG . xy
-
-instance SVGable [Cmp] where
-  fmtSVG = foldMap fmtSVG
 
 instance SVGable XY where
   fmtSVG (x, y) = fmtSVG x <> "," <> fmtSVG y <> " "

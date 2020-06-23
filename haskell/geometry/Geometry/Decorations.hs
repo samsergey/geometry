@@ -2,7 +2,7 @@
 {-# language FlexibleInstances #-}
 {-# language OverloadedStrings #-}
 {-# language GeneralizedNewtypeDeriving #-}
-{-# language MultiParamTypeClasses #-}
+{-# language TypeFamilies #-}
 {-# language DerivingVia #-}
 {-# language UndecidableInstances #-}
 {-# language FlexibleContexts #-}
@@ -75,6 +75,10 @@ class WithOptions a where
   defaultOptions :: a -> Options
   defaultOptions _ = mempty
 
+instance WithOptions a => WithOptions (Maybe a) where
+  options = maybe mempty options
+  setOptions o f = setOptions o <$> f
+
 ------------------------------------------------------------
 
 -- | The transparent decoration wrapper for geometric objects.
@@ -116,7 +120,8 @@ instance Affine a => Affine (Decorated a) where
 instance Trans a => Trans (Decorated a) where
   transform t = fmap (transform t)
 
-instance (Affine a,  Manifold a m) => Manifold a (Decorated m) where
+instance Manifold m => Manifold (Decorated m) where
+  type Domain (Decorated m) = Domain m
   param = param . fromDecorated
   project = project . fromDecorated
   paramMaybe = paramMaybe . fromDecorated
@@ -128,11 +133,11 @@ instance APoint p => APoint (Decorated p) where
   toPoint = toPoint . fromDecorated
   asPoint = pure . asPoint
 
-instance Curve a c => Curve a (Decorated c) where
+instance Curve c => Curve (Decorated c) where
   tangent = tangent . fromDecorated
   normal = normal . fromDecorated
 
-instance ClosedCurve a c => ClosedCurve a (Decorated c) where
+instance ClosedCurve c => ClosedCurve (Decorated c) where
   isEnclosing = isEnclosing . fromDecorated
   location = location . fromDecorated
 
@@ -222,9 +227,11 @@ dotted = mkDecorator Dashing "2,3"
 arcs :: Int -> Decorator Angle
 arcs = mkDecorator MultiStroke
 
+-- | The decorator which makes invisible object visible.
 visible :: WithOptions a => Decorator a
 visible = mkDecorator Invisible False
 
+-- | The decorator which makes visible object invisible.
 invisible :: WithOptions a => Decorator a
 invisible = mkDecorator Invisible True
 
@@ -237,19 +244,16 @@ label :: WithOptions a => String -> Decorator a
 label = mkDecorator LabelText
 
 -- | The decorator for label offset.
-loffs :: WithOptions a => Cmp -> Decorator a
-loffs = mkDecorator LabelOffset . conjugate
+loffs :: (Affine p,  WithOptions a) => p -> Decorator a
+loffs = mkDecorator LabelOffset . conjugate . cmp
 
 -- | The decorator for label position.
-lpos :: WithOptions a => Cmp -> Decorator a
-lpos = mkDecorator LabelPosition
+lpos :: (Affine p, WithOptions a) => p -> Decorator a
+lpos = mkDecorator LabelPosition . cmp
 
 -- | The decorator for setting label on a curve at a given parameter value.
---lparam :: (Affine a, Manifold a m, WithOptions m) => Double -> Decorator m
-lparam x = Decorator $ \f -> f #: lpos (asCmp (f @-> x))
+lparam :: (WithOptions m, Manifold m) => Double -> Decorator m
+lparam x = Decorator $ \f -> f #: lpos (f @-> x)
 
 ------------------------------------------------------------
 
-instance WithOptions a => WithOptions (Maybe a) where
-  options = maybe mempty options
-  setOptions o f = setOptions o <$> f

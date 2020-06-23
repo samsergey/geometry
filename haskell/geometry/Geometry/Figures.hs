@@ -2,6 +2,8 @@
 {-# language FlexibleContexts #-}
 {-# language DerivingVia #-}
 {-# language StandaloneDeriving #-}
+{-# language TypeFamilies #-}
+{-# language ConstrainedClassMethods #-}
 
 module Geometry.Figures
   ( origin
@@ -87,7 +89,7 @@ point' p = mkPoint (cmp p)
 >    pointOn c 0.667 #: "C"
 << figs/pointOn.svg >>
 -}
-pointOn :: Curve a c => c -> Double -> Decorated Point
+pointOn :: Curve c => c -> Double -> Decorated Point
 pointOn c t = mkPoint (c @-> t) #: loffs (cmp (normal c t))
 
 {- | Returns a normal projection of the given point on the curve.
@@ -103,8 +105,8 @@ pointOn c t = mkPoint (c @-> t) #: loffs (cmp (normal c t))
 >           pD <+> pD # projectOn c #: "D'")
 << figs/projectOn.svg >>
 -}
-projectOn :: (APoint p, Curve Cmp c, Affine p) => c -> p -> Maybe (Decorated Point)
-projectOn c p = pointOn c <$> (cmp p ->@? c)
+projectOn :: (APoint p, Curve c, Affine p) => c -> p -> Maybe (Decorated Point)
+projectOn c p = pointOn c <$> (dom c p ->@? c)
 
 {- | Returns a list of intersection points as `Point` objects.
 
@@ -113,7 +115,7 @@ projectOn c p = pointOn c <$> (cmp p ->@? c)
 > in p1 <+> c <+> group (intersectionPoints c p1)
 << figs/intersectionPoints.svg >>
 -}
-intersectionPoints :: ( Curve Cmp a, Curve Cmp b, Intersections a b )
+intersectionPoints :: ( Curve a, Curve b, Intersections a b )
                    => a -> b -> [Point]
 intersectionPoints c1 c2 = point' <$> intersections c1 c2
 
@@ -193,7 +195,7 @@ extendToLength l s = s # through' (paramL (asLine s) l)
 >    group [s2 # along a # extendTo t | a <- [0,10..360] ]
 << figs/extendTo.svg >>
 -}
-extendTo :: (Curve Cmp c, Intersections Ray c)
+extendTo :: (Curve c, Intersections Ray c)
          => c -> Segment -> Maybe Segment
 extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
   where extend p = s # through' p
@@ -208,18 +210,18 @@ extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
 > in t <+> pA <+> sa <+> pB <+> sb
 << figs/heightFrom.svg >>
 -}
-heightFrom :: (Affine p, Curve Cmp c, Intersections Ray c)
+heightFrom :: (Affine p, Curve c, Intersections Ray c)
            => p -> c -> Maybe Segment
 heightFrom p c = (aSegment # at' p # normalTo c) >>= extendTo c
 
 -- | Returns a list of segments as a result of clipping the line by a closed curve.
-clipBy :: (Linear l, Intersections l c, Figure c, ClosedCurve Cmp c)
+clipBy :: (Linear l, Intersections l c, Figure c, ClosedCurve c)
        => c -> l -> [Segment]
 clipBy c l = filter internal $ Segment <$> zip ints (tail ints) 
   where
-    ints = sortOn (project l) $ intersections l c <> ends
-    internal s = c `isEnclosing` (s @-> 0.5)
-    ends = (l @->) <$> bounds l
+    ints = sortOn (project l . dom l) $ intersections l c <> ends
+    internal s = c `isEnclosing` dom c (s @-> 0.5)
+    ends = cmp . (l @->) <$> bounds l
 
 -- | A generalized version of `through`.
 through' :: (Affine p, Linear l) => p -> (l -> l)
@@ -248,12 +250,12 @@ through = through'
 >          | x <- [0,1..7] ]
 << figs/normalTo.svg >>
 -}
-normalTo :: (Curve Cmp c, Linear l) => c -> l -> Maybe l
+normalTo :: (Curve c, Linear l) => c -> l -> Maybe l
 normalTo c l = turn <*> Just l
-  where s = start l
+  where s = dom c $ start l
         turn = if c `isContaining` s
                then along' . normal c <$> (s ->@? c)
-               else along' . ray' s <$> (s # projectOn c)
+               else along' . ray' s <$> (point' s # projectOn c)
 
 {- | If possible, returns a line segment normal to the curve starting at a given parameter.
 
@@ -265,14 +267,14 @@ normalTo c l = turn <*> Just l
 >    <+> t # normalSegment 1 #: "4"
 << figs/normalSegment.svg >>
 -}
-normalSegment :: Curve Cmp c => Double -> c -> Maybe Segment
+normalSegment :: Curve c => Double -> c -> Maybe Segment
 normalSegment x c =
   do p <- paramMaybe c x
      aSegment # at' p # normalTo c
 
 {- | Reflects the curve  at a given parameter against the normal, if it exists, or does nothing otherwise.
 -}
-flipAt :: (Curve Cmp c) => Double -> c -> c
+flipAt :: Curve c => Double -> c -> c
 flipAt x c = case c # normalSegment x of
                Just n -> c # reflectAt n
                Nothing -> c
@@ -401,6 +403,7 @@ aTriangle = asCmp 1
 aSquare :: Rectangle
 aSquare = asCmp 1
 
+-- | An invisible square with given size, used for spacing aligned objects. 
 space :: Double -> Decorated Rectangle
 space a = aSquare # scale a #: invisible
 
@@ -416,7 +419,10 @@ triangle2a a1 a2 = case intersections r1 r2 of
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
-height :: PiecewiseLinear p => Int -> p -> Segment
+{- | Returns a segment, starting from a given vertex,
+perpendicular to the opposite side (for odd number of vertices).
+-}
+height :: Polygonal p => Int -> p -> Segment
 height n p = aSegment
              # at' (vertex n p)
              # fromJust . normalTo (asLine (side n p))
@@ -427,7 +433,7 @@ vertexAngle' j p = side j p `angleBetween` side (j-1) p
 ------------------------------------------------------------
 
 -- | Creates a scale as a list of labeled points on a given curve
-linearScale :: (Show s, Curve a c)
+linearScale :: (Show s, Curve c)
             => (Double -> s) -- ^ labeling function
             -> [Double] -- ^ range of the curve parameter
             -> c -- ^ the curve
@@ -444,7 +450,7 @@ linearScale fn rng c = [ pointOn c x #:: label (show (fn x))
 > in (c <+> s1) `beside` space 1 `beside` (s2 <+> t)
 << figs/modularScale.svg>>
 -}
-modularScale :: (Trans c, Affine a, Curve a c) => Int -> c -> [Decorated Point]
+modularScale :: (Trans c, Curve c) => Int -> c -> [Decorated Point]
 modularScale n = linearScale lf rng
   where n' = fromIntegral n
         rng = (/n') <$> [0..n'-1]
@@ -507,4 +513,7 @@ instance WithOptions Angle where
     , Thickness "1.25"
     , MultiStroke 1
     , LabelPosition $ refPoint an + scale 30 (cmp (bisectrisse an)) ]
+
+--------------------------------------------------------------------------------
+
 

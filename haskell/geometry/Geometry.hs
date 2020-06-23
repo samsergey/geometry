@@ -10,13 +10,13 @@ module Geometry
   -- * Grouping combinators
   (<+>), group, beside, above, (<||>)
   , Groupable (..), Group (..)
-  , put, chart
+--  , put, chart
   -- * Constructors for geometric objects
   -- ** Figures
-  , Figure (..), Box, pointBox
+  , Figure (..), Box
   -- ** Figures' size and bounding box corners.
   , figureHeight, figureWidth
-  , corner, left, right, lower, upper
+--  , corner, left, right, lower, upper
   -- ** Point constructors
   , APoint(..), Point (..), Label (..)
   , origin
@@ -27,7 +27,7 @@ module Geometry
   , Linear (..), Line (..), Ray (..), Segment (..)
   , aLine, aRay, aSegment, oX, oY
   , line, line', ray, ray', segment, segment'
-  , end, midPerpendicular
+  , midPerpendicular
   , extendToLength, extendTo, normalSegment, heightFrom, clipBy
   -- ** Angle constructors
   , Angular (..), Angle(..)
@@ -38,7 +38,7 @@ module Geometry
   , PiecewiseLinear (..)
   , isDegenerate
   , Polyline (..)
-  , Polygon (..)
+  , Polygonal, Polygon (..)
   , closePolyline
   , Triangle (..), aTriangle, triangle2a
   , Rectangle (..), aSquare, aRectangle, space
@@ -66,7 +66,7 @@ module Geometry
   , Decorated(..)
   -- ** Decorators
   , Decorator(..)
-  , (#:), (#::)
+  , (#:)
   , visible, invisible
   , stroke, white, fill
   , thickness, thin
@@ -83,7 +83,7 @@ module Geometry
   , rad, asRad
   , turns, asTurns
   -- ** Points in affine space
-  , Affine (..), roundUp
+  , Affine (..)
   -- *** Predicates
   , isOrthogonal, isCollinear, isOpposite, isZero
   -- *** Vector and point operations
@@ -91,7 +91,7 @@ module Geometry
   -- ** Manifolds and curves
   , Manifold (..)
   , (->@), (->@?), (@->), (@->?)
-  , start, paramL, projectL, distanceTo
+  , start, end, paramL, projectL, distanceTo
   , plotManifold
   , Plot (..)
   , Curve (..), PointLocation (..), ClosedCurve(..)
@@ -116,6 +116,7 @@ import Geometry.Point
 import Geometry.Circle
 import Geometry.Line
 import Geometry.Polygon
+import Geometry.Plot
 import Geometry.Angle
 import Geometry.Decorations
 import Geometry.Intersections

@@ -1,10 +1,7 @@
-{-# Language UndecidableInstances #-}
 {-# Language FlexibleInstances #-}
-{-# Language MultiParamTypeClasses #-}
+{-# Language FlexibleContexts #-}
 {-# Language GeneralizedNewtypeDeriving #-}
 {-# Language ConstraintKinds #-}
-{-# Language FlexibleContexts #-}
-{-# Language FunctionalDependencies #-}
 {-# Language TypeFamilies #-}
 
 module Geometry.Base
@@ -37,7 +34,7 @@ module Geometry.Base
   -- * Manifolds and curves
   , Manifold (..)
   , (->@), (->@?), (@->), (@->?)
-  , start, paramL, projectL, distanceTo
+  , start, end, paramL, projectL, distanceTo
   , Curve (..), PointLocation (..), ClosedCurve(..)
   -- * Figures
   , Figure (..), Box, pointBox
@@ -69,6 +66,8 @@ type Cmp = Complex Double
 
 -- | Type alias for a coordinate representation.
 type XY = (Double, Double)
+
+data Zero = Zero deriving Show
 
 ------------------------------------------------------------
 
@@ -275,7 +274,8 @@ rotateAt' p a = transformAt p (rotate a)
 reflect :: Trans a => Direction -> a -> a
 reflect d = transform $ reflectT $ rad d
 
---reflectAt :: (Linear l, Trans a) => l -> a -> a
+-- | The reflection of an object against the affine manifold.
+reflectAt :: (Trans a, Manifold m, Affine m) => m -> a -> a
 reflectAt l = transformAt (start l) (reflect (angle l))
 
 -- | Moves an object along given vector.
@@ -339,7 +339,7 @@ along = along' . asDeg
 --
 -- << figs/on.svg>>
 --
-on :: (Figure f, Affine f, Curve a c) => c -> Double -> (f -> f)
+on :: (Figure f, Affine f, Curve c) => c -> Double -> (f -> f)
 on c x = along' (tangent c x) . at' (c @-> x)
 
 ------------------------------------------------------------
@@ -463,30 +463,45 @@ columns (a, b) = ( asXY (getX a, getX b)
 ------------------------------------------------------------
 
 -- | Class representing 1-dimensional manifolds, e.g. lines, curves of angles, parameterized by real value.
-class AlmostEq a => Manifold a m | m -> a where
+class Affine (Domain m) => Manifold m where
   {-# MINIMAL param, project, (isContaining | (paramMaybe, projectMaybe)) #-}
 
+  {- | The domain in which the manifold is embedded.
+Here are some instances:
+
+> type instance Domain Angle = Direction
+> type instance Domain Circle = Cmp
+> type instance Domain Polyline = Cmp
+> type instance Domain (Plot a) = a
+> type instance Domain Line = Cmp
+-}
+  type Domain m
+
+  -- | The transformer from a general affine space to a manifold domain.
+  dom :: Affine a => m -> a -> Domain m
+  dom = const asAffine
+  
   -- | Returns a point on a manifold for a given parameter.
-  param :: m -> Double -> a
+  param :: m -> Double -> Domain m
 
   -- | Returns a parameter, corresponding to a normal point projection on a manifold.
-  project :: m -> a -> Double
+  project :: m -> Domain m -> Double
 
   -- | Returns `True` if point belongs to the manifold.
-  isContaining :: m -> a -> Bool
+  isContaining :: m -> Domain m -> Bool
   isContaining c p = case projectMaybe c p >>= paramMaybe c  of
-                       Just p' -> p' ~== p
+                       Just p' -> p' `distance` p ~== 0
                        Nothing -> False
 
   {- | Returns a point on a manifold for given parameter, or Nothing
      if parameter runs out of the range defined for a manifold. -}
-  paramMaybe :: m -> Double -> Maybe a
+  paramMaybe :: m -> Double -> Maybe (Domain m)
   paramMaybe m x = if m `isContaining` p then Just p else Nothing
     where p = param m x
 
   -- | Returns a parameter for a point on a manifold, or nothing
   -- if parameter could not be found.
-  projectMaybe :: m -> a -> Maybe Double
+  projectMaybe :: m -> Domain m -> Maybe Double
   projectMaybe m p = if inBounds x then Just x else Nothing
     where x = project m p
           inBounds x = case bounds m of
@@ -504,19 +519,20 @@ class AlmostEq a => Manifold a m | m -> a where
   unit :: m -> Double
   unit _ = 1
 
-instance (Affine a,  Manifold a m) => Manifold a (Maybe m) where
-  param = maybe (const (asCmp 0)) param
+instance Manifold m => Manifold (Maybe m) where
+  type Domain (Maybe m) = Domain m
+  param   = maybe (const (asCmp 0)) param
   project = maybe (const 0) project 
   isContaining = maybe (const False) isContaining
 
 infix 8 @->
 -- | Operator form of the `param` function.
-(@->) ::  Manifold a m => m -> Double -> a
+(@->) ::  Manifold m => m -> Double -> Domain m
 (@->) = param
 
 infix 8 @->?
 -- | Operator form of the `paramMaybe` function.
-(@->?) :: Manifold a m => m -> Double -> Maybe a
+(@->?) :: Manifold m => m -> Double -> Maybe (Domain m)
 (@->?) = paramMaybe
 
 infix 8 ->@
@@ -524,7 +540,7 @@ infix 8 ->@
 --
 -- prop>  p ->@ c  ==  project c p
 --  
-(->@) :: (Manifold a m) => a -> m -> Double
+(->@) :: Manifold m => Domain m -> m -> Double
 (->@) = flip project
 
 infix 8 ->@?
@@ -532,15 +548,15 @@ infix 8 ->@?
 --
 -- prop>  p ->@? c  ==  projectMaybe c p
 -- 
-(->@?) :: (Affine a, Manifold a m) => a -> m -> Maybe Double
+(->@?) :: Manifold m => Domain m -> m -> Maybe Double
 (->@?) = flip projectMaybe
 
 -- | Point on the curve, parameterized by length.
-paramL :: Manifold a m => m -> Double -> a
+paramL :: Manifold m => m -> Double -> Domain m
 paramL m l = param m (l / unit m)
 
 -- | Projection on a manifold, parameterized by length.
-projectL :: (Manifold a m) => m -> a -> Double
+projectL :: Manifold m => m -> Domain m -> Double
 projectL c p = unit c * project c p
 
 {- | The distance between a manifold and a given point.
@@ -549,9 +565,9 @@ projectL c p = unit c * project c p
 >>> aCircle # distanceTo (point (2,0))
 1.0
 -}
-distanceTo :: (Affine p, Affine a, Manifold a m) => p -> m -> Double
+distanceTo :: (Affine p, Manifold m) => p -> m -> Double
 distanceTo p m = p `distance` p'
-  where p' = case asAffine p ->@? m of
+  where p' = case dom m p ->@? m of
                Just x -> m @-> x
                Nothing -> minimumOn (distance p) (param m <$> bounds m)
 
@@ -559,13 +575,17 @@ distanceTo p m = p `distance` p'
 >>> start aCircle
 1.0:+0.0
 -}
-start :: Manifold a m => m -> a
+start :: Manifold m => m -> Domain m
 start m = param m 0
+
+-- | Returns the end point of the segment.
+end :: Manifold m => m -> Domain m
+end m = param m 1
 
 ------------------------------------------------------------
 
 -- | Class representing a curve as a  continuous locally smooth manifold in affine space.
-class (Figure c, Trans c, Affine a, Manifold a c) => Curve a c | c -> a  where
+class (Figure c, Trans c, Manifold c) => Curve c  where
   {-# MINIMAL normal | tangent #-}
 
   -- | The tangent direction for a given parameter on the curve.
@@ -576,33 +596,36 @@ class (Figure c, Trans c, Affine a, Manifold a c) => Curve a c | c -> a  where
   normal :: c -> Double -> Direction
   normal c t = tangent c t + 90
 
-instance Curve a c => Curve a (Maybe c) where
+instance Curve c => Curve (Maybe c) where
   tangent = maybe (const 0) tangent
   normal = maybe (const 0) normal 
                   
 -- |  Class representing a closed region
-class Curve a c => ClosedCurve a c | c -> a where
+class Curve c => ClosedCurve c where
   {-# MINIMAL location | isEnclosing #-}
   
   -- | Returns the location of a point with respect to the region.
-  location :: c -> a -> PointLocation
+  location :: c -> Domain c -> PointLocation
   location c p | isContaining c p = OnCurve
                | isEnclosing c p = Inside
                | otherwise = Outside
 
   -- | Returns `True` if point belongs to the region.
-  isEnclosing :: c -> a -> Bool
+  isEnclosing :: c -> Domain c -> Bool
   isEnclosing c p = location c p == Inside
 
-instance ClosedCurve a c => ClosedCurve a (Maybe c) where
+instance ClosedCurve c => ClosedCurve (Maybe c) where
   location = maybe (const Outside) location
   isEnclosing = maybe (const False) isEnclosing
   
--- | The type representing the relation 'belongs to' between a point and a curve.
-data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)
+-- | The type representing the relation /belongs to/ between an affine point and a curve.
+data PointLocation = Inside
+                   | Outside
+                   | OnCurve
+  deriving (Show, Eq)
 
 ------------------------------------------------------------
-
+-- | The type representing lower-left and upper-right corners of `Figure`'s bounding box.
 type Box = ((Min Double, Min Double), (Max Double, Max Double))
 
 pointBox :: Affine p => p -> Box
@@ -611,7 +634,7 @@ pointBox p = ((Min x, Min y), (Max x, Max y))
 
            
 -- | Class representing the interface for a figure on a chart
-class (Trans a) => Figure a where
+class Trans a => Figure a where
   {-# MINIMAL isTrivial, box #-}
 
   -- | A rectangular bounding box enclosing a figure.
@@ -636,10 +659,12 @@ instance Figure f => Figure (Maybe f) where
   box = maybe mempty box
   isTrivial  = maybe False isTrivial
 
+-- | Returns the total width of the figure.
 figureWidth :: Figure f => f -> Double
 figureWidth f = let ((Min xmin, Min ymin), (Max xmax, Max ymax)) = box f
           in abs $ xmax - xmin
 
+-- | Returns the total height of the figure.
 figureHeight :: Figure f => f -> Double
 figureHeight f = let ((Min xmin, Min ymin), (Max xmax, Max ymax)) = box f
            in abs $ ymax - ymin
@@ -661,3 +686,6 @@ bisection f a b
   where c = (a + b) / 2
 
 findRoot f xs = msum $ zipWith (bisection f) xs (tail xs)
+
+--------------------------------------------------------------------------------
+

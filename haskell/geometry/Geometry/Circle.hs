@@ -1,4 +1,4 @@
-{-# language MultiParamTypeClasses #-}
+{-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
 {-# language FlexibleContexts #-}
 
@@ -17,7 +17,7 @@ import Geometry.Polygon
 
 
 -- | Class for circle and decorated circle
-class (Trans c, Manifold Cmp c, Curve Cmp c, ClosedCurve Cmp c, Figure c) =>
+class (Trans c, Manifold c, Curve c, ClosedCurve c, Figure c) =>
   Circular c where
   {-# MINIMAL toCircle, asCircle #-}
   toCircle :: c -> Circle
@@ -77,7 +77,8 @@ instance Trans Circle where
           o' = transformOrientation t * o
 
 
-instance Manifold Cmp Circle where
+instance Manifold Circle where
+  type Domain Circle = Cmp
   param c t = center c + mkPolar (radius c) (rad x)
     where
       ph = turns $ phaseShift c
@@ -92,12 +93,12 @@ instance Manifold Cmp Circle where
   unit _ = 2 * pi
 
 
-instance Curve Cmp Circle where
+instance Curve Circle where
   normal c t = azimuth (center c) (c @-> t)
   tangent c t = normal c t + 90 * orientation c
 
 
-instance ClosedCurve Cmp Circle where
+instance ClosedCurve Circle where
   location c p = res
     where res | r' ~== radius c = OnCurve
               | r' < radius c   = Inside

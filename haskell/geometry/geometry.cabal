@@ -53,10 +53,28 @@ library
   exposed-modules:  Geometry
 
   -- Modules included in this library but not exported.
-  other-modules: Geometry.Line, Geometry.Decorations,  Geometry.Angle, Geometry.Circle, Geometry.Polygon, Geometry.SVG, Geometry.Figures, Geometry.Base,  Geometry.Point, Geometry.Intersections
+  other-modules: Geometry.Line
+               , Geometry.Decorations
+               , Geometry.Angle
+               , Geometry.Circle
+               , Geometry.Polygon
+               , Geometry.Plot
+               , Geometry.SVG
+               , Geometry.Figures
+               , Geometry.Base
+               , Geometry.Point
+               , Geometry.Intersections
 
   -- LANGUAGE extensions used by modules in this package.
-  other-extensions:    ConstraintKinds, OverloadedStrings, GADTs, FlexibleInstances
+  other-extensions:  FlexibleInstances
+                   , FlexibleContexts
+                   , GeneralizedNewtypeDeriving
+                   , ConstraintKinds
+                   , TypeFamilies
+                   , LambdaCase
+                   , OverloadedStrings
+                   , DerivingVia
+                   , StandaloneDeriving
 
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.12 && <4.13, text >=1.2 && <1.3, hspec >=2.7 && <2.8, QuickCheck >=2.14 && <2.15, test-invariant >=0.4 && <0.5, extra >=1.7 && <1.8, svg-builder >=0.1 && <0.2, double-conversion >=2.0 && <2.1, ieee754 >=0.8 && <0.9, test-invariant >=0.4.5.0, hspec >=2.7.1

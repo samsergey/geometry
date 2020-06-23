@@ -1,6 +1,6 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FlexibleContexts #-}
 module Geometry.Line
   ( Linear (..)
@@ -19,7 +19,7 @@ import Geometry.Base
 ------------------------------------------------------------
 
 -- | Class representing a linear object: line, ray or segment.
-class (Curve Cmp l, Affine l, Figure l) => Linear l where
+class (Curve l, Affine l, Figure l) => Linear l where
   {-# MINIMAL refPoints #-}
   refPoints :: l -> (Cmp, Cmp)
 
@@ -39,8 +39,8 @@ instance Linear l => Linear (Maybe l) where
 
 -- | The straight line, passing through two given points.
 -- The first point sets the `Figure`'s refference point and a starting point of a line.
--- The distance between refference points `p1` and `p2` sets the `unit` and internal scale,
--- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
+-- The distance between refference points @p1@ and @p2@ sets the `unit` and internal scale,
+-- so that @p1 == l \@<- 0@ and @p2 == l \@<- 1@.
 newtype Line = Line (Cmp, Cmp)
   deriving Show
 
@@ -76,7 +76,8 @@ instance Trans Line where
           p2' = transformCmp t p2
 
 
-instance Manifold Cmp Line where
+instance Manifold Line where
+  type Domain Line = Cmp
   bounds l | isTrivial l = [0, 0]
            | otherwise = []
   param l t = let (p1, p2) = refPoints l
@@ -87,7 +88,7 @@ instance Manifold Cmp Line where
                      || l `isCollinear` azimuth (refPoint l) p
   unit = norm
 
-instance Curve Cmp Line where
+instance Curve Line where
   tangent l _ = angle l
 
 intersectionLL (x1 :+ y1) (v1x :+ v1y) (x2 :+ y2) (v2x :+ v2y) =
@@ -104,14 +105,14 @@ lineIntersection l1 l2 =
 
 -- | The ray, passing through two given points.
 -- The first point sets the `Figure`'s refference point and a starting point of a ray.
--- The distance between refference points `p1` and `p2` sets the `unit` and internal scale,
--- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
+-- The distance between refference points @p1@ and @p2@ sets the `unit` and internal scale,
+-- so that @p1 == l \@<- 0@ and @p2 == l \@<- 1@.
 newtype Ray = Ray (Cmp, Cmp)
   deriving Show
   deriving ( Eq
            , Affine
            , Trans
-           , Curve Cmp
+           , Curve
            , Linear
            ) via Line
 
@@ -120,7 +121,8 @@ mkRay :: (Affine p1, Affine p2) => (p1, p2) -> Ray
 mkRay = asRay . mkLine
 
 
-instance Manifold Cmp Ray where
+instance Manifold Ray where
+  type Domain Ray = Cmp
   bounds r | isTrivial r = [0,0]
            | otherwise = [0]
   param = param . asLine
@@ -137,16 +139,17 @@ instance Figure Ray where
 
 ------------------------------------------------------------
 
--- | The line segment, joining two given points.
--- The first point sets the `Figure`'s refference point and a starting point of a ray.
--- The distance between refference points `p1` and `p2` sets the `unit` and internal scale,
--- so that `p1 == l \@<- 0` and `p2 == l \@<- 1`.
+{- | The line segment, joining two given points.
+The first point sets the `Figure`'s refference point and a starting point of a ray.
+The distance between refference points @p1@ and @p2@ sets the `unit` and internal scale,
+so that @p1 == l \@<- 0@ and @p2 == l \@<- 1@.
+-}
 newtype Segment = Segment (Cmp, Cmp)
   deriving Show
   deriving ( Eq
            , Affine
            , Trans
-           , Curve Cmp
+           , Curve
            , Linear
            ) via Line
 
@@ -154,7 +157,8 @@ newtype Segment = Segment (Cmp, Cmp)
 mkSegment :: (Affine p1, Affine p2) => (p1, p2) -> Segment
 mkSegment = asSegment . mkLine
 
-instance Manifold Cmp Segment where
+instance Manifold Segment where
+  type Domain Segment = Cmp
   bounds s | isTrivial s = [0, 0]
            | otherwise = [0, 1]
   param = param . asLine
@@ -168,10 +172,6 @@ instance Figure Segment where
   refPoint = fst . refPoints
   box l = pointBox p1 <> pointBox p2
     where (p1, p2) = refPoints l
-
-
-end :: Segment -> Cmp
-end = snd . refPoints
 
 {- | Returns a perpendicular passing through the middle of the given segment.
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="270.0" width="300.0" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
+  <polygon points="45,220 220,220 132.50000000000006,68.44555433772322 " stroke="orange" stroke-width="2" fill="none"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="45" r="3" cx="220"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="220" text-anchor="middle" y="59">A
+  </text>
+  <line x2="144.22277716886163" y1="45" stroke="orange" stroke-width="2" fill="none" y2="88.74999999999991" x1="220"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="175.1113885844308" text-anchor="middle" y="54.75064434701781">a
+  </text>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="220" r="3" cx="255"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="255" text-anchor="middle" y="234">B
+  </text>
+  <line x2="170.47277716886168" y1="220" stroke="orange" stroke-width="2" fill="none" y2="73.59455543377223" x1="255"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="224.86074423741297" text-anchor="middle" y="139.79727771688613">b
+  </text>
+</svg>

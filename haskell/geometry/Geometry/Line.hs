@@ -173,6 +173,10 @@ instance Figure Segment where
 end :: Segment -> Cmp
 end = snd . refPoints
 
+{- | Returns a perpendicular passing through the middle of the given segment.
+
+<< figs/midPerpendicular.svg >>
+-}
 midPerpendicular :: Segment -> Line
 midPerpendicular s = mkLine (p1, p2)
   where p1 = s @-> 0.5

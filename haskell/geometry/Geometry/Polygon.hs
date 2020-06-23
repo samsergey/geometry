@@ -56,15 +56,15 @@ class (Trans p, Manifold Cmp p) => PiecewiseLinear p where
     vs -> Segment <$> zip vs (tail vs)
 
   -- | The indexed selector for vertices of a polyline.
-  vertex :: p -> Int -> Cmp
-  vertex p i = vs !! j
+  vertex :: Int -> p -> Cmp
+  vertex i p = vs !! j
     where vs = vertices p
           n = verticesNumber p
           j = (0 `max` i) `min` (n - 1)
 
   -- | The indexed selector for sides of a polyline.
-  side :: p -> Int -> Segment
-  side p i = segments p !! j
+  side :: Int -> p -> Segment
+  side i p = segments p !! j
     where j = (0 `max` i) `min` (n - 1)
           n = verticesNumber p         
 
@@ -156,8 +156,8 @@ instance Trans Polyline where
 
 
 instance Manifold Cmp Polyline where
-  param p t | t < 0 = param (asLine (side p 0)) t
-            | t > 1 = param (asLine (side p (verticesNumber p - 1))) t
+  param p t | t < 0 = param (asLine (side 0 p)) t
+            | t > 1 = param (asLine (side (verticesNumber p - 1) p)) t
             | otherwise = fromJust $  interpolation p (t * unit p) 
 
   project p pt = (x0 + (project s pt * unit s)) / unit p
@@ -215,11 +215,11 @@ instance PiecewiseLinear Polygon where
   vertices (Polygon vs) = vs
   segments = segments . asPolyline
 
-  vertex p i = vs !! (i `mod` n)
+  vertex i p = vs !! (i `mod` n)
     where vs = vertices (asPolyline p)
           n = verticesNumber p
 
-  side p i = segments p !! (i `mod` n)
+  side i p = segments p !! (i `mod` n)
     where n = verticesNumber (asPolyline p)
 
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="315.0" width="263.8268590214843" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
+  <polygon points="108.45559064267144,181.72779532145603 181.7277953212154,181.72779532145603 145.09169298194342,118.27220467854396 " stroke="orange" stroke-width="2" fill="none"/>
+  <line x2="152.4189134497978" y1="181.72779532145603" stroke="orange" stroke-width="2" fill="none" y2="255" x1="152.41891344979783"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="138.4189134497978" text-anchor="middle" y="218.36389766072801">1
+  </text>
+  <line x2="226.8653347944878" y1="150" stroke="orange" stroke-width="2" fill="none" y2="113.36389766072172" x1="163.40974415157942"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="202.1375394730348" text-anchor="middle" y="143.8063044833423">2
+  </text>
+  <line x2="145.09169298221462" y1="118.27220467854396" stroke="orange" stroke-width="2" fill="none" y2="45" x1="145.09169298194342"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="159.09169298207902" text-anchor="middle" y="81.6361023393238">3
+  </text>
+  <line x2="45" y1="181.72779532145603" stroke="orange" stroke-width="2" fill="none" y2="218.3638976611448" x1="108.45559064267144"/>
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="69.7277953212561" text-anchor="middle" y="187.92149083836424">4
+  </text>
+</svg>

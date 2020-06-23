@@ -9,8 +9,8 @@ main = do
   writeSVG 400 (path <> "angle1.svg") $
     let t = triangle2a 30 60
         a1 = anAngle 30 #: "#" <> loffs ((-1):+1)
-        a2 = anAngle 90 # on (side t 2) 0 #: "#"
-        a3 = vertexAngle t 1 #: "#"
+        a2 = anAngle 90 # on (side 2 t) 0 #: "#"
+        a3 = t # vertexAngle 1 #: "#"
     in t <+> a1 <+> a2 <+> a3
 
   writeSVG 300 (path <> "angle2.svg") $
@@ -123,4 +123,31 @@ main = do
        s = aSquare # at (1,1) # along' t
    in a <||> t <||> s
    
+  writeSVG 300 (path <> "normalSegment.svg") $
+   let t = aTriangle
+   in t
+      <+> t # normalSegment 0.2 #: "1"
+      <+> t # normalSegment 0.5 #: "2"
+      <+> t # normalSegment (2/3) #: "3"
+      <+> t # normalSegment 1 #: "4"
 
+  writeSVG 300 (path <> "heightFrom.svg") $
+   let t = aTriangle
+       pA = point (1,1) #: "A"
+       sa = t # heightFrom pA #: "a"
+       pB = point (1.2,0) #: "B"
+       sb = sa # heightFrom pB #: "b"
+   in t <+> pA <+> sa <+> pB <+> sb
+
+  writeSVG 300 (path <> "midPerpendicular.svg") $
+    let t = triangle2a 50 70
+        l1 = t # side 0 # midPerpendicular #: thin <> white
+        l2 = t # side 1 # midPerpendicular #: thin <> white
+        l3 = t # side 2 # midPerpendicular #: thin <> white
+        p = head $ intersectionPoints l1 l2
+        c = circle' (p `distance` vertex 0 t) p
+    in t <+> c
+       <+> l1 # clipBy c
+       <+> l2 # clipBy c
+       <+> l3 # clipBy c
+       <+> p

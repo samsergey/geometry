@@ -28,7 +28,7 @@ module Geometry
   , aLine, aRay, aSegment, oX, oY
   , line, line', ray, ray', segment, segment'
   , end, midPerpendicular
-  , extendToLength, extendTo, normalSegment, heightTo, clipBy
+  , extendToLength, extendTo, normalSegment, heightFrom, clipBy
   -- ** Angle constructors
   , Angular (..), Angle(..)
   , anAngle

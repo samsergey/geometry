@@ -10,7 +10,7 @@ module Geometry.Figures
   , pointOn, projectOn, intersectionPoints, closestTo
   , aLine, aRay, aSegment, oX, oY
   , line, line', ray, ray', segment, segment'
-  , extendToLength, extendTo, normalSegment, heightTo, clipBy
+  , extendToLength, extendTo, normalSegment, heightFrom, clipBy
   , anAngle
   , angleBetween, angleWithin, bisectrisse
   , supplementary, vertical, reflex
@@ -200,19 +200,22 @@ extendTo c s = extend <$> closestTo (start s) (intersections (asRay s) c)
 
 {- | Returns a segment normal to a given curve starting at given point.
 
->>> point (1,1) # heightTo oX
-Just (Segment (1.0 :+ 1.0, 1.0 :+ 0.0))
->>> point (-1,1) # heightTo aRay
-Nothing
+> let t = aTriangle
+>     pA = point (1,1) #: "A"
+>     sa = t # heightFrom pA #: "a"
+>     pB = point (1.2,0) #: "B"
+>     sb = sa # heightFrom pB #: "b"
+> in t <+> pA <+> sa <+> pB <+> sb
+<< figs/heightFrom.svg >>
 -}
-heightTo :: (Affine p, Curve Cmp c, Intersections Ray c)
-         => c -> p -> Maybe Segment
-heightTo c p = (aSegment # at' p # normalTo c) >>= extendTo c
+heightFrom :: (Affine p, Curve Cmp c, Intersections Ray c)
+           => p -> c -> Maybe Segment
+heightFrom p c = (aSegment # at' p # normalTo c) >>= extendTo c
 
 -- | Returns a list of segments as a result of clipping the line by a closed curve.
 clipBy :: (Linear l, Intersections l c, Figure c, ClosedCurve Cmp c)
-       => l -> c -> [Segment]
-clipBy l c = filter internal $ Segment <$> zip ints (tail ints) 
+       => c -> l -> [Segment]
+clipBy c l = filter internal $ Segment <$> zip ints (tail ints) 
   where
     ints = sortOn (project l) $ intersections l c <> ends
     internal s = c `isEnclosing` (s @-> 0.5)
@@ -252,17 +255,27 @@ normalTo c l = turn <*> Just l
                then along' . normal c <$> (s ->@? c)
                else along' . ray' s <$> (s # projectOn c)
 
--- | Reflects the curve  at a given parameter against the normal, if it exists, or does nothing otherwise.
-flipAt :: (Curve Cmp c) => Double -> c -> c
-flipAt x c = case normalSegment c x of
-               Just n -> c # reflectAt n
-               Nothing -> c
+{- | If possible, returns a line segment normal to the curve starting at a given parameter.
 
--- | If possible, returns a line segment normal to the curve starting at a given parameter
-normalSegment :: Curve Cmp c => c -> Double -> Maybe Segment
-normalSegment c x =
+> let t = aTriangle
+> in t
+>    <+> t # normalSegment 0.2 #: "1"
+>    <+> t # normalSegment 0.5 #: "2"
+>    <+> t # normalSegment (2/3) #: "3"
+>    <+> t # normalSegment 1 #: "4"
+<< figs/normalSegment.svg >>
+-}
+normalSegment :: Curve Cmp c => Double -> c -> Maybe Segment
+normalSegment x c =
   do p <- paramMaybe c x
      aSegment # at' p # normalTo c
+
+{- | Reflects the curve  at a given parameter against the normal, if it exists, or does nothing otherwise.
+-}
+flipAt :: (Curve Cmp c) => Double -> c -> c
+flipAt x c = case c # normalSegment x of
+               Just n -> c # reflectAt n
+               Nothing -> c
 
 ------------------------------------------------------------
 
@@ -313,11 +326,11 @@ angleWithin :: (Affine a1, Affine a2, Affine a3)
 angleWithin p1 p2 p3 = angleBetween (ray' p2 p1) (ray' p2 p3)
 
 -- | Returns the Angle mark for the angle at given polyline vertex.
-vertexAngle :: PiecewiseLinear p => p -> Int -> Angle
-vertexAngle p n = angleWithin p3 p2 p1 # innerAngle
-  where p1 = vertex p (n-1)
-        p2 = vertex p n
-        p3 = vertex p (n+1)
+vertexAngle :: PiecewiseLinear p => Int -> p -> Angle
+vertexAngle n p = angleWithin p3 p2 p1 # innerAngle
+  where p1 = p # vertex (n-1)
+        p2 = p # vertex n
+        p3 = p # vertex (n+1)
 
 -- | Returns a ray, representng the bisectrisse of a given angle.
 bisectrisse :: Angular a => a -> Ray
@@ -403,13 +416,13 @@ triangle2a a1 a2 = case intersections r1 r2 of
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
-height :: PiecewiseLinear p => p -> Int -> Segment
-height p n = aSegment
-             # at' (vertex p n)
-             # fromJust . normalTo (asLine (side p n))
+height :: PiecewiseLinear p => Int -> p -> Segment
+height n p = aSegment
+             # at' (vertex n p)
+             # fromJust . normalTo (asLine (side n p))
 
-vertexAngle' :: PiecewiseLinear p => p -> Int -> Angle
-vertexAngle' p j = side p j `angleBetween` side p (j-1)
+vertexAngle' :: PiecewiseLinear p => Int -> p -> Angle
+vertexAngle' j p = side j p `angleBetween` side (j-1) p
 
 ------------------------------------------------------------
 

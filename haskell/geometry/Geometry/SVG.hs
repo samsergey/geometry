@@ -87,6 +87,9 @@ instance SVGable XY where
 instance SVGable a => SVGable (Maybe a) where
   toSVG = maybe mempty toSVG
 
+instance SVGable a => SVGable [a] where
+  toSVG = foldMap toSVG
+
 ------------------------------------------------------------
 
 instance SVGable a => SVGable (Decorated a) where
@@ -140,13 +143,13 @@ instance SVGable Line where
   toSVG l = do
     bx <- figureBox
     let relabel s = s #: lpos ((s @-> 0.95) - cmp s) 
-    foldMap (toSVG . relabel) $ l `clipBy` bx
+    foldMap (toSVG . relabel) $ clipBy bx l
       
 instance SVGable Ray where
   toSVG r = do
     bx <- figureBox
     let relabel s = s #: lpos ((s @-> 0.95) - cmp s) 
-    foldMap (toSVG . relabel) $ r `clipBy` bx
+    foldMap (toSVG . relabel) $ clipBy bx r 
 
 instance SVGable Segment where
   toSVG s = elem . attr <> labelElement s

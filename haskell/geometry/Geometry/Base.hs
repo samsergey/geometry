@@ -325,7 +325,7 @@ along' v l = rotateAt' (refPoint l) (angle v - angle l) l
 << figs/along.svg >>
 -}
 along :: (Figure f, Affine f) => Double -> (f -> f)
-along d = along' (asDeg d)
+along = along' . asDeg
 
 -- | Locates an affine object on a given curve at
 -- given parameter and aligns it along a tangent to a curve at this point.
@@ -389,6 +389,8 @@ instance Affine a => Affine (Maybe a) where
   cmp = maybe 0 cmp
   asCmp = pure . asCmp
 
+asAffine :: (Affine a, Affine b) => a -> b
+asAffine = asCmp . cmp
     
 -- | Returns `True` if two points represent orthogonal vectors.
 isOrthogonal :: (Affine a, Affine b) => a -> b -> Bool
@@ -451,7 +453,7 @@ roundUp d = asXY . (\(x,y) -> (rounding x, rounding y)) . xy
 
 -- | The direction of the vector or a point.
 angle :: Affine a => a -> Direction
-angle = asCmp . cmp
+angle = asAffine
 
 -- | The matrix, composed of two vector columns.
 columns :: Affine a => (a, a) -> (a, a)
@@ -462,9 +464,7 @@ columns (a, b) = ( asXY (getX a, getX b)
 
 -- | Class representing 1-dimensional manifolds, e.g. lines, curves of angles, parameterized by real value.
 class AlmostEq a => Manifold a m | m -> a where
-  {-# MINIMAL dom, param, project, (isContaining | (paramMaybe, projectMaybe)) #-}
-
-  dom :: Affine p => m -> p -> a
+  {-# MINIMAL param, project, (isContaining | (paramMaybe, projectMaybe)) #-}
 
   -- | Returns a point on a manifold for a given parameter.
   param :: m -> Double -> a
@@ -478,8 +478,8 @@ class AlmostEq a => Manifold a m | m -> a where
                        Just p' -> p' ~== p
                        Nothing -> False
 
-  -- | Returns a point on a manifold for given parameter, or Nothing
-  -- if parameter runs out of the range defined for a manifold.
+  {- | Returns a point on a manifold for given parameter, or Nothing
+     if parameter runs out of the range defined for a manifold. -}
   paramMaybe :: m -> Double -> Maybe a
   paramMaybe m x = if m `isContaining` p then Just p else Nothing
     where p = param m x
@@ -505,17 +505,9 @@ class AlmostEq a => Manifold a m | m -> a where
   unit _ = 1
 
 instance (Affine a,  Manifold a m) => Manifold a (Maybe m) where
-  dom = maybe (const (asCmp 0)) dom
-  param m' x = case m' of
-                Just m -> param m x
-                Nothing -> asCmp 0
-  project m' p = case m' of
-                   Just m -> project m p
-                   Nothing -> 0
-
-  isContaining m' p = case m' of
-                        Just m -> isContaining m p
-                        Nothing -> False
+  param = maybe (const (asCmp 0)) param
+  project = maybe (const 0) project 
+  isContaining = maybe (const False) isContaining
 
 infix 8 @->
 -- | Operator form of the `param` function.
@@ -554,14 +546,19 @@ projectL c p = unit c * project c p
 {- | The distance between a manifold and a given point.
 >>> aCircle # distanceTo (point (2,0))
 1.0
+>>> aCircle # distanceTo (point (2,0))
+1.0
 -}
-distanceTo :: (Affine a, Manifold Cmp m) => a -> m -> Double
+distanceTo :: (Affine p, Affine a, Manifold a m) => p -> m -> Double
 distanceTo p m = p `distance` p'
-  where p' = case cmp p ->@? m of
+  where p' = case asAffine p ->@? m of
                Just x -> m @-> x
                Nothing -> minimumOn (distance p) (param m <$> bounds m)
 
--- | The starting point on the manifold. 
+{- | The starting point on the manifold.
+>>> start aCircle
+1.0:+0.0
+-}
 start :: Manifold a m => m -> a
 start m = param m 0
 
@@ -580,12 +577,8 @@ class (Figure c, Trans c, Affine a, Manifold a c) => Curve a c | c -> a  where
   normal c t = tangent c t + 90
 
 instance Curve a c => Curve a (Maybe c) where
-  tangent c t = case c of
-                  Just c -> tangent c t
-                  Nothing -> 0
-  normal c t = case c of
-                  Just c -> normal c t
-                  Nothing -> 0
+  tangent = maybe (const 0) tangent
+  normal = maybe (const 0) normal 
                   
 -- |  Class representing a closed region
 class Curve a c => ClosedCurve a c | c -> a where
@@ -602,12 +595,8 @@ class Curve a c => ClosedCurve a c | c -> a where
   isEnclosing c p = location c p == Inside
 
 instance ClosedCurve a c => ClosedCurve a (Maybe c) where
-  location c p = case c of
-                   Just c -> location c p
-                   Nothing -> Outside
-  isEnclosing c p = case c of
-                   Just c -> isEnclosing c p
-                   Nothing -> False
+  location = maybe (const Outside) location
+  isEnclosing = maybe (const False) isEnclosing
   
 -- | The type representing the relation 'belongs to' between a point and a curve.
 data PointLocation = Inside | Outside | OnCurve deriving (Show, Eq)

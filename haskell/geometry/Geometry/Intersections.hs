@@ -18,7 +18,7 @@ import Geometry.Circle
 import Geometry.Polygon
 import Geometry.Decorations
 
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 -- | Class provides `intersections` function returning a list (possible empty)
 -- of intersection points (co-dimension 1).
 class (Manifold Cmp a, Manifold Cmp b) => Intersections a b where
@@ -38,11 +38,37 @@ intersections a b
 isIntersecting :: (Figure a, Figure b, Intersections a b) => a -> b -> Bool
 isIntersecting a b = not . null $ intersections a b
 
-------------------------------------------------------------
+instance (Figure a, Figure b, Intersections a b) =>
+  Intersections a (Maybe b) where
+  intersections' a = maybe [] (intersections' a) 
+
+instance (Figure a, Figure b, Intersections b a) =>
+  Intersections (Maybe a) b where
+  intersections' = flip intersections'
+
+instance {-# OVERLAPPING #-}
+  (Figure a, Figure b, Intersections b a) =>
+  Intersections (Maybe a) (Maybe b) where
+  intersections' a = maybe [] (intersections' a)
+
+instance (Figure a, Figure b, Intersections a b) =>
+         Intersections a (Decorated b) where
+  intersections' a = intersections a . fromDecorated
+
+instance (Figure a, Figure b, Intersections b a) =>
+         Intersections (Decorated a) b where
+  intersections' = flip intersections'
+
+instance {-# OVERLAPPING #-}
+  (Figure a, Figure b, Intersections a b) =>
+  Intersections (Decorated a) (Decorated b) where
+  intersections' = intersections' . fromDecorated
+
+--------------------------------------------------------------------------------
 
 intersectionCC c1 c2 | d == 0 || b < 0 = []
-                     | b == 0          = [x]
-                     | b > 0           = [x, conjugate x]
+                     | b == 0 = [x]
+                     | b > 0 = [x, conjugate x]
   where
     r1 = radius c1
     r2 = radius c2
@@ -59,7 +85,7 @@ intersectionCL c l | b > r = []
     r = radius c
     a = sqrt (r**2 - b**2)
 
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 instance Intersections Line Line where
   intersections' l1 l2
@@ -79,7 +105,7 @@ instance Intersections Line Circle  where
 instance Intersections Line Polyline where
   intersections' l = foldMap (intersections' l) . segments . closePolyline
 
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 instance Intersections Circle Line where
   intersections' = flip intersections'
@@ -97,7 +123,7 @@ instance Intersections Circle Circle where
 instance Intersections Circle Polyline where
   intersections' c = foldMap (intersections' c) . segments . closePolyline
 
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 instance Intersections Polyline Line where
   intersections' = flip intersections'
@@ -108,7 +134,7 @@ instance Intersections Polyline Circle where
 instance Intersections Polyline Polyline where
   intersections' p = foldMap (intersections' p) . segments . closePolyline
 
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 deriving via Line instance
   (Manifold Cmp a, Intersections a Line) => Intersections a Ray
@@ -122,7 +148,7 @@ instance Intersections Ray Polyline where
 instance Intersections Ray Circle where
   intersections' = intersections' . asLine 
 
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 deriving via Line instance
   (Manifold Cmp a, Intersections a Line) => Intersections a Segment
@@ -136,7 +162,7 @@ instance Intersections Segment Polyline where
 instance Intersections Segment Circle where
   intersections' = intersections' . asLine 
 
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 deriving via Polyline instance
   (Manifold Cmp a, Intersections a Polyline) => Intersections a Polygon
@@ -150,7 +176,7 @@ instance Intersections Polygon Polyline  where
 instance Intersections Polygon Circle  where
   intersections' = intersections' . asPolyline
 
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 deriving via Polygon instance
   (Manifold Cmp a, Intersections a Polyline) => Intersections a Triangle
@@ -164,7 +190,7 @@ instance Intersections Triangle Polyline  where
 instance Intersections Triangle Circle  where
   intersections' = intersections' . asPolyline
 
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 deriving via Polygon instance
   (Manifold Cmp a, Intersections a Polyline) => Intersections a Rectangle

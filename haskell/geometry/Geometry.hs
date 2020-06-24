@@ -83,13 +83,13 @@ module Geometry
   , rad, asRad
   , turns, asTurns
   -- ** Points in affine space
-  , Affine (..)
+  , Affine (..), asAffine
   -- *** Predicates
   , isOrthogonal, isCollinear, isOpposite, isZero
   -- *** Vector and point operations
   , dot, det, cross, norm, distance, angle, normalize, columns, azimuth
   -- ** Manifolds and curves
-  , Manifold (..)
+  , Manifold (..), Bounding (..)
   , (->@), (->@?), (@->), (@->?)
   , start, end, paramL, projectL, distanceTo
   , plotManifold

@@ -1,6 +1,9 @@
 {-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
 {-# language GeneralizedNewtypeDeriving #-}
+{-# language DerivingVia #-}
+{-# language DerivingStrategies #-}
+{-# language StandaloneDeriving #-}
 
 module Geometry.Plot ( Plot (..), plotManifold ) where
 
@@ -12,7 +15,7 @@ import Geometry.Polygon
 --------------------------------------------------------------------------------
 
 -- | A manifold with explicit parameter function. Could be used for parametric plotting.
-newtype Plot a = Plot { plotFn :: Double -> a }
+newtype Plot a = Plot (Double -> a)
   deriving Functor
 
 instance Show (Plot a) where
@@ -39,8 +42,8 @@ instance (Affine a, Trans a) => Figure (Plot a) where
 
 instance (Affine a, Trans a) => Manifold (Plot a) where
   type Domain (Plot a) = a
-  bounds _ = [0,1]
-  param = plotFn
+  bounds = const Bound
+  param (Plot f) = f
   project p pt = let x0 = project (plotManifold p) (cmp pt)
                  in findMin (\x -> (p @-> x) `distance` pt) x0
   isContaining p pt = 0 ~<= x && x ~<= 1 && (p @-> x) `distance` pt <= 1e-5
@@ -50,7 +53,7 @@ instance (Affine a, Trans a) => Manifold (Plot a) where
 
 --------------------------------------------------------------------------------
 
--- | Returns a polilyne on an adaptive mesh for  a given smooth manifold.
+-- | Returns a polyline on an adaptive mesh for  a given smooth manifold.
 plotManifold :: Manifold m => m -> Polyline
 plotManifold m = Polyline pts
   where

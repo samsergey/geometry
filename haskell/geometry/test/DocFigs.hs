@@ -147,3 +147,12 @@ main = do
         p = head $ intersectionPoints l1 l2
         c = circle' (p `distance` vertex 0 t) p
     in t <+> c <+> l1 <+> l2 <+> l3 <+> p
+
+  writeSVG 300 (path <> "plot.svg") $
+    let p = Plot (\t -> (cos t, sin t)
+        l1 = t # side 0 # midPerpendicular #: thin <> white
+        l2 = t # side 1 # midPerpendicular #: thin <> white
+        l3 = t # side 2 # midPerpendicular #: thin <> white
+        p = head $ intersectionPoints l1 l2
+        c = circle' (p `distance` vertex 0 t) p
+    in t <+> c <+> l1 <+> l2 <+> l3 <+> p

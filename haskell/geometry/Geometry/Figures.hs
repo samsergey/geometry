@@ -106,7 +106,7 @@ pointOn c t = mkPoint (c @-> t) #: loffs (cmp (normal c t))
 << figs/projectOn.svg >>
 -}
 projectOn :: (APoint p, Curve c, Affine p) => c -> p -> Maybe (Decorated Point)
-projectOn c p = pointOn c <$> (dom c p ->@? c)
+projectOn c p = pointOn c <$> (p ->@? c)
 
 {- | Returns a list of intersection points as `Point` objects.
 
@@ -183,7 +183,7 @@ aRay = asCmp 1
 << figs/extendToLength.svg >>
 -}
 extendToLength :: Double -> Segment -> Segment
-extendToLength l s = s # through' (paramL (asLine s) l)
+extendToLength l s = s # through' (paramL l (asLine s))
 
 {- | Returns a segment extended to a closest intersection point with a given curve.
 
@@ -219,9 +219,12 @@ clipBy :: (Linear l, Intersections l c, Figure c, ClosedCurve c)
        => c -> l -> [Segment]
 clipBy c l = filter internal $ Segment <$> zip ints (tail ints) 
   where
-    ints = sortOn (project l . dom l) $ intersections l c <> ends
-    internal s = c `isEnclosing` dom c (s @-> 0.5)
-    ends = cmp . (l @->) <$> bounds l
+    ints = sortOn (->@ l) $ intersections l c <> ends
+    internal s = c `isEnclosing` (s @-> 0.5)
+    ends = cmp . (l @->) <$> case bounds l of
+                               Unbound -> []
+                               Semibound -> [0]
+                               Bound -> [0,1]
 
 -- | A generalized version of `through`.
 through' :: (Affine p, Linear l) => p -> (l -> l)
@@ -252,8 +255,8 @@ through = through'
 -}
 normalTo :: (Curve c, Linear l) => c -> l -> Maybe l
 normalTo c l = turn <*> Just l
-  where s = dom c $ start l
-        turn = if c `isContaining` s
+  where s = start l
+        turn = if c `isContaining` asAffine s
                then along' . normal c <$> (s ->@? c)
                else along' . ray' s <$> (point' s # projectOn c)
 

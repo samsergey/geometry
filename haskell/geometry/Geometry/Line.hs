@@ -78,8 +78,8 @@ instance Trans Line where
 
 instance Manifold Line where
   type Domain Line = Cmp
-  bounds l | isTrivial l = [0, 0]
-           | otherwise = []
+  bounds l | isTrivial l = Bound
+           | otherwise = Unbound
   param l t = let (p1, p2) = refPoints l
               in scaleAt' p1 t p2
   project l p = let v = cmp p - cmp (refPoint l)
@@ -123,8 +123,8 @@ mkRay = asRay . mkLine
 
 instance Manifold Ray where
   type Domain Ray = Cmp
-  bounds r | isTrivial r = [0,0]
-           | otherwise = [0]
+  bounds r | isTrivial r = Bound
+           | otherwise = Semibound
   param = param . asLine
   project = project . asLine
   isContaining r p = isContaining (asLine r) p
@@ -159,8 +159,7 @@ mkSegment = asSegment . mkLine
 
 instance Manifold Segment where
   type Domain Segment = Cmp
-  bounds s | isTrivial s = [0, 0]
-           | otherwise = [0, 1]
+  bounds = const Bound
   param = param . asLine
   project = project . asLine
   isContaining r p = isContaining (asRay r) p

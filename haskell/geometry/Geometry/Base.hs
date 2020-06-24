@@ -16,7 +16,7 @@ module Geometry.Base
   , rad, asRad
   , turns, asTurns
   -- * Points in affine space
-  , Affine (..), roundUp
+  , Affine (..), roundUp, asAffine
   -- ** Predicates
   , isOrthogonal, isCollinear, isOpposite, isZero, opposite
   -- ** Vector and point operations
@@ -32,7 +32,7 @@ module Geometry.Base
   , scale, scaleX, scaleY, scaleAt', scaleAt
   , scaleXAt', scaleXAt, scaleYAt', scaleYAt, scaleFig
   -- * Manifolds and curves
-  , Manifold (..)
+  , Manifold (..), Bounding (..)
   , (->@), (->@?), (@->), (@->?)
   , start, end, paramL, projectL, distanceTo
   , Curve (..), PointLocation (..), ClosedCurve(..)
@@ -389,6 +389,15 @@ instance Affine a => Affine (Maybe a) where
   cmp = maybe 0 cmp
   asCmp = pure . asCmp
 
+{- | A general homomorphism between affine instances (via `Cmp`).
+
+>>> asAffine (1 :: Cmp) :: XY
+(1.0,0.0)
+>>> asAffine ((2,3) :: XY) :: Segment
+Segment (0.0 :+ 0.0, 2.0 :+ 3.0)
+>>> asAffine (aSegment # rotate 30) :: Direction
+30°
+-}
 asAffine :: (Affine a, Affine b) => a -> b
 asAffine = asCmp . cmp
     
@@ -462,6 +471,12 @@ columns (a, b) = ( asXY (getX a, getX b)
 
 ------------------------------------------------------------
 
+-- | Type representing range of the internal parameter @x@ of the manifold.
+data Bounding = Unbound -- ^ x ∈ (−∞, ∞)
+              | Semibound -- ^ x ∈ [0, ∞)
+              | Bound -- ^ x ∈ [0, 1]
+              deriving Show
+
 -- | Class representing 1-dimensional manifolds, e.g. lines, curves of angles, parameterized by real value.
 class Affine (Domain m) => Manifold m where
   {-# MINIMAL param, project, (isContaining | (paramMaybe, projectMaybe)) #-}
@@ -476,11 +491,7 @@ Here are some instances:
 > type instance Domain Line = Cmp
 -}
   type Domain m
-
-  -- | The transformer from a general affine space to a manifold domain.
-  dom :: Affine a => m -> a -> Domain m
-  dom = const asAffine
-  
+ 
   -- | Returns a point on a manifold for a given parameter.
   param :: m -> Double -> Domain m
 
@@ -505,17 +516,18 @@ Here are some instances:
   projectMaybe m p = if inBounds x then Just x else Nothing
     where x = project m p
           inBounds x = case bounds m of
-            [] -> True
-            [a] -> x >= a
-            [a, b] -> x >= a && x <= b
+            Unbound -> True
+            Semibound -> x >= 0
+            Bound -> x >= 0 && x <= 1
 
-  -- | Returns bounds for a parameter of a manifold.
-  -- [a, b] for finite, [a] for semibound manifolds (a is lower bound), [] for unbound manifolds
-  bounds :: m -> [Double]
-  bounds _ = [0, 1]
+  {- | Returns bounds for a parameter of a manifold.
+    @[a, b]@ for finite, @[a]@ for semibound manifolds (@a@ is lower bound),
+    @[]@ for unbound manifolds
+    -}
+  bounds :: m -> Bounding
+  bounds _ = Bound
   
-  -- | The internal length unit of the curve,
-  --  which maps the parameter to the length of the curve.
+  -- | The internal length unit of the curve,  which maps the parameter to the length of the curve.
   unit :: m -> Double
   unit _ = 1
 
@@ -536,30 +548,41 @@ infix 8 @->?
 (@->?) = paramMaybe
 
 infix 8 ->@
--- | Operator form for `project` with flipped arguments:
---
--- prop>  p ->@ c  ==  project c p
---  
-(->@) :: Manifold m => Domain m -> m -> Double
-(->@) = flip project
+-- | Generalized operator form for `project` with flipped arguments.
+(->@) :: (Affine a, Manifold m) => a -> m -> Double
+p ->@ m = project m (asAffine p)
 
 infix 8 ->@?
--- | Operator for `projectMaybe` with flipped arguments:
---
--- prop>  p ->@? c  ==  projectMaybe c p
--- 
-(->@?) :: Manifold m => Domain m -> m -> Maybe Double
-(->@?) = flip projectMaybe
+-- | Operator for `projectMaybe` with flipped arguments. 
+(->@?) :: (Affine a, Manifold m) => a -> m -> Maybe Double
+p ->@? m = projectMaybe m (asAffine p)
 
--- | Point on the curve, parameterized by length.
-paramL :: Manifold m => m -> Double -> Domain m
-paramL m l = param m (l / unit m)
+{- | Point on the curve, parameterized by length.
 
--- | Projection on a manifold, parameterized by length.
-projectL :: Manifold m => m -> Domain m -> Double
-projectL c p = unit c * project c p
+>>> aCircle # paramL 1 # rad . asCmp
+1.0
+>>> (aTriangle # paramL 1) == (aTriangle # vertex 1)
+True
+>>> (aTriangle # paramL 2) == (aTriangle # vertex 2)
+True
+-}
+paramL :: Manifold m => Double -> m -> Domain m
+paramL l m = param m (l / unit m)
+
+{- | Projection on a manifold, parameterized by length.
+
+>>> aCircle # projectL (asRad 1)
+1.0
+>>> aTriangle # projectL (aTriangle # vertex 1)
+1.0
+>>> aTriangle # projectL (aTriangle # vertex 2)
+2.0
+-}
+projectL :: (Affine p, Manifold m) => p -> m -> Double
+projectL p m = unit m * (p ->@ m)
 
 {- | The distance between a manifold and a given point.
+
 >>> aCircle # distanceTo (point (2,0))
 1.0
 >>> aCircle # distanceTo (point (2,0))
@@ -567,11 +590,16 @@ projectL c p = unit c * project c p
 -}
 distanceTo :: (Affine p, Manifold m) => p -> m -> Double
 distanceTo p m = p `distance` p'
-  where p' = case dom m p ->@? m of
+  where p' = case p ->@? m of
                Just x -> m @-> x
-               Nothing -> minimumOn (distance p) (param m <$> bounds m)
+               Nothing -> minimumOn (distance p) (param m <$> ends)
+        ends = case bounds m of
+          Unbound -> []
+          Semibound -> [0]
+          Bound -> [0,1]
 
 {- | The starting point on the manifold.
+
 >>> start aCircle
 1.0:+0.0
 -}
@@ -605,13 +633,13 @@ class Curve c => ClosedCurve c where
   {-# MINIMAL location | isEnclosing #-}
   
   -- | Returns the location of a point with respect to the region.
-  location :: c -> Domain c -> PointLocation
-  location c p | isContaining c p = OnCurve
+  location :: Affine a => c -> a -> PointLocation
+  location c p | isContaining c (asAffine p) = OnCurve
                | isEnclosing c p = Inside
                | otherwise = Outside
 
   -- | Returns `True` if point belongs to the region.
-  isEnclosing :: c -> Domain c -> Bool
+  isEnclosing :: Affine a => c -> a -> Bool
   isEnclosing c p = location c p == Inside
 
 instance ClosedCurve c => ClosedCurve (Maybe c) where

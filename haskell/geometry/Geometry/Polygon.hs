@@ -33,9 +33,10 @@ import Geometry.Line
 
 -- | A class for polylines and polygons.
 class (Trans p, Manifold p) => PiecewiseLinear p where
-  {-# MINIMAL vertices #-}
+  {-# MINIMAL vertices | asPolyline  #-}
   -- | A list of polyline vertices.
   vertices :: p -> [Cmp]
+  vertices = vertices . asPolyline
   
   -- | A representation of the instance as a polyline.
   asPolyline :: p -> Polyline

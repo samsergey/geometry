@@ -49,17 +49,6 @@ main = do
     pointOn aCircle 0.25 #: "B" <+>
     pointOn aCircle 0.667 #: "C"
 
-  writeSVG 500 (path <> "projectOn.svg") $
-    let c = Plot (\t -> (t, sin t)) # range (0, 6)
-        pA = point (1,0) #: "A"
-        pB = point (2,0) #: "B"
-        pC = point (4,0) #: "C"
-        pD = point (6,1) #: "D"
-    in  c  <+> pA <+> pA # projectOn c #: "A'" <+>
-        pB <+> pB # projectOn c #: "B'" <+>
-        pC <+> pC # projectOn c #: "C'" <+>
-        pD <+> pD # projectOn c #: "D'"
-
   writeSVG 300 (path <> "intersectionPoints.svg") $
     let p = regularPoly 7
         c = aCircle # scale 0.95
@@ -76,31 +65,16 @@ main = do
   writeSVG 300 (path <> "groups.svg") $
     group $ take 10 $ iterate (rotate 3 . scale 1.1) $ regularPoly 3
 
-  writeSVG 300 (path <> "compose.svg") $
-    let f = G . translate (1,0) . scale 0.7 . rotate 30 <>
-            G . translate (1,0) . scale 0.6 . rotate (-45)
-    in G aSegment # iterate f # take 8 # mconcat # rotate 90
-
   writeSVG 300 (path <> "beside.svg") $
     aTriangle `beside` aSquare
 
   writeSVG 300 (path <> "above.svg") $
     aTriangle `above` aSquare
 
-  writeSVG 300 (path <> "serp.svg") $
-    let tr t = t `above` (t `beside` t)
-    in G aCircle # iterate tr # take 5 # mconcat # rotate 225 # scaleX 0.6
-
   writeSVG 400 (path <> "extendToLength.svg") $
    group [aSegment # rotate x # extendToLength r
          | x <- [0,5..360] 
          , let r = 2 + sin (7 * rad x) ]
-
-  writeSVG 400 (path <> "normalTo.svg") $
-   let c = range (0, 6) . Plot $ \t -> (t, sin t)
-   in c <+>
-      group [ aSegment # at (x,0) # normalTo c
-            | x <- [0,1..7] ]
 
   writeSVG 300 (path <> "on.svg") $
    let c = aCircle
@@ -148,9 +122,39 @@ main = do
         c = circle' (p `distance` vertex 0 t) p
     in t <+> c <+> l1 <+> l2 <+> l3 <+> p
 
+  fractals
+  plots
+
+plots = do
+  writeSVG 400 (path <> "normalTo.svg") $
+   let c = range (0, 6) . plot $ \t -> (t, sin t)
+   in c <+>
+      group [ aSegment # at (x,0) # normalTo c
+            | x <- [0,1..7] ]
+
   writeSVG 300 (path <> "plot.svg") $
-    let p = ClosedPlot (\t -> (cos t, -sin t)) # range (0, 2*pi)
+    let p = closedPlot (\t -> (cos t, -sin t)) # range (0, 2*pi)
         e = p # scaleX 0.5 # rotate 30
     in p <||> space 1 <||> (e <+> group (modularScale 12 e))
 
-onRange (a, b) f x = f (a + x * (b - a))
+  writeSVG 500 (path <> "projectOn.svg") $
+    let c = plot (\t -> (t, sin t)) # range (0, 6)
+        pA = point (1,0) #: "A"
+        pB = point (2,0) #: "B"
+        pC = point (4,0) #: "C"
+        pD = point (6,1) #: "D"
+    in  c  <+> pA <+> pA # projectOn c #: "A'" <+>
+        pB <+> pB # projectOn c #: "B'" <+>
+        pC <+> pC # projectOn c #: "C'" <+>
+        pD <+> pD # projectOn c #: "D'"
+
+
+fractals = do
+  writeSVG 300 (path <> "compose.svg") $
+    let f = G . translate (1,0) . scale 0.7 . rotate 30 <>
+            G . translate (1,0) . scale 0.6 . rotate (-45)
+    in G aSegment # iterate f # take 8 # mconcat # rotate 90
+
+  writeSVG 300 (path <> "serp.svg") $
+    let tr t = t `above` (t `beside` t)
+    in G aCircle # iterate tr # take 5 # mconcat # rotate 225 # scaleX 0.6

@@ -48,7 +48,7 @@ module Geometry
   , Circular (..), Circle
   , aCircle, circle, circle'
   -- ** Plots and arbitrary curves
-  , APlot (..), Plot (..), ClosedPlot (..)
+  , APlot (..), Plot (..), plot, ClosedPlot, closedPlot
   -- ** Scalers
   , linearScale, modularScale
   -- * Modificators

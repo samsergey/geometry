@@ -7,8 +7,8 @@
 
 module Geometry.Plot
      ( APlot (..)
-     , Plot (..)
-     , ClosedPlot (..)
+     , Plot, plot
+     , ClosedPlot, closedPlot
      , plotManifold
      ) where
 
@@ -23,7 +23,7 @@ class APlot p where
   {-# MINIMAL premap #-}
   {- | Mapping on the input parameter of the plot.
 
-     @ premap f (Plot p) =  Plot (d . f) @
+     @ premap f (plot p) =  plot (d . f) @
     -}
   premap :: (Double -> Double) -> p -> p
 
@@ -39,15 +39,17 @@ instance APlot p => APlot (Maybe p) where
   
 {- | A manifold with explicit parameter function. Could be used for parametric plotting.
 
-> let p = ClosedPlot (\t -> (cos t, sin t)) # range (0, 2*pi)
+> let p = closedPlot (\t -> (cos t, sin t)) # range (0, 2*pi)
 > in p <||> (p # scaleX 0.5) <||> (p # scaleX 0.5 # rotate 30) <||> 
 << figs/plot.svg >>
 -}
-newtype Plot a = Plot (Double -> a)
-  deriving Functor
+newtype Plot a = Plot (Double -> a, Polyline)
 
-instance APlot (Plot a) where
-  premap f (Plot p) = Plot $ p . f
+-- | Smart constructor for a Plot
+plot f = Plot (f, plotParam f)
+
+instance (Affine a, Trans a) => APlot (Plot a) where
+  premap f p = plot $ (param p) . f
 
 instance Show (Plot a) where
   show _ = "<Plot>"
@@ -55,23 +57,22 @@ instance Show (Plot a) where
 instance (Affine a, Trans a) => Manifold (Plot a) where
   type Domain (Plot a) = a
   bounds = const Bound
-  param (Plot f) = f
-  project p pt = let x0 = project (plotManifold p) (cmp pt)
+  param (Plot (f, _)) = f
+  project p pt = let x0 = project (asPolyline p) (cmp pt)
                  in findMin (\x -> (p @-> x) `distance` pt) x0
   isContaining p pt = 0 ~<= x && x ~<= 1 && (p @-> x) `distance` pt <= 1e-5
     where x = pt ->@ p
     
-  unit = unit . plotManifold
+  unit = unit . asPolyline
   
 instance (Affine a, Trans a)=> Eq (Plot a) where
-  p1 == p2 = plotManifold p1 == plotManifold p2
+  p1 == p2 = asPolyline p1 == asPolyline p2
 
 instance (Affine a, Trans a) => Trans (Plot a) where
-  transform = fmap . transform
+  transform t (Plot (f, p)) = Plot (transform t . f, transform t p)
 
 instance (Affine a, Trans a) => PiecewiseLinear (Plot a) where
-  vertices = vertices . plotManifold
-  asPolyline = plotManifold
+  asPolyline (Plot (_,p)) = p
 
 instance (Affine a, Trans a) => Curve (Plot a) where
   tangent p t = asCmp $ cmp (p @-> (t + dt)) - cmp (p @-> (t - dt))
@@ -79,14 +80,15 @@ instance (Affine a, Trans a) => Curve (Plot a) where
 
 instance (Affine a, Trans a) => Figure (Plot a) where
   refPoint = left . lower . corner
-  box = box . plotManifold
-  isTrivial = isTrivial . plotManifold
-
+  box = box . asPolyline
+  isTrivial = isTrivial . asPolyline
 
 --------------------------------------------------------------------------------
 
-newtype ClosedPlot a = ClosedPlot (Double -> a)
-  deriving Functor
+newtype ClosedPlot a = ClosedPlot (Double -> a, Polyline)
+
+-- | Smart constructor for a ClosedPlot
+closedPlot f = Plot (f, plotParam f)
 
 instance Show (ClosedPlot a) where
   show _ = "<ClosedPlot>"
@@ -94,21 +96,20 @@ instance Show (ClosedPlot a) where
 instance (Affine a, Trans a) => Manifold (ClosedPlot a) where
   type Domain (ClosedPlot a) = a
   bounds = const Unbound
-  param (ClosedPlot f) = f
-  project p pt = let x0 = project (plotManifold p) (cmp pt)
+  param (ClosedPlot (f, _)) = f
+  project p pt = let x0 = project (asPolyline p) (cmp pt)
                  in findMin (\x -> (p @-> x) `distance` pt) x0
   isContaining p pt = (p @-> (pt ->@ p)) `distance` pt <= 1e-5
     
-  unit = unit . plotManifold
+  unit = unit . asPolyline
 
 instance (Affine a, Trans a) => PiecewiseLinear (ClosedPlot a) where
-  vertices = vertices . closePolyline . plotManifold
-  asPolyline = asPolyline . closePolyline . plotManifold
+  asPolyline (ClosedPlot (_,p)) = p
 
 instance Polygonal (ClosedPlot Cmp) where
 
 instance (Affine a, Trans a) => ClosedCurve (ClosedPlot a) where
-  isEnclosing = isEnclosing . closePolyline . plotManifold
+  isEnclosing = isEnclosing . closePolyline . asPolyline
 
 deriving via Plot a instance (Affine a, Trans a) => APlot (ClosedPlot a)
 deriving via Plot a instance (Affine a, Trans a) => Eq (ClosedPlot a)
@@ -116,22 +117,25 @@ deriving via Plot a instance (Affine a, Trans a) => Trans (ClosedPlot a)
 deriving via Plot a instance (Affine a, Trans a) => Figure (ClosedPlot a)
 deriving via Plot a instance (Affine a, Trans a) => Curve (ClosedPlot a)
 
---------------------------------------------------------------------------------
-
 -- | Returns a polyline on an adaptive mesh for  a given smooth manifold.
 plotManifold :: Manifold m => m -> Polyline
-plotManifold m = Polyline pts
+plotManifold = plotParam . param 
+
+--------------------------------------------------------------------------------
+
+plotParam :: Affine a => (Double -> a) -> Polyline
+plotParam f = Polyline pts
   where
-    mf @->. x = cmp (mf @-> x) 
-    pts = clean $ [m @->. 0] <> tree 0 0.5 <> tree 0.5 1 <> [m @->. 1]
+    mf @->. x = cmp (f x) 
+    pts = clean $ [f @->. 0] <> tree 0 0.5 <> tree 0.5 1 <> [f @->. 1]
     tree a b | xa `distance` xb < 1e-4 = [xc]
              | abs (azimuth xa xc - azimuth xc xb) < asDeg 2 = [xc]
              | otherwise = tree a c <> tree c b
           where
             c = (a + b) / 2
-            xa = m @->. a
-            xb = m @->. b
-            xc = m @->. c
+            xa = f @->. a
+            xb = f @->. b
+            xc = f @->. c
     clean (x:y:z:t) | Segment (x,z) `isContaining` y = clean (x:z:t)
                     | otherwise = x : clean (y:z:t)
     clean xs = xs

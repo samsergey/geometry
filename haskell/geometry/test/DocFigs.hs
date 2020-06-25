@@ -50,7 +50,7 @@ main = do
     pointOn aCircle 0.667 #: "C"
 
   writeSVG 500 (path <> "projectOn.svg") $
-    let c = Plot  $ (\t -> t :+ sin t) . (*6)
+    let c = Plot (\t -> (t, sin t)) # range (0, 6)
         pA = point (1,0) #: "A"
         pB = point (2,0) #: "B"
         pC = point (4,0) #: "C"
@@ -97,7 +97,7 @@ main = do
          , let r = 2 + sin (7 * rad x) ]
 
   writeSVG 400 (path <> "normalTo.svg") $
-   let c = Plot $ (\t -> t :+ sin t) . (*6)
+   let c = range (0, 6) . Plot $ \t -> (t, sin t)
    in c <+>
       group [ aSegment # at (x,0) # normalTo c
             | x <- [0,1..7] ]
@@ -149,10 +149,8 @@ main = do
     in t <+> c <+> l1 <+> l2 <+> l3 <+> p
 
   writeSVG 300 (path <> "plot.svg") $
-    let p = Plot (\t -> (cos t, sin t)
-        l1 = t # side 0 # midPerpendicular #: thin <> white
-        l2 = t # side 1 # midPerpendicular #: thin <> white
-        l3 = t # side 2 # midPerpendicular #: thin <> white
-        p = head $ intersectionPoints l1 l2
-        c = circle' (p `distance` vertex 0 t) p
-    in t <+> c <+> l1 <+> l2 <+> l3 <+> p
+    let p = ClosedPlot (\t -> (cos t, -sin t)) # range (0, 2*pi)
+        e = p # scaleX 0.5 # rotate 30
+    in p <||> space 1 <||> (e <+> group (modularScale 12 e))
+
+onRange (a, b) f x = f (a + x * (b - a))

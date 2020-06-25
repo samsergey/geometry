@@ -47,6 +47,8 @@ module Geometry
   -- ** Circle constructors
   , Circular (..), Circle
   , aCircle, circle, circle'
+  -- ** Plots and arbitrary curves
+  , APlot (..), Plot (..), ClosedPlot (..)
   -- ** Scalers
   , linearScale, modularScale
   -- * Modificators
@@ -93,7 +95,6 @@ module Geometry
   , (->@), (->@?), (@->), (@->?)
   , start, end, paramL, projectL, distanceTo
   , plotManifold
-  , Plot (..)
   , Curve (..), PointLocation (..), ClosedCurve(..)
   -- ** Intersections of curves
   , Intersections (..)

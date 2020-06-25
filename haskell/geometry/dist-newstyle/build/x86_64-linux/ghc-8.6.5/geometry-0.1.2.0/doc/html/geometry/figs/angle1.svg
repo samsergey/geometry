@@ -4,12 +4,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="240.17891641676758" width="400.00000000000006" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
   <polygon points="70.83333333333333,182.69494798882332 329.1666666666667,182.69494798882332 264.58333333333337,70.83333333333333 " stroke="orange" stroke-width="2" fill="none"/>
   <polyline points="88.15384140902201,172.69494798882332 70.83333333333333,182.69494798882332 90.83333302871598,182.69145733033693 " stroke="white" stroke-width="1.25" fill="none"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="85.81043042499128" text-anchor="middle" y="160.92784787741667">29.98999999999978°
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="89.91093548837962" text-anchor="middle" y="165.028352940805">29.98999999999978°
   </text>
   <polyline points="84.68973979388427,174.69494798882332 84.94399128781613,175.1524462757582 85.40693843137304,176.09115858830526 85.80752074302139,177.05813049847146 86.14402401077594,178.0492240431211 86.41500823611939,179.06019803540292 86.61931379618893,180.08672621406166 86.75606640615099,181.1244157568074 86.82468086052752,182.16882607852293 86.83333308963945,182.6921554620342 " stroke="white" stroke-width="1.25" fill="none"/>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="85.81043042499128" text-anchor="middle" y="160.92784787741667">29.98999999999978°
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="89.91093548837962" text-anchor="middle" y="165.028352940805">29.98999999999978°
   </text>
-  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="85.81043042499128" text-anchor="middle" y="160.92784787741667">29.98999999999978°
+  <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="89.91093548837962" text-anchor="middle" y="165.028352940805">29.98999999999978°
   </text>
   <polyline points="274.58031018209874,88.15558647445916 264.58333333333337,70.83333333333333 247.26282525764498,80.83333333333304 " stroke="white" stroke-width="1.25" fill="none"/>
   <text dy="4" font-size="16" font-style="italic" stroke="none" fill="white" font-family="CMU Serif" x="256.816233221925" text-anchor="middle" y="99.81043042499128">89.98999999999923°

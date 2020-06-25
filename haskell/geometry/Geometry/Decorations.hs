@@ -36,6 +36,7 @@ import Geometry.Line
 import Geometry.Circle
 import Geometry.Angle
 import Geometry.Polygon
+import Geometry.Plot
 
 
 -- | Possible SVG options for a figure.
@@ -129,10 +130,6 @@ instance Manifold m => Manifold (Decorated m) where
   isContaining = isContaining . fromDecorated
   unit = unit . fromDecorated
 
-instance APoint p => APoint (Decorated p) where
-  toPoint = toPoint . fromDecorated
-  asPoint = pure . asPoint
-
 instance Curve c => Curve (Decorated c) where
   tangent = tangent . fromDecorated
   normal = normal . fromDecorated
@@ -141,11 +138,14 @@ instance ClosedCurve c => ClosedCurve (Decorated c) where
   isEnclosing = isEnclosing . fromDecorated
   location = location . fromDecorated
 
-
 instance Figure a => Figure (Decorated a) where
   isTrivial = isTrivial . fromDecorated
   refPoint = refPoint . fromDecorated
   box = box . fromDecorated
+
+instance APoint p => APoint (Decorated p) where
+  toPoint = toPoint . fromDecorated
+  asPoint = pure . asPoint
 
 instance Linear l => Linear (Decorated l) where
   refPoints = refPoints . fromDecorated
@@ -158,11 +158,16 @@ instance PiecewiseLinear a => PiecewiseLinear (Decorated a) where
   vertices = vertices . fromDecorated
   asPolyline = asPolyline . fromDecorated
 
+instance Polygonal p => Polygonal (Decorated p) where
+
 instance Angular a => Angular (Decorated a) where
   asAngle = pure . asAngle
   toAngle = toAngle . fromDecorated
   setValue v = fmap (setValue v)
 
+instance APlot p => APlot (Decorated p) where
+  premap = fmap . premap
+  
 ------------------------------------------------------------
 -- | A wrapped decoration function with monoidal properties,
 -- corresponding to decoration options.

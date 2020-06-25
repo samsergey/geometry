@@ -181,8 +181,14 @@ instance SVGable Polygon where
 deriving via Polygon instance SVGable Triangle
 deriving via Polygon instance SVGable Rectangle
 
+------------------------------------------------------------
+
 instance (AlmostEq a, Affine a, Trans a) => SVGable (Plot a) where
-  toSVG = toSVG . plotManifold
+  toSVG = toSVG . asPolyline
+
+instance (AlmostEq a, Affine a, Trans a) => SVGable (ClosedPlot a) where
+  toSVG = toSVG . asPolyline
+
 ------------------------------------------------------------
 
 instance SVGable Angle where

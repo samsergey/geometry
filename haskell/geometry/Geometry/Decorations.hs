@@ -165,7 +165,9 @@ instance Angular a => Angular (Decorated a) where
   toAngle = toAngle . fromDecorated
   setValue v = fmap (setValue v)
 
- 
+instance APlot p => APlot (Decorated p) where
+  rmap = fmap . rmap
+  
 ------------------------------------------------------------
 -- | A wrapped decoration function with monoidal properties,
 -- corresponding to decoration options.

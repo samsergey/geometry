@@ -1,8 +1,11 @@
 {-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
 {-# language DerivingVia #-}
+{-# language DeriveFunctor #-}
 {-# language StandaloneDeriving #-}
 {-# language RankNTypes #-}
+{-# language UndecidableInstances #-}
+{-# language ConstraintKinds #-}
 
 module Geometry.Plot
      ( APlot (..)
@@ -16,47 +19,48 @@ import Geometry.Point
 import Geometry.Line
 import Geometry.Polygon
 
+type Pnt a = (Affine a, Trans a)
+
 --------------------------------------------------------------------------------
 -- | Class for objects representing plots.
 class APlot p where
-  {-# MINIMAL rmap, lmap #-}
+  {-# MINIMAL rmap #-}
+
   {- | Mapping on the input parameter of the plot.
 
      @ rmap f (plot p) =  plot (d . f) @
     -}
-  rmap :: (Trans a, Affine a) => (Double -> Double) -> p a -> p a
+  rmap :: (Double -> Double) -> p -> p
 
-  lmap :: (Trans a, Affine a, Trans b, Affine b) => (a -> b) -> p a -> p b
-
-  {- | Changes or sets the parameter range of the plot.
-
-<< figs/range.svg >>
-    -}
-  range :: (Trans a, Affine a) => (Double, Double) -> p a -> p a
+  -- | Changes or sets the parameter range of the plot.
+  range :: (Double, Double) -> p -> p
   range (a,b) = rmap $ \x -> a + x * (b - a)
 
-instance APlot p => (forall a . APlot (Maybe (p a))) where
-  rmap f p = rmap f <$> p
-
+instance APlot p => APlot (Maybe p) where
+  rmap = fmap . rmap
+  
 --------------------------------------------------------------------------------  
 {- | A manifold with explicit parameter function. Could be used for parametric plotting.
 
-> plot (\t -> (t, abs (sin t))) # range (0, 7)
+> let p1 = plot (\t -> (t, abs (sin t)))
+>     p2 = p1 # range (0, 3)
+>     p3 = p1 # range (0, 7)
+> in p1 `above` p2 `above` p3
 << figs/plot.svg >>
 -}
 newtype Plot a = Plot (Double -> a, Polyline)
+  deriving Functor 
 
 -- | Smart constructor for a Plot
 plot f = Plot (f, plotParam f)
 
-instance APlot Plot where
+instance Pnt a => APlot (Plot a) where
   rmap f p = plot $ param p . f
-  lmap f p = plot $ f . param p
 
 instance Show (Plot a) where
   show _ = "<Plot>"
 
-instance (Affine a, Trans a) => Manifold (Plot a) where
+instance Pnt a => Manifold (Plot a) where
   type Domain (Plot a) = a
   bounds = const Bound
   param (Plot (f, _)) = f
@@ -67,20 +71,20 @@ instance (Affine a, Trans a) => Manifold (Plot a) where
     
   unit = unit . asPolyline
   
-instance (Affine a, Trans a)=> Eq (Plot a) where
+instance Pnt a => Eq (Plot a) where
   p1 == p2 = asPolyline p1 == asPolyline p2
 
-instance (Affine a, Trans a) => Trans (Plot a) where
+instance Pnt a => Trans (Plot a) where
   transform t (Plot (f, p)) = Plot (transform t . f, transform t p)
 
-instance (Affine a, Trans a) => PiecewiseLinear (Plot a) where
+instance Pnt a => PiecewiseLinear (Plot a) where
   asPolyline (Plot (_,p)) = p
 
-instance (Affine a, Trans a) => Curve (Plot a) where
+instance Pnt a => Curve (Plot a) where
   tangent p t = asCmp $ cmp (p @-> (t + dt)) - cmp (p @-> (t - dt))
     where dt = 1e-5
 
-instance (Affine a, Trans a) => Figure (Plot a) where
+instance Pnt a => Figure (Plot a) where
   refPoint = left . lower . corner
   box = box . asPolyline
   isTrivial = isTrivial . asPolyline
@@ -89,10 +93,11 @@ instance (Affine a, Trans a) => Figure (Plot a) where
 
 {- | A manifold with explicit parameter function. Could be used for parametric plotting.
 
-> closeDlot (\t -> (t, abs (sin t))) # range (0, 7)
+> closePlot (\t -> (t, abs (sin t))) # range (0, 7)
 << figs/plot.svg >>
 -}
 newtype ClosedPlot a = ClosedPlot (Double -> a, Polyline)
+  deriving Functor
 
 -- | Smart constructor for a ClosedPlot
 closedPlot f = Plot (f, plotParam f)
@@ -100,7 +105,7 @@ closedPlot f = Plot (f, plotParam f)
 instance Show (ClosedPlot a) where
   show _ = "<ClosedPlot>"
 
-instance (Affine a, Trans a) => Manifold (ClosedPlot a) where
+instance Pnt a => Manifold (ClosedPlot a) where
   type Domain (ClosedPlot a) = a
   bounds = const Unbound
   param (ClosedPlot (f, _)) = f
@@ -110,19 +115,19 @@ instance (Affine a, Trans a) => Manifold (ClosedPlot a) where
     
   unit = unit . asPolyline
 
-instance (Affine a, Trans a) => PiecewiseLinear (ClosedPlot a) where
+instance Pnt a => PiecewiseLinear (ClosedPlot a) where
   asPolyline (ClosedPlot (_,p)) = p
 
 instance Polygonal (ClosedPlot Cmp) where
 
-instance (Affine a, Trans a) => ClosedCurve (ClosedPlot a) where
+instance Pnt a => ClosedCurve (ClosedPlot a) where
   isEnclosing = isEnclosing . closePolyline . asPolyline
 
-deriving via Plot instance APlot ClosedPlot
-deriving via Plot a instance (Affine a, Trans a) => Eq (ClosedPlot a)
-deriving via Plot a instance (Affine a, Trans a) => Trans (ClosedPlot a)
-deriving via Plot a instance (Affine a, Trans a) => Figure (ClosedPlot a)
-deriving via Plot a instance (Affine a, Trans a) => Curve (ClosedPlot a)
+deriving via Plot a instance Pnt a => APlot (ClosedPlot a)
+deriving via Plot a instance Pnt a => Eq (ClosedPlot a)
+deriving via Plot a instance Pnt a => Trans (ClosedPlot a)
+deriving via Plot a instance Pnt a => Figure (ClosedPlot a)
+deriving via Plot a instance Pnt a => Curve (ClosedPlot a)
 
 -- | Returns a polyline on an adaptive mesh for  a given smooth manifold.
 plotManifold :: Manifold m => m -> Polyline
@@ -134,7 +139,8 @@ plotParam :: Affine a => (Double -> a) -> Polyline
 plotParam mf = Polyline pts
   where
     f = cmp . mf
-    pts = clean $ [f 0] <> tree 0 0.5 <> tree 0.5 1 <> [f 1]
+    pts = clean $ [f 0] <> xs <> [f 1]
+    xs = mconcat $ zipWith tree [0,0.25..1] [0.25, 0.5..1]
     tree a b | xa `distance` xb < 1e-3 = [xc]
              | abs (azimuth xa xc - azimuth xc xb) < asDeg 3 = [xc]
              | otherwise = tree a c <> tree c b

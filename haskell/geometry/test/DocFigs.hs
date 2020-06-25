@@ -127,13 +127,16 @@ main = do
 
 plots = do
   writeSVG 400 (path <> "normalTo.svg") $
-   let c = range (0, 6) . plot $ \t -> (t, sin t)
+   let c = plot (\t -> (t, sin t)) # range (0, 6) #: white
    in c <+>
       group [ aSegment # at (x,0) # normalTo c
             | x <- [0,1..7] ]
 
   writeSVG 300 (path <> "plot.svg") $
-    plot (\t -> (t, abs (sin t))) # range (0, 7)
+    let p1 = plot (\t -> (t, abs (sin t)))
+        p2 = p1 # range (0, 3)
+        p3 = p1 # range (0, 7)
+    in p1 `above` p2 `above` p3
 
   writeSVG 300 (path <> "closedPlot.svg") $
     let p = closedPlot (\t -> (cos t, -sin t)) # range (0, 2*pi)

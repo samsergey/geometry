@@ -154,22 +154,33 @@ plotParam mf = Polyline pts
 
 --------------------------------------------------------------------------------
 
+intersectionP :: (Manifold m1, Manifold m2, Affine a) => m1 -> m2 -> a -> [a]
+intersectionP m1 m2 x = asAffine <$> go x
+  where go = limit . take 100 . iterate step . asAffine
+        step p = m1 @-> (p ->@ m2)
+
+limit [] = []
+limit xs = pure . snd . head $
+           dropWhile (\(x,y) -> distance x y > 1e-8) $
+           zip xs (tail xs)
+
 findZero f x = go x (x+dx) (f x) (f $ x + dx) 
   where go x1 x2 y1 y2 | abs (x2 - x1) < 1e-12 = x2
                        | otherwise = let x = (x1*y2 - x2*y1)/(y2-y1)
                                      in go x2 x y2 (f x)
         dx = 1e-5
 
+goldenMean :: (Double -> Double) -> Double -> Double -> Double
 goldenMean f x1 x2 = go (x1, c, d, x2, 0)
   where
-    goldenMean = (sqrt 5 - 1)/2
-    c = x2 - (x2 - x1)*goldenMean
-    d = x1 + (x2 - x1)*goldenMean
+    phi = (sqrt 5 - 1)/2
+    c = x2 - (x2 - x1)*phi
+    d = x1 + (x2 - x1)*phi
     go (a, c, d, b, i) 
-      | abs l < 1e-9 || i > 100 = (d+c)/2 -- quadraticMin f a b ((d+c)/2)
-      | f c < f d = go (a, a + l, c, d, i+1)
-      | otherwise = go (c, d, b - l, b, i+1)
-      where l = d - c 
+      | abs (d - c) <= 1e-14 || i > 100 = (d+c)/2 
+      | f c < f d = go (a, d - (d - a)*phi, c, d, i+1)
+      | otherwise  = go (c, d, c + (b - c)*phi, b, i+1)
+
 
 quadraticMin f x1 x2 x3 | True = x
                         | otherwise = quadraticMin f x2 x3 x

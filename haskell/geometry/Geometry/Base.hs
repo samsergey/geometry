@@ -36,6 +36,7 @@ module Geometry.Base
   , (->@), (->@?), (@->), (@->?)
   , start, end, paramL, projectL, distanceTo
   , Curve (..), PointLocation (..), ClosedCurve(..)
+  , tangentLine
   -- * Figures
   , Figure (..), Box, pointBox
   -- ** Figures' size and bounding box corners.
@@ -623,6 +624,8 @@ class (Figure c, Trans c, Manifold c) => Curve c  where
   -- | The normal direction for a given parameter on the curve.
   normal :: c -> Double -> Direction
   normal c t = tangent c t + 90
+
+tangentLine c x = asCmp 1 # along' (tangent c x) # at' (c @-> x)
 
 instance Curve c => Curve (Maybe c) where
   tangent = maybe (const 0) tangent

@@ -180,3 +180,4 @@ midPerpendicular :: Segment -> Line
 midPerpendicular s = mkLine (p1, p2)
   where p1 = s @-> 0.5
         p2 = p1 + cmp (normal s 0.5)
+

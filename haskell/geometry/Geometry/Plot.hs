@@ -1,8 +1,6 @@
 {-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
-{-# language GeneralizedNewtypeDeriving #-}
 {-# language DerivingVia #-}
-{-# language DerivingStrategies #-}
 {-# language StandaloneDeriving #-}
 
 module Geometry.Plot
@@ -20,22 +18,24 @@ import Geometry.Polygon
 --------------------------------------------------------------------------------
 -- | Class for objects representing plots.
 class APlot p where
-  {-# MINIMAL premap #-}
+  {-# MINIMAL rmap, lmap #-}
   {- | Mapping on the input parameter of the plot.
 
-     @ premap f (plot p) =  plot (d . f) @
+     @ rmap f (plot p) =  plot (d . f) @
     -}
-  premap :: (Double -> Double) -> p -> p
+  rmap :: (Trans a, Affine a) => (Double -> Double) -> p a -> p a
+
+  lmap :: (Trans a, Affine a, Trans b, Affine b) => (a -> b) -> p a -> p b
 
   {- | Changes or sets the parameter range of the plot.
 
 << figs/range.svg >>
     -}
-  range :: (Double, Double) -> p -> p
-  range (a,b) = premap $ \x -> a + x * (b - a)
+  range :: (Trans a, Affine a) => (Double, Double) -> p a -> p a
+  range (a,b) = rmap $ \x -> a + x * (b - a)
 
-instance APlot p => APlot (Maybe p) where
-  premap f p = premap f <$> p
+--instance APlot p => APlot (Maybe (p a)) where
+--  rmap f p = rmap f <$> p
 
 --------------------------------------------------------------------------------  
 {- | A manifold with explicit parameter function. Could be used for parametric plotting.
@@ -48,8 +48,9 @@ newtype Plot a = Plot (Double -> a, Polyline)
 -- | Smart constructor for a Plot
 plot f = Plot (f, plotParam f)
 
-instance (Affine a, Trans a) => APlot (Plot a) where
-  premap f p = plot $ (param p) . f
+instance APlot Plot where
+  rmap f p = plot $ param p . f
+  lmap f p = plot $ f . param p
 
 instance Show (Plot a) where
   show _ = "<Plot>"
@@ -116,7 +117,7 @@ instance Polygonal (ClosedPlot Cmp) where
 instance (Affine a, Trans a) => ClosedCurve (ClosedPlot a) where
   isEnclosing = isEnclosing . closePolyline . asPolyline
 
-deriving via Plot a instance (Affine a, Trans a) => APlot (ClosedPlot a)
+deriving via Plot instance APlot ClosedPlot
 deriving via Plot a instance (Affine a, Trans a) => Eq (ClosedPlot a)
 deriving via Plot a instance (Affine a, Trans a) => Trans (ClosedPlot a)
 deriving via Plot a instance (Affine a, Trans a) => Figure (ClosedPlot a)

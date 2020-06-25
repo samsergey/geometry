@@ -2,6 +2,7 @@
 {-# language FlexibleInstances #-}
 {-# language DerivingVia #-}
 {-# language StandaloneDeriving #-}
+{-# language RankNTypes #-}
 
 module Geometry.Plot
      ( APlot (..)
@@ -34,8 +35,8 @@ class APlot p where
   range :: (Trans a, Affine a) => (Double, Double) -> p a -> p a
   range (a,b) = rmap $ \x -> a + x * (b - a)
 
---instance APlot p => APlot (Maybe (p a)) where
---  rmap f p = rmap f <$> p
+instance APlot p => (forall a . APlot (Maybe (p a))) where
+  rmap f p = rmap f <$> p
 
 --------------------------------------------------------------------------------  
 {- | A manifold with explicit parameter function. Could be used for parametric plotting.

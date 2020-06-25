@@ -38,6 +38,7 @@ import Geometry.Circle
 import Geometry.Line
 import Geometry.Angle
 import Geometry.Polygon
+import Geometry.Plot
 import Geometry.Intersections
 import Geometry.Decorations
 
@@ -516,6 +517,12 @@ instance WithOptions Angle where
     , Thickness "1.25"
     , MultiStroke 1
     , LabelPosition $ refPoint an + scale 30 (cmp (bisectrisse an)) ]
+
+instance (Affine a, Trans a) => WithOptions (Plot a) where
+  defaultOptions = defaultOptions . asPolyline
+  
+instance (Affine a, Trans a) => WithOptions (ClosedPlot a) where
+  defaultOptions = defaultOptions . asPolyline
 
 --------------------------------------------------------------------------------
 

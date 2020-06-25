@@ -3,14 +3,13 @@
 {-# language DerivingVia #-}
 {-# language DeriveFunctor #-}
 {-# language StandaloneDeriving #-}
-{-# language RankNTypes #-}
-{-# language UndecidableInstances #-}
 {-# language ConstraintKinds #-}
+{-# language BangPatterns #-}
 
 module Geometry.Plot
      ( APlot (..)
-     , Plot, plot
-     , ClosedPlot, closedPlot
+     , Plot (..), plot
+     , ClosedPlot (..), closedPlot
      , plotManifold
      ) where
 
@@ -78,7 +77,7 @@ instance Pnt a => Trans (Plot a) where
   transform t (Plot (f, p)) = Plot (transform t . f, transform t p)
 
 instance Pnt a => PiecewiseLinear (Plot a) where
-  asPolyline (Plot (_,p)) = p
+  asPolyline (Plot (_,!p)) = p
 
 instance Pnt a => Curve (Plot a) where
   tangent p t = asCmp $ cmp (p @-> (t + dt)) - cmp (p @-> (t - dt))
@@ -116,7 +115,7 @@ instance Pnt a => Manifold (ClosedPlot a) where
   unit = unit . asPolyline
 
 instance Pnt a => PiecewiseLinear (ClosedPlot a) where
-  asPolyline (ClosedPlot (_,p)) = p
+  asPolyline (ClosedPlot (_,!p)) = p
 
 instance Polygonal (ClosedPlot Cmp) where
 

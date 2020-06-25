@@ -11,11 +11,13 @@ module Geometry.Intersections
   ) where
 
 import Data.Complex
+import Data.List (nub)
 
 import Geometry.Base
 import Geometry.Line
 import Geometry.Circle
 import Geometry.Polygon
+import Geometry.Plot
 import Geometry.Decorations
 
 --------------------------------------------------------------------------------
@@ -30,7 +32,8 @@ intersections :: (Figure a, Figure b, Intersections a b)
 intersections a b  
   | isTrivial a = filter (isContaining b . asAffine) [refPoint a]
   | isTrivial b = filter (isContaining a . asAffine) [refPoint b]
-  | otherwise = 
+  | otherwise =
+    nub $
     filter (isContaining a . asAffine) $
     filter (isContaining b . asAffine) $
     intersections' a b
@@ -104,7 +107,7 @@ instance Intersections Line Circle  where
       a = angle l
 
 instance Intersections Line Polyline where
-  intersections' l = foldMap (intersections' l) . segments . closePolyline
+  intersections' l = foldMap (intersections l) . segments . closePolyline
 
 --------------------------------------------------------------------------------
 
@@ -122,7 +125,7 @@ instance Intersections Circle Circle where
       a = azimuth c1 c2
 
 instance Intersections Circle Polyline where
-  intersections' c = foldMap (intersections' c) . segments . closePolyline
+  intersections' c = foldMap (intersections c) . segments . closePolyline
 
 --------------------------------------------------------------------------------
 
@@ -133,7 +136,7 @@ instance Intersections Polyline Circle where
   intersections' = flip intersections'
   
 instance Intersections Polyline Polyline where
-  intersections' p = foldMap (intersections' p) . segments . closePolyline
+  intersections' p = foldMap (intersections p) . segments . closePolyline
 
 --------------------------------------------------------------------------------
 
@@ -203,4 +206,36 @@ instance Intersections Rectangle Polyline  where
   intersections' = intersections' . asPolyline
 
 instance Intersections Rectangle Circle  where
+  intersections' = intersections' . asPolyline
+
+--------------------------------------------------------------------------------
+
+instance (Affine a, Trans a) => Intersections (Plot a) Line where
+  intersections' = intersections' . asPolyline
+
+instance (Affine a, Trans a) => Intersections (Plot a) Circle where
+  intersections' = intersections' . asPolyline
+  
+instance (Affine a, Trans a) => Intersections (Plot a) Polyline where
+  intersections' = intersections' . asPolyline
+
+instance (Affine a, Trans a, Manifold b, Intersections (Plot a) b) => Intersections b (Plot a) where
+  intersections' = flip intersections'
+
+instance {-# OVERLAPPING #-}
+  (Affine a, Trans a, Affine b, Trans b) => Intersections (Plot a) (Plot b) where
+  intersections' p1 p2 = intersections' (asPolyline p1) (asPolyline p2)
+
+--------------------------------------------------------------------------------
+
+deriving via (Plot a) instance
+  (Manifold b, Affine a, Trans a, Intersections b (Plot a)) => Intersections b (ClosedPlot a)
+
+instance (Affine a, Trans a) => Intersections (ClosedPlot a) Line  where
+  intersections' = intersections' . asPolyline
+
+instance (Affine a, Trans a) => Intersections (ClosedPlot a) Polyline  where
+  intersections' = intersections' . asPolyline
+
+instance (Affine a, Trans a) => Intersections (ClosedPlot a) Circle  where
   intersections' = intersections' . asPolyline

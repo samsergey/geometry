@@ -133,6 +133,9 @@ plots = do
             | x <- [0,1..7] ]
 
   writeSVG 300 (path <> "plot.svg") $
+    plot (\t -> (t, abs (sin t))) # range (0, 7)
+
+  writeSVG 300 (path <> "closedPlot.svg") $
     let p = closedPlot (\t -> (cos t, -sin t)) # range (0, 2*pi)
         e = p # scaleX 0.5 # rotate 30
     in p <||> space 1 <||> (e <+> group (modularScale 12 e))

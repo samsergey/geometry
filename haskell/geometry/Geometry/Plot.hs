@@ -36,11 +36,11 @@ class APlot p where
 
 instance APlot p => APlot (Maybe p) where
   premap f p = premap f <$> p
-  
+
+--------------------------------------------------------------------------------  
 {- | A manifold with explicit parameter function. Could be used for parametric plotting.
 
-> let p = closedPlot (\t -> (cos t, sin t)) # range (0, 2*pi)
-> in p <||> (p # scaleX 0.5) <||> (p # scaleX 0.5 # rotate 30) <||> 
+> plot (\t -> (t, abs (sin t))) # range (0, 7)
 << figs/plot.svg >>
 -}
 newtype Plot a = Plot (Double -> a, Polyline)
@@ -85,6 +85,11 @@ instance (Affine a, Trans a) => Figure (Plot a) where
 
 --------------------------------------------------------------------------------
 
+{- | A manifold with explicit parameter function. Could be used for parametric plotting.
+
+> closeDlot (\t -> (t, abs (sin t))) # range (0, 7)
+<< figs/plot.svg >>
+-}
 newtype ClosedPlot a = ClosedPlot (Double -> a, Polyline)
 
 -- | Smart constructor for a ClosedPlot
@@ -124,18 +129,18 @@ plotManifold = plotParam . param
 --------------------------------------------------------------------------------
 
 plotParam :: Affine a => (Double -> a) -> Polyline
-plotParam f = Polyline pts
+plotParam mf = Polyline pts
   where
-    mf @->. x = cmp (f x) 
-    pts = clean $ [f @->. 0] <> tree 0 0.5 <> tree 0.5 1 <> [f @->. 1]
-    tree a b | xa `distance` xb < 1e-4 = [xc]
-             | abs (azimuth xa xc - azimuth xc xb) < asDeg 2 = [xc]
+    f = cmp . mf
+    pts = clean $ [f 0] <> tree 0 0.5 <> tree 0.5 1 <> [f 1]
+    tree a b | xa `distance` xb < 1e-3 = [xc]
+             | abs (azimuth xa xc - azimuth xc xb) < asDeg 3 = [xc]
              | otherwise = tree a c <> tree c b
           where
             c = (a + b) / 2
-            xa = f @->. a
-            xb = f @->. b
-            xc = f @->. c
+            xa = f a
+            xb = f b
+            xc = f c
     clean (x:y:z:t) | Segment (x,z) `isContaining` y = clean (x:z:t)
                     | otherwise = x : clean (y:z:t)
     clean xs = xs

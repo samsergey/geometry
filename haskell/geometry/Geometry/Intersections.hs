@@ -210,32 +210,35 @@ instance Intersections Rectangle Circle  where
 
 --------------------------------------------------------------------------------
 
-instance (Affine a, Trans a) => Intersections (Plot a) Line where
-  intersections' = intersections' . asPolyline
+instance Pnt a => Intersections (Plot a) Line where
+  intersections' p l = intersectionsP p l $ intersections (asPolyline p) l
 
-instance (Affine a, Trans a) => Intersections (Plot a) Circle where
-  intersections' = intersections' . asPolyline
+instance Pnt a => Intersections (Plot a) Circle where
+  intersections' p c = intersectionsP p c $ intersections (asPolyline p) c
   
-instance (Affine a, Trans a) => Intersections (Plot a) Polyline where
-  intersections' = intersections' . asPolyline
+instance Pnt a => Intersections (Plot a) Polyline where
+  intersections' p pl = intersectionsP p pl $ intersections (asPolyline p) pl
 
-instance (Affine a, Trans a, Manifold b, Intersections (Plot a) b) => Intersections b (Plot a) where
+instance (Pnt a, Manifold b, Intersections (Plot a) b) => Intersections b (Plot a) where
   intersections' = flip intersections'
 
 instance {-# OVERLAPPING #-}
-  (Affine a, Trans a, Affine b, Trans b) => Intersections (Plot a) (Plot b) where
-  intersections' p1 p2 = intersections' (asPolyline p1) (asPolyline p2)
+  (Pnt a, Pnt b) => Intersections (Plot a) (Plot b) where
+  intersections' p1 p2 = intersectionsP p1 p2 $
+                         intersections (asPolyline p1) (asPolyline p2)
 
 --------------------------------------------------------------------------------
 
 deriving via (Plot a) instance
   (Manifold b, Affine a, Trans a, Intersections b (Plot a)) => Intersections b (ClosedPlot a)
 
-instance (Affine a, Trans a) => Intersections (ClosedPlot a) Line  where
-  intersections' = intersections' . asPolyline
+instance Pnt a => Intersections (ClosedPlot a) Line  where
+  intersections' p l = intersectionsP p l $ intersections (asPolyline p) l
 
-instance (Affine a, Trans a) => Intersections (ClosedPlot a) Polyline  where
-  intersections' = intersections' . asPolyline
+instance Pnt a => Intersections (ClosedPlot a) Polyline  where
+  intersections' p pl = intersectionsP p pl $ intersections (asPolyline p) pl
 
-instance (Affine a, Trans a) => Intersections (ClosedPlot a) Circle  where
-  intersections' = intersections' . asPolyline
+instance Pnt a => Intersections (ClosedPlot a) Circle  where
+  intersections' p c = intersectionsP p c $ intersections (asPolyline p) c
+
+

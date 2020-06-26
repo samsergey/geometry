@@ -103,7 +103,7 @@ instance ClosedCurve Circle where
     where res | r' ~== radius c = OnCurve
               | r' < radius c   = Inside
               | r' > radius c   = Outside
-          r' = distance p (center c)
+          r' = distance (cmp p) (center c)
 
 
 instance Figure Circle where

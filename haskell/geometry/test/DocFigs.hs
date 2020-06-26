@@ -122,15 +122,32 @@ main = do
         c = circle' (p `distance` vertex 0 t) p
     in t <+> c <+> l1 <+> l2 <+> l3 <+> p
 
+  writeSVG 300 (path <> "bisectrisse.svg") $
+    let t = triangle2a 50 70
+        r1 = t # vertexAngle 0 # bisectrisse #: thin <> white
+        r2 = t # vertexAngle 1 # bisectrisse #: thin <> white
+        r3 = t # vertexAngle 2 # bisectrisse #: thin <> white
+        p = head $ intersectionPoints r1 r2
+        c = circle' (p `distanceTo` side 0 t) p
+    in t <+> r1 <+> r2 <+> r3 <+> p <+> c
+
+  writeSVG 300 (path <> "height.svg") $
+    let t = triangle2a 50 70
+        s1 = t # height 0 #: thin <> white
+        s2 = t # height 1 #: thin <> white
+        s3 = t # height 2 #: thin <> white
+        p = intersectionPoints s1 s2
+    in t <+> s1 <+> s2 <+> s3 <+> group p
+
   fractals
   plots
 
 plots = do
   writeSVG 400 (path <> "normalTo.svg") $
-   let c = plot (\t -> (t, sin t)) # range (0, 6) #: white
-   in c <+>
-      group [ aSegment # at (x,0) # normalTo c
-            | x <- [0,1..7] ]
+   let p = plot (\t -> (t, sin t)) # range (0,7) #: white
+   in p <+>
+      group [ aSegment # at (x,0) # normalTo p
+            | x <- [0,0.3..7] ]
 
   writeSVG 300 (path <> "plot.svg") $
     let p1 = plot (\t -> (t, abs (sin t)))
@@ -139,9 +156,9 @@ plots = do
     in p1 `above` p2 `above` p3
 
   writeSVG 300 (path <> "closedPlot.svg") $
-    let p = closedPlot (\t -> (cos t, -sin t)) # range (0, 2*pi)
-        e = p # scaleX 0.5 # rotate 30
-    in p <||> space 1 <||> (e <+> group (modularScale 12 e))
+    let flower t = scale (2 + sin (5*t)) (cos t, sin t)
+        p = closedPlot flower # range (0, 2*pi)
+    in p <||> space 1 <||> p # scaleX 0.5 # rotate 30
 
   writeSVG 500 (path <> "projectOn.svg") $
     let c = plot (\t -> (t, sin t)) # range (0, 6)
@@ -149,11 +166,10 @@ plots = do
         pB = point (2,0) #: "B"
         pC = point (4,0) #: "C"
         pD = point (6,1) #: "D"
-    in  c  <+> pA <+> pA # projectOn c #: "A'" <+>
-        pB <+> pB # projectOn c #: "B'" <+>
-        pC <+> pC # projectOn c #: "C'" <+>
-        pD <+> pD # projectOn c #: "D'"
-
+    in c  <+> pA <+> pA # projectOn c #: "A'" <+>
+       pB <+> pB # projectOn c #: "B'" <+>
+       pC <+> pC # projectOn c #: "C'" <+>
+       pD <+> pD # projectOn c #: "D'"
 
 fractals = do
   writeSVG 300 (path <> "compose.svg") $

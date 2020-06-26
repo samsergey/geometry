@@ -183,10 +183,10 @@ deriving via Polygon instance SVGable Rectangle
 
 ------------------------------------------------------------
 
-instance (AlmostEq a, Affine a, Trans a) => SVGable (Plot a) where
+instance (AlmostEq a, Pnt a) => SVGable (Plot a) where
   toSVG = toSVG . asPolyline
 
-instance (AlmostEq a, Affine a, Trans a) => SVGable (ClosedPlot a) where
+instance (AlmostEq a, Pnt a) => SVGable (ClosedPlot a) where
   toSVG = toSVG . asPolyline
 
 ------------------------------------------------------------

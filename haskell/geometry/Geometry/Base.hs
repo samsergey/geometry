@@ -16,6 +16,7 @@ module Geometry.Base
   , rad, asRad
   , turns, asTurns
   -- * Points in affine space
+  , Metric (..), Pnt
   , Affine (..), roundUp, asAffine
   -- ** Predicates
   , isOrthogonal, isCollinear, isOpposite, isZero, opposite
@@ -68,7 +69,8 @@ type Cmp = Complex Double
 -- | Type alias for a coordinate representation.
 type XY = (Double, Double)
 
-data Zero = Zero deriving Show
+-- | Constraint for a point in a metric affine space
+type Pnt a = (Affine a, Trans a, Metric a)
 
 ------------------------------------------------------------
 
@@ -115,6 +117,33 @@ a ~>= b = a ~== b || a > b
 
 ------------------------------------------------------------
 
+-- | The class for points in a metric space
+class Metric a where
+  {-# MINIMAL dist | dist2 #-}
+  -- | The distance between two points, or a norm of the difference between two vectors.
+  dist :: a -> a -> Double
+  dist x y = sqrt (dist2 x y)
+
+  -- | The squared distance between two points, or a norm of the difference between two vectors.
+  dist2 :: a -> a -> Double
+  dist2 x y = dist x y ** 2
+
+instance Metric Double where
+  dist x y = abs (x - y)
+  dist2 x y = (x - y)**2
+
+instance Metric Cmp where
+  dist x y = magnitude (x - y)
+
+instance Metric XY where
+  dist2 (ax, ay) (bx, by) = (ax-bx)**2 + (ay-by)**2 
+
+instance Metric a => Metric (Maybe a) where
+  dist x y = fromMaybe 0 (dist <$> x <*> y)
+  dist2 x y = fromMaybe 0 (dist2 <$> x <*> y)
+
+------------------------------------------------------------
+
 {- | The representation of a directed value isomorphic either to an angle
  or to a complex number or coordinates.
 -}
@@ -147,6 +176,10 @@ turns (Direction a) = (a / 360)  `mod'` 1
 
 instance Show Direction where
   show a = show (deg a) <> "°"
+
+instance Metric Direction where
+  dist x y = abs (rad x - rad y)
+  dist2 x y = (rad x - rad y)**2
 
 instance AlmostEq Direction where  a ~== b = rad a ~== rad b
 
@@ -442,14 +475,13 @@ det (a, b) = let (xa, ya) = xy a
 cross :: (Affine a, Affine b) => a -> b -> Double
 cross a b = det (a, b)
 
--- | The norm of a vector, or a distance from a point to the origin.
+-- | The norm of a vector, or a dist from a point to the origin.
 norm :: Affine a => a -> Double
 norm = magnitude . cmp
 
--- | The distance between tho points,
--- or a norm of the difference between two vectors.
-distance :: (Affine a, Affine b) => a -> b -> Double
-distance a b = magnitude (cmp a - cmp b)
+-- | The distance between two affine points.
+distance :: (Affine a, Metric a, Affine b, Metric b) => a -> b -> Double
+distance p1 p2 = dist (cmp p1) (cmp p2)
 
 -- | The normalized vector, or a projection of a point on a unit circle.
 normalize :: Affine a => a -> a
@@ -479,7 +511,7 @@ data Bounding = Unbound -- ^ x ∈ (−∞, ∞)
               deriving Show
 
 -- | Class representing 1-dimensional manifolds, e.g. lines, curves of angles, parameterized by real value.
-class Affine (Domain m) => Manifold m where
+class (Metric (Domain m), Affine (Domain m)) => Manifold m where
   {-# MINIMAL param, project, (isContaining | (paramMaybe, projectMaybe)) #-}
 
   {- | The domain in which the manifold is embedded.
@@ -502,7 +534,7 @@ Here are some instances:
   -- | Returns `True` if point belongs to the manifold.
   isContaining :: m -> Domain m -> Bool
   isContaining c p = case projectMaybe c p >>= paramMaybe c  of
-                       Just p' -> p' `distance` p ~== 0
+                       Just p' -> p' `dist` p ~== 0
                        Nothing -> False
 
   {- | Returns a point on a manifold for given parameter, or Nothing
@@ -582,18 +614,18 @@ paramL l m = param m (l / unit m)
 projectL :: (Affine p, Manifold m) => p -> m -> Double
 projectL p m = unit m * (p ->@ m)
 
-{- | The distance between a manifold and a given point.
+{- | The dist between a manifold and a given point.
 
->>> aCircle # distanceTo (point (2,0))
+>>> aCircle # distTo (point (2,0))
 1.0
->>> aCircle # distanceTo (point (2,0))
+>>> aCircle # distTo (point (2,0))
 1.0
 -}
-distanceTo :: (Affine p, Manifold m) => p -> m -> Double
-distanceTo p m = p `distance` p'
+distanceTo :: (Metric p, Affine p, Manifold m) => p -> m -> Double
+distanceTo p m = p `dist` p'
   where p' = case p ->@? m of
-               Just x -> m @-> x
-               Nothing -> minimumOn (distance p) (param m <$> ends)
+               Just x -> asAffine $ m @-> x
+               Nothing -> minimumOn (dist p) (asAffine . param m <$> ends)
         ends = case bounds m of
           Unbound -> []
           Semibound -> [0]

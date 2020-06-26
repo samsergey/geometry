@@ -11,14 +11,13 @@ module Geometry.Plot
      , Plot (..), plot
      , ClosedPlot (..), closedPlot
      , plotManifold
+     , intersectionsP
      ) where
 
 import Geometry.Base
 import Geometry.Point
 import Geometry.Line
 import Geometry.Polygon
-
-type Pnt a = (Affine a, Trans a)
 
 --------------------------------------------------------------------------------
 -- | Class for objects representing plots.
@@ -63,9 +62,13 @@ instance Pnt a => Manifold (Plot a) where
   type Domain (Plot a) = a
   bounds = const Bound
   param (Plot (f, _)) = f
-  project p pt = let x0 = project (asPolyline p) (cmp pt)
-                 in findMin (\x -> (p @-> x) `distance` pt) x0
-  isContaining p pt = 0 ~<= x && x ~<= 1 && (p @-> x) `distance` pt <= 1e-5
+  project p pt = let x0 = pt ->@ asPolyline p
+                     goal x = dot (azimuth (p @-> x) pt) (tangent p x)
+                 in case findZero goal x0 of
+                      Nothing -> let goal x = dist2 (p @-> x) pt 
+                                 in findMin goal x0
+                      Just x -> x
+  isContaining p pt = 0 ~<= x && x ~<= 1 && (p @-> x) `distance` pt <= 1e-10
     where x = pt ->@ p
     
   unit = unit . asPolyline
@@ -81,7 +84,7 @@ instance Pnt a => PiecewiseLinear (Plot a) where
 
 instance Pnt a => Curve (Plot a) where
   tangent p t = asCmp $ cmp (p @-> (t + dt)) - cmp (p @-> (t - dt))
-    where dt = 1e-5
+    where dt = 1e-8
 
 instance Pnt a => Figure (Plot a) where
   refPoint = left . lower . corner
@@ -92,14 +95,14 @@ instance Pnt a => Figure (Plot a) where
 
 {- | A manifold with explicit parameter function. Could be used for parametric plotting.
 
-> closePlot (\t -> (t, abs (sin t))) # range (0, 7)
-<< figs/plot.svg >>
+> closedPlot (\t -> (t, abs (sin t))) # range (0, 7)
+<< figs/closedPlot.svg >>
 -}
 newtype ClosedPlot a = ClosedPlot (Double -> a, Polyline)
   deriving Functor
 
 -- | Smart constructor for a ClosedPlot
-closedPlot f = Plot (f, plotParam f)
+closedPlot f = ClosedPlot (f, plotParam f)
 
 instance Show (ClosedPlot a) where
   show _ = "<ClosedPlot>"
@@ -108,9 +111,13 @@ instance Pnt a => Manifold (ClosedPlot a) where
   type Domain (ClosedPlot a) = a
   bounds = const Unbound
   param (ClosedPlot (f, _)) = f
-  project p pt = let x0 = project (asPolyline p) (cmp pt)
-                 in findMin (\x -> (p @-> x) `distance` pt) x0
-  isContaining p pt = (p @-> (pt ->@ p)) `distance` pt <= 1e-5
+  project p pt = let x0 = pt ->@ asPolyline p
+                     goal x = dot (azimuth (p @-> x) pt) (tangent p x)
+                 in case findZero goal x0 of
+                      Nothing -> let goal x = dist2 (p @-> x) pt 
+                                 in findMin goal x0
+                      Just x -> x
+  isContaining p pt = (p @-> (pt ->@ p)) `distance` pt <= 1e-10
     
   unit = unit . asPolyline
 
@@ -138,13 +145,14 @@ plotParam :: Affine a => (Double -> a) -> Polyline
 plotParam mf = Polyline pts
   where
     f = cmp . mf
-    pts = clean $ [f 0] <> xs <> [f 1]
-    xs = mconcat $ zipWith tree [0,0.25..1] [0.25, 0.5..1]
+    phi = (sqrt 5 - 1) / 2
+    pts = clean $ [f 0] <> mconcat (zipWith tree xs (tail xs)) <> [f 1]
+    xs = 0 : (reverse $ take 5 $ iterate (*phi) 1)
     tree a b | xa `distance` xb < 1e-3 = [xc]
              | abs (azimuth xa xc - azimuth xc xb) < asDeg 3 = [xc]
              | otherwise = tree a c <> tree c b
           where
-            c = (a + b) / 2
+            c = a + (b - a) * phi
             xa = f a
             xb = f b
             xc = f c
@@ -153,21 +161,43 @@ plotParam mf = Polyline pts
     clean xs = xs
 
 --------------------------------------------------------------------------------
+intersectionsP m1 m2 pts = foldMap refine pts
+  where
+    dist a b = dist2 (cmp (m1 @-> a)) (cmp (m2 @-> b))
+    refine x =
+      case steepestDescent dist (x ->@ m1, x ->@ m2) of
+        Nothing -> []
+        Just (t1, t2) -> [asAffine (m1 @-> t1)]
+        
+limit :: (Metric b) => [b] -> Maybe b
+limit [] = Nothing
+limit xs = case res of
+             [] -> Nothing
+             ((_,y):_) -> Just y
+  where res = take 100 $
+              dropWhile (\(x, y) -> dist x y > 1e-12) $
+              zip xs (tail xs)
 
-intersectionP :: (Manifold m1, Manifold m2, Affine a) => m1 -> m2 -> a -> [a]
-intersectionP m1 m2 x = asAffine <$> go x
-  where go = limit . take 100 . iterate step . asAffine
-        step p = m1 @-> (p ->@ m2)
+steepestDescent
+  :: (Double -> Double -> Double)
+     -> (Double, Double) -> Maybe (Double, Double)
+steepestDescent f (x, y) = limit $ iterate step (x,y)
+  where
+    step (x, y) = let (dx, dy) = grad f x y
+                      t = findMin (\t -> f (x+dx*t) (y+dy*t)) 0
+                 in (x + dx*t, y + dy*t)
 
-limit [] = []
-limit xs = pure . snd . head $
-           dropWhile (\(x,y) -> distance x y > 1e-8) $
-           zip xs (tail xs)
+    grad f x y = ( (f (x + d) y - f (x - d) y)/(2*d)
+                 , (f x (y + d) - f x (y - d))/(2*d) )
+      where d = 1e-8
 
-findZero f x = go x (x+dx) (f x) (f $ x + dx) 
-  where go x1 x2 y1 y2 | abs (x2 - x1) < 1e-12 = x2
-                       | otherwise = let x = (x1*y2 - x2*y1)/(y2-y1)
-                                     in go x2 x y2 (f x)
+findZero :: (Ord a, Fractional a) => (a -> a) -> a -> Maybe a
+findZero f x = go x (x+dx) (f x) (f $ x + dx) 10
+  where go x1 x2 y1 y2 i
+          | y2 == y1 || i <= 0 = Nothing
+          | abs (x2 - x1) < 1e-12 = Just x2            
+          | otherwise = let x = (x1*y2 - x2*y1)/(y2-y1)
+                        in go x2 x y2 (f x) (i-1)
         dx = 1e-5
 
 goldenMean :: (Double -> Double) -> Double -> Double -> Double
@@ -177,26 +207,17 @@ goldenMean f x1 x2 = go (x1, c, d, x2, 0)
     c = x2 - (x2 - x1)*phi
     d = x1 + (x2 - x1)*phi
     go (a, c, d, b, i) 
-      | abs (d - c) <= 1e-14 || i > 100 = (d+c)/2 
+      | abs (d - c) <= 1e-14 || i > 50 = (d+c)/2 
       | f c < f d = go (a, d - (d - a)*phi, c, d, i+1)
       | otherwise  = go (c, d, c + (b - c)*phi, b, i+1)
 
-
-quadraticMin f x1 x2 x3 | True = x
-                        | otherwise = quadraticMin f x2 x3 x
-  where x | d /= 0 = (x1**2*(y3-y2)-x2**2*y3+x3**2*y2+(x2**2-x3^2)*y1)/d
-          | otherwise = x1
-        d = 2*(x1*(y3-y2)-x2*y3+x3*y2+(x2-x3)*y1)
-        y1 = f x1
-        y2 = f x2
-        y3 = f x3
-
+findMin :: (Double -> Double) -> Double -> Double
 findMin f x = go x x1 (3*x1 - 2*x)
   where
     dx = 1e-3
     x1 | f x > f (x + dx) = x + dx
        | otherwise = x - dx
-    go x1 x2 x3 | f x2 <= f x3 = goldenMean f x1 x3
+    go x1 x2 x3 | f x2 < f x3 = goldenMean f x1 x3
                 | otherwise = go x2 x3 (3*x3 - 2*x2)
     
 

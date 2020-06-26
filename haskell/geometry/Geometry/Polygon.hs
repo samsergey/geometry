@@ -216,6 +216,7 @@ instance PiecewiseLinear Polygon where
   asPolyline p = Polyline $ take (length vs + 1) (cycle vs)
     where vs = vertices p
   vertices (Polygon vs) = vs
+  verticesNumber p = length (vertices p)
   segments = segments . asPolyline
 
   vertex i p = vs !! (i `mod` n)
@@ -223,7 +224,7 @@ instance PiecewiseLinear Polygon where
           n = verticesNumber p
 
   side i p = segments p !! (i `mod` n)
-    where n = verticesNumber (asPolyline p)
+    where n = verticesNumber p
 
 
 instance Show Polygon where

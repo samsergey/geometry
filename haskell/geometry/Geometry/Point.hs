@@ -51,6 +51,10 @@ instance Show Point where
 instance Eq Point where
   p1 == p2 = cmp p1 ~== cmp p2
 
+instance Metric Point where
+  dist p1 p2 = dist (cmp p1) (cmp p2)
+  dist2 p1 p2 = dist2 (cmp p1) (cmp p2)
+
 instance Trans Point where
   transform t (Point p) = Point $ transformCmp t p 
 
@@ -67,7 +71,12 @@ instance Figure Point where
 
 -- | The type representing a label.
 newtype Label = Label Cmp
-  deriving (Eq, Trans, Affine, Figure, APoint) via Point
+  deriving ( Eq
+           , Metric
+           , Trans
+           , Affine
+           , Figure
+           , APoint) via Point
 
 -- | The general label constructor (the label test is set by @label@ decorator).
 mkLabel :: Affine a => a -> Label

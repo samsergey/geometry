@@ -121,7 +121,7 @@ intersectionPoints :: ( Curve a, Curve b, Intersections a b )
 intersectionPoints c1 c2 = point' <$> intersections c1 c2
 
 -- | Returns a point from a list which is closest to a given one.
-closestTo :: (Affine a, Affine b) => a -> [b] -> Maybe b
+closestTo :: (Metric a, Affine a, Metric b, Affine b) => a -> [b] -> Maybe b
 closestTo p [] = Nothing
 closestTo p ps  = Just $ minimumOn (distance p) ps
 
@@ -228,7 +228,7 @@ clipBy c l = filter internal $ Segment <$> zip ints (tail ints)
                                Bound -> [0,1]
 
 -- | A generalized version of `through`.
-through' :: (Affine p, Linear l) => p -> (l -> l)
+through' :: (Metric p, Affine p, Linear l) => p -> (l -> l)
 through' p l = l
                # along' (azimuth p0 p)
                # scaleAt' p0 (distance p0 p / unit l)
@@ -331,14 +331,28 @@ angleWithin :: (Affine a1, Affine a2, Affine a3)
             => a1 -> a2 -> a3 -> Angle
 angleWithin p1 p2 p3 = angleBetween (ray' p2 p1) (ray' p2 p3)
 
--- | Returns the Angle mark for the angle at given polyline vertex.
+{- | Returns the Angle mark for the angle at given polyline vertex.
+
+<< figs/vertexAngle.svg >>
+-}
 vertexAngle :: PiecewiseLinear p => Int -> p -> Angle
 vertexAngle n p = angleWithin p3 p2 p1 # innerAngle
   where p1 = p # vertex (n-1)
         p2 = p # vertex n
         p3 = p # vertex (n+1)
 
--- | Returns a ray, representng the bisectrisse of a given angle.
+{- | Returns a ray, representng the bisectrisse of a given angle.
+
+> let t = triangle2a 50 70
+>     r1 = t # vertexAngle 0 # bisectrisse #: thin <> white
+>     r2 = t # vertexAngle 1 # bisectrisse #: thin <> white
+>     r3 = t # vertexAngle 2 # bisectrisse #: thin <> white
+>     p = head $ intersectionPoints r1 r2
+>     c = circle' (p `distanceTo` side 0 t) p
+> in t <+> r1 <+> r2 <+> r3 <+> p <+> c
+
+<< figs/bisectrisse.svg >>
+-}
 bisectrisse :: Angular a => a -> Ray
 bisectrisse an = aRay # at' (refPoint an) # along' (an @-> 0.5)
 
@@ -382,18 +396,27 @@ innerAngle an | deg (angleValue an) > 180 = reflex an
 
 ------------------------------------------------------------
 
--- | Constructs a parametric graph as a `Polyline`.
+{- | Constructs a parametric graph as a `Polyline`.
+
+<< figs/parametricPoly.svg >>
+-}
 parametricPoly :: (Double -> XY) -> [Double] -> Polyline
 parametricPoly f range =
   mkPolyline [ x :+ y | t <- range , let (x,y) = f t ]
 
--- | Constructs a polar graph as a `Polyline`.
+{- | Constructs a polar graph as a `Polyline`.
+
+<< figs/polarPoly.svg >>
+-}
 polarPoly :: (Double -> Double) -> [Double] -> Polyline
 polarPoly rho range =
   mkPolyline [ mkPolar (rho phi) phi | x <- range
                                      , let phi = 2*pi*x ]
 
--- | Constructs a regular polygon with given number of sides, enscribed in a unit circle.
+{- | Constructs a regular polygon with given number of sides, enscribed in a unit circle.
+
+<< figs/regularPoly.svg >>
+-}
 regularPoly :: Int -> Polygon
 regularPoly n' = rotate 90 $ closePolyline $
                  polarPoly (const 1) [0,1/n..1-1/n]
@@ -415,7 +438,10 @@ space a = aSquare # scale a #: invisible
 aRectangle :: Double -> Double -> Rectangle
 aRectangle a b = aSquare # scaleX a . scaleY b
 
--- | Returns a triangle with base 1 and two given angles.
+{- | Returns a triangle with base 1 and two given angles.
+
+<< figs/triangle2a.svg >>
+-}
 triangle2a :: Direction -> Direction -> Triangle
 triangle2a a1 a2 = case intersections r1 r2 of
                     [p] -> mkTriangle [(0,0), (1,0), xy p]
@@ -425,14 +451,13 @@ triangle2a a1 a2 = case intersections r1 r2 of
 
 {- | Returns a segment, starting from a given vertex,
 perpendicular to the opposite side (for odd number of vertices).
+
+<< figs/height.svg >>
 -}
 height :: Polygonal p => Int -> p -> Segment
 height n p = aSegment
              # at' (vertex n p)
-             # fromJust . normalTo (asLine (side n p))
-
-vertexAngle' :: PiecewiseLinear p => Int -> p -> Angle
-vertexAngle' j p = side j p `angleBetween` side (j-1) p
+             # normalTo (asLine (side (n + n `div` 2 + 1) p))
 
 ------------------------------------------------------------
 
@@ -518,10 +543,10 @@ instance WithOptions Angle where
     , MultiStroke 1
     , LabelPosition $ refPoint an + scale 30 (cmp (bisectrisse an)) ]
 
-instance (Affine a, Trans a) => WithOptions (Plot a) where
+instance Pnt a => WithOptions (Plot a) where
   defaultOptions = defaultOptions . asPolyline
   
-instance (Affine a, Trans a) => WithOptions (ClosedPlot a) where
+instance Pnt a => WithOptions (ClosedPlot a) where
   defaultOptions = defaultOptions . asPolyline
 
 --------------------------------------------------------------------------------

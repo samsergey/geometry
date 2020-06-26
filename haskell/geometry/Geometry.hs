@@ -85,6 +85,8 @@ module Geometry
   , rad, asRad
   , turns, asTurns
   -- ** Points in affine space
+  , Pnt
+  , Metric (..)
   , Affine (..), asAffine
   -- *** Predicates
   , isOrthogonal, isCollinear, isOpposite, isZero

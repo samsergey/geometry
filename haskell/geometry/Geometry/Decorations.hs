@@ -114,6 +114,10 @@ instance Show a => Show (Decorated a) where
 instance Eq a => Eq (Decorated a) where
   d1 == d2 = fromDecorated d1 == fromDecorated d2
 
+instance Metric a => Metric (Decorated a) where
+  dist a b = dist (fromDecorated a) (fromDecorated b)
+  dist2 a b = dist2 (fromDecorated a) (fromDecorated b)
+
 instance Affine a => Affine (Decorated a) where
   cmp = cmp . fromDecorated
   asCmp = pure . asCmp

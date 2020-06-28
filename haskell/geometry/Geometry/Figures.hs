@@ -457,7 +457,8 @@ perpendicular to the opposite side (for odd number of vertices).
 height :: Polygonal p => Int -> p -> Maybe Segment
 height n p = aSegment
              # at' (vertex n p)
-             # normalTo (asLine (side (n + n `div` 2 + 1) p))
+             # normalTo (asLine (side (n + verticesNumber p `div` 2) p))
+             # fromJust 
 
 ------------------------------------------------------------
 

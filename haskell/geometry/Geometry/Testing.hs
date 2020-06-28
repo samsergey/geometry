@@ -15,7 +15,8 @@ import Test.QuickCheck.Modifiers
 import Data.Tuple.Extra (second)
 
 import Geometry
-import Geometry.Circle
+import Geometry.Circle (mkCircle)
+import Geometry.Base (roundUp)
 
 infix 0 <==>
 a <==> b = (a ==> b) .&&. (b ==> a)
@@ -37,16 +38,16 @@ instance Arbitrary Parameter where
 ------------------------------------------------------------
 
 newtype Position a = Position {getPosition :: a}
-  deriving (Show, Affine, Trans, Eq)
+  deriving (Show, Affine, Trans, Metric, Eq)
 
 
-instance (Eq a, Trans a, Affine a, Arbitrary a) =>
+instance (Eq a, Pnt a, Arbitrary a) =>
          Arbitrary (Position a) where
   arbitrary = Position . roundUp 1 <$> arbitrary 
   shrink = shrinkPos 0.5
 
 
-shrinkPos :: (Eq a, Affine a) => Double -> a -> [a]
+shrinkPos :: (Eq a, Affine a, Metric a) => Double -> a -> [a]
 shrinkPos d x = res
   where res = filter (\y -> not (y == x)) $
               map (roundUp d) $
@@ -165,13 +166,28 @@ newtype Nontrivial a = Nontrivial a deriving
   , Trans
   )
 
-deriving instance Curve a f => Curve a (Nontrivial f) 
+deriving instance Curve f => Curve (Nontrivial f) 
 
-deriving instance ClosedCurve a f => ClosedCurve a (Nontrivial f) 
+deriving instance ClosedCurve f => ClosedCurve (Nontrivial f) 
 
-deriving instance (Affine a, Manifold a m) => Manifold a (Nontrivial m)
+deriving instance Manifold m => Manifold (Nontrivial m)
 
 instance (Arbitrary a, Figure a) => Arbitrary (Nontrivial a) where
   arbitrary = Nontrivial <$> arbitrary `suchThat` isNontrivial
   shrink (Nontrivial l) = Nontrivial <$> filter isNontrivial (shrink l)
 
+--------------------------------------------------------------------------------
+
+instance Arbitrary Triangle where
+  arbitrary = t `suchThat` isNontrivial
+    where t = do
+            Position p1 <- arbitrary
+            Position p2 <- arbitrary
+            Position p3 <- arbitrary
+            pure $ Triangle [p1,p2,p3]
+  shrink (Triangle [p1,p2,p3]) = filter isNontrivial ts
+    where ts = do
+            p1' <- shrink p1
+            p2' <- shrink p2
+            p3' <- shrink p3
+            pure $ Triangle [p1', p2', p3']

@@ -7,7 +7,7 @@
 module Geometry.Polygon
   (
     PiecewiseLinear (..)
-  , isDegenerate
+  , isDegenerate, isNondegenerate
   , Polyline (..)
   , mkPolyline, trivialPolyline
   , Polygonal, Polygon (..)
@@ -66,12 +66,22 @@ class (Trans p, Manifold p) => PiecewiseLinear p where
     where j = (0 `max` i) `min` (n - 1)
           n = verticesNumber p         
 
+  -- | The list of angles of a polyline.
+  vertexAngles :: p -> [Direction]
+  vertexAngles p = case segments p of
+    [] -> []
+    [x] -> []
+    s -> zipWith (\a b -> angle a - angle b) s (tail s)
+
 instance PiecewiseLinear p => PiecewiseLinear (Maybe p) where
   vertices = maybe mempty vertices
 
 -- | A predicate. Returns `True` if any of polyline's segment has zero length.
 isDegenerate :: PiecewiseLinear p => p -> Bool
 isDegenerate = any isZero . segments 
+
+isNondegenerate :: PiecewiseLinear p => p -> Bool
+isNondegenerate = not . isDegenerate
 
 interpolation :: PiecewiseLinear p => p -> Double -> Maybe Cmp
 interpolation p x = param' <$> find interval tbl
@@ -225,6 +235,14 @@ instance PiecewiseLinear Polygon where
 
   side i p = segments p !! (i `mod` n)
     where n = verticesNumber p
+
+  vertexAngles p = case segments p of
+    [] -> []
+    [x] -> [0,0]
+    s -> zipWith (\a b -> 180 - (angle b - angle a)) (last s : s) s
+    where inner a | a > 180 = 360 - a
+                  | a < 0 = 360 + a
+                  | otherwise = a
 
 
 instance Show Polygon where

@@ -95,7 +95,9 @@ instance Pnt a => Figure (Plot a) where
 
 {- | A manifold with explicit parameter function. Could be used for parametric plotting.
 
-> closedPlot (\t -> (t, abs (sin t))) # range (0, 7)
+> let flower t = scale (2 + sin (5*t)) (cos t, sin t)
+>     p = closedPlot flower # range (0, 2*pi)
+> in p <||> space 1 <||> p # scaleX 0.5 # rotate 30
 << figs/closedPlot.svg >>
 -}
 newtype ClosedPlot a = ClosedPlot (Double -> a, Polyline)

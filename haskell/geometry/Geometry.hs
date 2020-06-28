@@ -36,7 +36,7 @@ module Geometry
   , supplementary, vertical, reflex
   -- ** Polygon constructors
   , PiecewiseLinear (..)
-  , isDegenerate
+  , isDegenerate, isNondegenerate
   , Polyline (..)
   , Polygonal, Polygon (..)
   , closePolyline

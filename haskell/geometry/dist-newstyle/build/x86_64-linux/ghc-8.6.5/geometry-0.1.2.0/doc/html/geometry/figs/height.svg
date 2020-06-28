@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
     "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="315.0" width="270.5348452854514" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
-  <polygon points="45,172.83149736566986 172.83149736566986,172.83149736566986 134.15804923169034,66.57707188511152 " stroke="orange" stroke-width="2" fill="none"/>
-  <line x2="142.92460821254966" y1="172.83149736566986" stroke="white" stroke-width="1" fill="none" y2="255" x1="45"/>
-  <line x2="172.83149736566986" y1="172.83149736566986" stroke="white" stroke-width="1" fill="none" y2="45" x1="172.83149736566986"/>
-  <line x2="232.08265744423997" y1="66.57707188511152" stroke="white" stroke-width="1" fill="none" y2="148.74557451944165" x1="134.15804923169034"/>
+<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="315.0" width="300.0" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
+  <polygon points="45,219.553453653823 255,219.553453653823 191.4677385816434,45 " stroke="orange" stroke-width="2" fill="none"/>
+  <line x2="242.33545036504083" y1="219.553453653823" stroke="white" stroke-width="1" fill="none" y2="147.72922355543272" x1="45"/>
+  <line x2="94.13066694501464" y1="219.553453653823" stroke="white" stroke-width="1" fill="none" y2="84.56805561964973" x1="255"/>
+  <line x2="191.46773858164335" y1="45" stroke="white" stroke-width="1" fill="none" y2="255" x1="191.4677385816434"/>
+  <circle stroke="#444" stroke-width="1" fill="red" cy="166.24355652982143" r="3" cx="191.46773858164346"/>
 </svg>

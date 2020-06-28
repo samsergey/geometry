@@ -3,6 +3,7 @@
 {-# language FlexibleContexts #-}
 {-# language UndecidableInstances #-}
 {-# language DerivingVia #-}
+{-# language GeneralizedNewtypeDeriving #-}
 
 module Geometry.Polygon
   (
@@ -17,6 +18,7 @@ module Geometry.Polygon
   , Rectangle (..)
   , mkRectangle
   , boxRectangle
+  , RightTriangle (..), isRightTriangle, hypotenuse, catets
   )
 where
 
@@ -75,10 +77,18 @@ class (Trans p, Manifold p) => PiecewiseLinear p where
 
 instance PiecewiseLinear p => PiecewiseLinear (Maybe p) where
   vertices = maybe mempty vertices
+  asPolyline = maybe mempty asPolyline
+  verticesNumber = maybe 0 verticesNumber
+  segments = maybe mempty segments
+  vertex i = maybe 0 (vertex i)
+  side i = maybe (asCmp 0) (side i)
+  vertexAngles = maybe mempty vertexAngles
+
 
 -- | A predicate. Returns `True` if any of polyline's segment has zero length.
 isDegenerate :: PiecewiseLinear p => p -> Bool
-isDegenerate = any isZero . segments 
+isDegenerate p = any isZero (segments  p) ||
+                 any isZero (vertexAngles  p)
 
 isNondegenerate :: PiecewiseLinear p => p -> Bool
 isNondegenerate = not . isDegenerate
@@ -339,3 +349,22 @@ boxRectangle f = Rectangle [ p4, p3, p2, p1 ]
   where ((p4,p3),(p1,p2)) = corner f
 
 ------------------------------------------------------------
+
+newtype RightTriangle = RightTriangle Triangle
+  deriving (Show
+           , Affine
+           , Trans
+           , Figure
+           , Manifold
+           , Curve
+           , ClosedCurve
+           , Polygonal
+           , PiecewiseLinear)
+
+isRightTriangle :: PiecewiseLinear p => p -> Bool
+isRightTriangle t = any (90 ~==) $ vertexAngles t
+
+hypotenuse (RightTriangle t) = side 1 t
+
+catets (RightTriangle t) = (side 0 t, side 2 t)
+

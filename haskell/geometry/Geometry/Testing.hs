@@ -10,7 +10,7 @@ module Geometry.Testing where
 import Data.Complex
 import Data.Foldable
 import Data.Monoid
-import Test.QuickCheck
+import Test.QuickCheck hiding (scale)
 import Test.QuickCheck.Modifiers
 import Data.Tuple.Extra (second)
 
@@ -178,6 +178,26 @@ instance (Arbitrary a, Figure a) => Arbitrary (Nontrivial a) where
 
 --------------------------------------------------------------------------------
 
+newtype NonDegenerate a = NonDegenerate a deriving
+  ( Eq
+  , Show
+  , Figure
+  , Affine
+  , Trans
+  , Polygonal
+  )
+
+deriving instance Curve f => Curve (NonDegenerate f) 
+deriving instance ClosedCurve f => ClosedCurve (NonDegenerate f) 
+deriving instance Manifold m => Manifold (NonDegenerate m)
+deriving instance PiecewiseLinear m => PiecewiseLinear (NonDegenerate m)
+
+instance (Arbitrary a, Figure a, PiecewiseLinear a) => Arbitrary (NonDegenerate a) where
+  arbitrary = NonDegenerate <$> arbitrary `suchThat` isNondegenerate
+  shrink (NonDegenerate l) = NonDegenerate <$> filter isNondegenerate (shrink l)
+
+--------------------------------------------------------------------------------
+
 instance Arbitrary Triangle where
   arbitrary = t `suchThat` isNontrivial
     where t = do
@@ -191,3 +211,11 @@ instance Arbitrary Triangle where
             p2' <- shrink p2
             p3' <- shrink p3
             pure $ Triangle [p1', p2', p3']
+
+instance Arbitrary RightTriangle where
+  arbitrary = (`suchThat` isNondegenerate) $ do
+    a <- asDeg <$> choose (0, 90)
+    m <- arbitrary
+    Positive s <- arbitrary
+    pure $ rightTriangle a # scale s # appMotion m
+  shrink (RightTriangle t) = RightTriangle <$> shrink t

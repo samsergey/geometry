@@ -12,39 +12,13 @@ import Data.Maybe
 import Geometry
 import Geometry.Testing
 
-newtype RightTriangle = RightTriangle Triangle
-  deriving (Show
-           , Affine
-           , Trans
-           , Figure
-           , Manifold
-           , Curve
-           , ClosedCurve
-           , Polygonal
-           , PiecewiseLinear)
+prop_AnglesSum :: Triangle -> Bool
+prop_AnglesSum t = sum (vertexAngles t) ~== 180
 
-mkRightTriangle :: Direction -> RightTriangle
-mkRightTriangle = RightTriangle . triangle2a 90  . (`mod'` 90)
-
-isRight :: PiecewiseLinear p => p -> Bool
-isRight t = any (90 ~==) $ vertexAngles t
-
-triangle3s a b c = case intersections c1 c2 of
-                     [] -> Nothing
-                     p:_ -> Just $ Triangle [0, a :+ 0, p]
-  where c1 = aCircle # scale b
-        c2 = aCircle # scale c # at (a, 0)
-
-instance Arbitrary RightTriangle where
-  arbitrary = (`suchThat` isNondegenerate) $ do
-    a <- asDeg <$> choose (0, 90)
-    m <- arbitrary
-    Positive s <- arbitrary
-    pure $ mkRightTriangle a # scale s # appMotion m
-  shrink (RightTriangle t) = RightTriangle <$> shrink t
-
-hypotenuse (RightTriangle t) = side 1 t
-catets (RightTriangle t) = (side 0 t, side 2 t)
+prop_TriangleIneq (Positive a) (Positive b) (Positive c) =
+  (ineq <==> isJust (triangle3s a b c)) .||.
+  (not ineq <==> isNothing (triangle3s a b c))
+  where ineq = a + b >= c && a + c >= b && b + c >= a
 
 prop_Pytharogas_1 :: RightTriangle -> Bool
 prop_Pytharogas_1 t =
@@ -52,13 +26,31 @@ prop_Pytharogas_1 t =
       c = hypotenuse t
   in unit c**2 ~== unit a**2 + unit b**2
 
-prop_Pytharogas_2 :: Double -> Double -> Bool
-prop_Pytharogas_2 a b = isRight $ triangle3s a b $ sqrt (a*a + b*b)
+prop_Pytharogas_2 (Positive a) (Positive b) =
+  isRightTriangle $ triangle3s a b $ sqrt (a*a + b*b)
+
+prop_Trig_bisectrisse :: NonDegenerate Triangle -> Bool
+prop_Trig_bisectrisse (NonDegenerate t) = let
+  [b1,b2,b3] = [t # vertexAngle i # bisectrisse | i <- [0,1,2] ]
+  [p12] = intersections b1 b2
+  [p13] = intersections b1 b3
+  [p23] = intersections b2 b3
+  in p12 ~== p13 && p12 ~== p23 && p13 ~== p23 
+  
 
 main :: IO ()
-main = hspec $
+main = hspec $ do
+  describe "Triangles" $ do
+    it "The triangle inequality" $
+      property prop_TriangleIneq
+    it "Sum of angles in a triangle is equal to 180" $
+      property prop_AnglesSum
+  
   describe "Pithagoras" $ do
     it "1" $ property prop_Pytharogas_1
     it "2" $ property prop_Pytharogas_2
-     
+
+  describe "Bisectrisse" $ do
+    it "1" $ property prop_Trig_bisectrisse
+
 

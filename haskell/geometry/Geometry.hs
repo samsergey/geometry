@@ -40,7 +40,8 @@ module Geometry
   , Polyline (..)
   , Polygonal, Polygon (..)
   , closePolyline
-  , Triangle (..), aTriangle, triangle2a
+  , Triangle (..), aTriangle, triangle2a, triangle3s
+  , RightTriangle (..), rightTriangle, isRightTriangle, hypotenuse, catets
   , Rectangle (..), aSquare, aRectangle, space
   , parametricPoly, polarPoly, regularPoly
   , boxRectangle

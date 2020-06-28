@@ -16,7 +16,7 @@ module Geometry.Figures
   , anAngle
   , angleBetween, angleWithin, bisectrisse
   , supplementary, vertical, reflex
-  , aTriangle, triangle2a
+  , aTriangle, triangle2a, triangle3s, rightTriangle
   , aSquare, aRectangle, space
   , parametricPoly, polarPoly, regularPoly
   , aCircle, circle, circle'
@@ -31,6 +31,7 @@ import Data.Complex
 import Data.Maybe
 import Data.List.Extra (minimumOn, sortOn)
 import Control.Applicative
+import Data.Fixed (mod')
 
 import Geometry.Base
 import Geometry.Point
@@ -449,12 +450,30 @@ triangle2a a1 a2 = case intersections r1 r2 of
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
+{- | Returns a triangle with given three sides.
+
+<< figs/triangle3s.svg >>
+-}
+triangle3s :: Double -> Double -> Double -> Maybe Triangle
+triangle3s a b c = case intersections c1 c2 of
+                     [] -> Nothing
+                     p:_ -> Just $ Triangle [0, a :+ 0, p]
+  where c1 = aCircle # scale b
+        c2 = aCircle # scale c # at (a, 0)
+
+{- | Returns a right triangle with unit side and given angle.
+
+<< figs/rightTriangle.svg >>
+-}
+rightTriangle :: Direction -> RightTriangle
+rightTriangle = RightTriangle . triangle2a 90  . (`mod'` 90)
+
 {- | Returns a segment, starting from a given vertex,
 perpendicular to the opposite side (for odd number of vertices).
 
 << figs/height.svg >>
 -}
-height :: Polygonal p => Int -> p -> Maybe Segment
+height :: Polygonal p => Int -> p -> Segment
 height n p = aSegment
              # at' (vertex n p)
              # normalTo (asLine (side (n + verticesNumber p `div` 2) p))

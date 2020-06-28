@@ -454,7 +454,7 @@ perpendicular to the opposite side (for odd number of vertices).
 
 << figs/height.svg >>
 -}
-height :: Polygonal p => Int -> p -> Segment
+height :: Polygonal p => Int -> p -> Maybe Segment
 height n p = aSegment
              # at' (vertex n p)
              # normalTo (asLine (side (n + n `div` 2 + 1) p))

@@ -161,7 +161,7 @@ plotParam mf = Polyline pts
     clean xs = xs
 
 --------------------------------------------------------------------------------
-intersectionsP m1 m2 pts = foldMap refine pts
+intersectionsP m1 m2 = foldMap refine
   where
     dist a b = dist2 (cmp (m1 @-> a)) (cmp (m2 @-> b))
     refine x =
@@ -174,14 +174,18 @@ limit [] = Nothing
 limit xs = case res of
              [] -> Nothing
              ((_,y):_) -> Just y
-  where res = take 100 $
-              dropWhile (\(x, y) -> dist x y > 1e-12) $
+  where res = dropWhile (\(x, y) -> dist x y > 1e-12) $
+              take 100 $
               zip xs (tail xs)
+
+fib = 0 : 1 : zipWith (+) fib (tail fib)
+
+fixpoint f = limit . iterate f
 
 steepestDescent
   :: (Double -> Double -> Double)
      -> (Double, Double) -> Maybe (Double, Double)
-steepestDescent f (x, y) = limit $ iterate step (x,y)
+steepestDescent f (x, y) = fixpoint step (x,y)
   where
     step (x, y) = let (dx, dy) = grad f x y
                       t = findMin (\t -> f (x+dx*t) (y+dy*t)) 0

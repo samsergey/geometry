@@ -55,7 +55,7 @@ mkLine :: (Affine p1, Affine p2) => (p1, p2) -> Line
 mkLine (p1, p2) = Line (cmp p1, cmp p2)
 
 instance Eq Line where
-  l1 == l2 = refPoints l1 ~== refPoints l2
+  l1 == l2 = refPoints l1 ~= refPoints l2
 
 instance Figure Line where
   isTrivial = isZero
@@ -84,7 +84,7 @@ instance Manifold Line where
               in scaleAt' p1 t p2
   project l p = let v = cmp p - cmp (refPoint l)
                 in (v `dot` angle l) / unit l
-  isContaining l p = cmp p ~== refPoint l
+  isContaining l p = cmp p ~= refPoint l
                      || l `isCollinear` azimuth (refPoint l) p
   unit = norm
 

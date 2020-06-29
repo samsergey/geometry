@@ -4,9 +4,8 @@ import Test.Hspec
 import Test.QuickCheck hiding (scale)
 import Test.Invariant
 
-import Data.Complex
-import Data.Fixed (mod')
-import Data.Maybe
+import Data.Maybe (isNothing, isJust)
+import Data.List (tails)
 
 import Geometry
 import Geometry.Testing
@@ -15,25 +14,25 @@ import Geometry.Testing
 
 type PosReal = Positive Double
 
-pairwise :: (t -> t -> a) -> [t] -> [a]
-pairwise f xs = [f (fst x) (fst y)
-                | x <- zip xs [1..]
-                , y <- zip xs [1..]
-                , snd x < snd y]
+pairwise :: (a1 -> a1 -> a2) -> [a1] -> [a2]
+pairwise f [] = []
+pairwise f xs = concat $ zipWith (\x l -> f x <$> l) xs $ tail <$> tails xs
 
 coinside :: Metric a => [a] -> Bool
-coinside xs = all (~== 0) $ pairwise dist xs
+coinside xs = all (~= 0) $ pairwise dist xs
 
 isTangentToCircle :: Linear l => Circle -> l -> Bool
 isTangentToCircle c l =
   let p = center c # projectOn l
-  in distanceTo (center c) l ~== radius c &&
-     0 ~== abs (l `cross` tangent c (p ->@ c))
+  in distanceTo (center c) l ~= radius c &&
+     0 ~= abs (l `cross` tangent c (p ->@ c))
 
+allIntersections :: (Curve c, Intersections c c) => [c] -> [Cmp]
+allIntersections = concat . pairwise intersections
 --------------------------------------------------------------------------------
 
 prop_anglesSum :: Triangle -> Bool
-prop_anglesSum t = sum (vertexAngles t) ~== 180
+prop_anglesSum t = sum (vertexAngles t) ~= 180
 
 prop_triangleInequality :: PosReal -> PosReal -> PosReal -> Property
 prop_triangleInequality (Positive a) (Positive b) (Positive c) =
@@ -45,7 +44,7 @@ prop_pytharogas1 :: RightTriangle -> Bool
 prop_pytharogas1 t =
   let (a, b) = catets t
       c = hypotenuse t
-  in unit c**2 ~== unit a**2 + unit b**2
+  in unit c**2 ~= unit a**2 + unit b**2
 
 prop_pytharogas2 :: PosReal -> PosReal -> Bool
 prop_pytharogas2 (Positive a) (Positive b) =
@@ -58,16 +57,16 @@ bisectrisses t = bisectrisse . (`vertexAngle` t) <$> [0,1,2]
 
 prop_bisectrisses1 :: NonDegenerate Triangle -> Bool
 prop_bisectrisses1 (NonDegenerate t) =
-  coinside $ concat $ pairwise intersections $ bisectrisses t 
+  coinside $ allIntersections $ bisectrisses t 
 
 prop_bisectrisses2 :: NonDegenerate Triangle -> Bool
 prop_bisectrisses2 (NonDegenerate t) =
-  let ps = concat $ pairwise intersections $ bisectrisses t
+  let ps = allIntersections $ bisectrisses t
   in coinside [ p `distanceTo` s | p <- ps, s <- segments t ]
                    
 prop_bisectrisses3 :: NonDegenerate Triangle -> Bool
 prop_bisectrisses3 (NonDegenerate t) =
-  let ps = concat $ pairwise intersections $ bisectrisses t
+  let ps = allIntersections $ bisectrisses t
       p = sum ps / 3
   in and [ s # isTangentToCircle (circle' r p)
          | s <- segments t
@@ -85,25 +84,26 @@ centroid p = sum (vertices p) / fromIntegral (verticesNumber p)
 
 prop_medians1 :: NonDegenerate Triangle -> Bool
 prop_medians1 (NonDegenerate t) =
-  coinside $ concat $ pairwise intersections $ medians t  
+  coinside $ allIntersections $ medians t  
 
 prop_medians2 :: NonDegenerate Triangle -> Bool
 prop_medians2 (NonDegenerate t) =
-  all (~== c) $ concat $ pairwise intersections $ medians t
+  all (~= c) $ allIntersections $ medians t
   where c = centroid t
 
 prop_medians3 :: NonDegenerate Triangle -> Bool
 prop_medians3 (NonDegenerate t) = and $ pairwise division $ medians t
   where
-    division m1 m2 = and [ c ->@ m ~== 2/3
-                         | c <- intersections m1 m2, m <- [m1, m2] ]
+    division m1 m2 = and [ c ->@ m ~= 2/3
+                         | c <- intersections m1 m2
+                         , m <- [m1, m2] ]
 
 prop_Apollonius :: NonDegenerate Triangle -> Bool
 prop_Apollonius (NonDegenerate t) =
-  and [ unit (median i t) ~== sqrt (2*b**2 + 2*c**2 - a**2) / 2
+  and [ unit (median i t) ~= sqrt (2*b**2 + 2*c**2 - a**2) / 2
       | i <- [0,1,2]
       , let a = unit $ side (i + 1) t
-            b = unit $ side (i) t
+            b = unit $ side i t
             c = unit $ side (i - 1) t ]
 
 --------------------------------------------------------------------------------

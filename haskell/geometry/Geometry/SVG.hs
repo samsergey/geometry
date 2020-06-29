@@ -74,7 +74,7 @@ class SVGable a where
   fmtSVG = mempty
 
 instance SVGable Double where
-  fmtSVG n = if n ~== 0 then "0" else toShortest n
+  fmtSVG n = if n ~= 0 then "0" else toShortest n
 
 instance SVGable Cmp where
   fmtSVG = fmtSVG . xy

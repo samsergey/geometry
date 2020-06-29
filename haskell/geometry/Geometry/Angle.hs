@@ -61,7 +61,7 @@ data Angle = Angle Cmp Direction Direction
 
 
 instance AlmostEq Angle where
-  a1 ~== a2 = angleValue a1 ~== angleValue a1
+  a1 ~= a2 = angleValue a1 ~= angleValue a1
 
 
 instance Angular Angle where
@@ -96,7 +96,7 @@ instance Manifold Angle where
 
 instance Figure Angle where
   refPoint (Angle p _ _) = p
-  isTrivial a = angleValue a ~== 0
+  isTrivial a = angleValue a ~= 0
   box (Angle p s e) = box $ mkCircle 0.1 p
            
 ------------------------------------------------------------

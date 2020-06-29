@@ -46,7 +46,7 @@ module Geometry.Base
   -- * Fuzzy equality
   , AlmostEq
   -- ** Fuzzy inequalities
-  , (~<=), (~>=), (~==)
+  , (~<=), (~>=), (~=)
   , (#)
   )
 where
@@ -80,40 +80,40 @@ infixl 5 #
 
 ------------------------------------------------------------
 
-infix 4 ~==, ~<=, ~>=
+infix 4 ~=, ~<=, ~>=
 
 -- | Type class for values for which equality could be stated with some known tolerance.
 class AlmostEq a where
   -- | The equality operator.
-  (~==) :: a -> a -> Bool
+  (~=) :: a -> a -> Bool
 
-instance AlmostEq Int where a ~== b = a == b
-instance AlmostEq Integer where  a ~== b = a == b
+instance AlmostEq Int where a ~= b = a == b
+instance AlmostEq Integer where  a ~= b = a == b
 
 instance AlmostEq Double where
-  a ~== b = abs (a - b) < 1e-8 || 2*abs (a-b) < 1e-8 * abs(a + b)
+  a ~= b = 2*abs (a-b) < 1e-10 * abs(a + b) || abs (a - b) < 1e-10
 
 instance (RealFloat a, Ord a, Fractional a, Num a, AlmostEq a) =>
          AlmostEq (Complex a) where
-  a ~== b = magnitude (a - b) ~== 0
+  a ~= b = magnitude (a - b) ~= 0
 
 instance (AlmostEq a, AlmostEq b) => AlmostEq (a, b) where
-  (a1, b1) ~== (a2, b2) = a1 ~== a2 && b1 ~== b2
+  (a1, b1) ~= (a2, b2) = a1 ~= a2 && b1 ~= b2
 
 instance AlmostEq a => AlmostEq [a] where
-  as ~== bs = and $ zipWith (~==) as bs
+  as ~= bs = and $ zipWith (~=) as bs
 
 instance AlmostEq a => AlmostEq (Maybe a) where
-  Just a ~== Just b = a ~== b
-  _ ~== _ = False 
+  Just a ~= Just b = a ~= b
+  _ ~= _ = False 
 
 -- | The less or almost equal relation.
 (~<=) :: (AlmostEq a, Ord a) => a -> a -> Bool
-a ~<= b = a ~== b || a < b
+a ~<= b = a ~= b || a < b
 
 -- | The greater or almost equal relation.
 (~>=) :: (AlmostEq a, Ord a) => a -> a -> Bool
-a ~>= b = a ~== b || a > b
+a ~>= b = a ~= b || a > b
 
 ------------------------------------------------------------
 
@@ -181,9 +181,9 @@ instance Metric Direction where
   dist x y = abs (rad x - rad y)
   dist2 x y = (rad x - rad y)**2
 
-instance AlmostEq Direction where  a ~== b = rad a ~== rad b
+instance AlmostEq Direction where  a ~= b = rad a ~= rad b
 
-instance Eq Direction  where  a == b = a ~== b
+instance Eq Direction  where  a == b = a ~= b
 
 instance Ord Direction where  a <= b = a == b || rad a < rad b
 
@@ -437,19 +437,19 @@ asAffine = asCmp . cmp
     
 -- | Returns `True` if two points represent orthogonal vectors.
 isOrthogonal :: (Affine a, Affine b) => a -> b -> Bool
-isOrthogonal a b = not (isZero a || isZero b) && cmp a `dot` cmp b ~== 0
+isOrthogonal a b = not (isZero a || isZero b) && cmp a `dot` cmp b ~= 0
 
 -- | Returns `True` if two points represent collinear vectors.
 isCollinear :: (Affine a, Affine b) => a -> b -> Bool
-isCollinear a b = not (isZero a || isZero b) && cmp a `cross` cmp b ~== 0
+isCollinear a b = not (isZero a || isZero b) && cmp a `cross` cmp b ~= 0
 
 -- | Returns `True` if two points represent collinear opposite vectors.
 isOpposite :: (Affine a, Affine b) => a -> b -> Bool
-isOpposite a b = not (isZero a || isZero b) && cmp a + cmp b ~== 0
+isOpposite a b = not (isZero a || isZero b) && cmp a + cmp b ~= 0
 
 -- | Returns `True` if the vector is trivial or a point is equal to the origin.
 isZero :: Affine a => a -> Bool
-isZero a = cmp a ~== 0
+isZero a = cmp a ~= 0
 
 -- | Returns the opposite vector to a given one.
 opposite :: Affine a => a -> a
@@ -534,7 +534,7 @@ Here are some instances:
   -- | Returns `True` if point belongs to the manifold.
   isContaining :: m -> Domain m -> Bool
   isContaining c p = case projectMaybe c p >>= paramMaybe c  of
-                       Just p' -> p' `dist` p ~== 0
+                       Just p' -> p' `dist` p ~= 0
                        Nothing -> False
 
   {- | Returns a point on a manifold for given parameter, or Nothing

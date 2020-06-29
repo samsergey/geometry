@@ -88,7 +88,7 @@ instance PiecewiseLinear p => PiecewiseLinear (Maybe p) where
 -- | A predicate. Returns `True` if any of polyline's segment has zero length.
 isDegenerate :: PiecewiseLinear p => p -> Bool
 isDegenerate p = any isTrivial (segments  p) ||
-                 any isZero (vertexAngles  p)
+                 any (0 ~=) (vertexAngles  p)
 
 isNondegenerate :: PiecewiseLinear p => p -> Bool
 isNondegenerate = not . isDegenerate
@@ -145,7 +145,7 @@ instance Show Polyline where
 
 
 instance Eq Polyline where
-  p1 == p2 = vertices p1 ~== vertices p2
+  p1 == p2 = vertices p1 ~= vertices p2
 
 -- | Addition of polylines, excluding zero segments.
 instance Semigroup Polyline where
@@ -362,7 +362,7 @@ newtype RightTriangle = RightTriangle Triangle
            , PiecewiseLinear)
 
 isRightTriangle :: PiecewiseLinear p => p -> Bool
-isRightTriangle t = any (90 ~==) $ vertexAngles t
+isRightTriangle t = any (90 ~=) $ vertexAngles t
 
 hypotenuse :: RightTriangle -> Segment
 hypotenuse (RightTriangle t) = side 1 t

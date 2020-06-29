@@ -65,9 +65,9 @@ mkCircle :: Double -> Cmp -> Circle
 mkCircle r c = Circle c (r:+0) 1 
 
 instance Eq Circle where
-  c1 == c2 = radius c1 ~== radius c2 &&
-             center c1 ~== center c2 &&
-             phaseShift c1 ~== phaseShift c2 
+  c1 == c2 = radius c1 ~= radius c2 &&
+             center c1 ~= center c2 &&
+             phaseShift c1 ~= phaseShift c2 
 
 
 instance Trans Circle where
@@ -89,7 +89,7 @@ instance Manifold Circle where
       ph = phaseShift c
       x = orientation c * azimuth (center c) p 
 
-  isContaining c p = distance p (center c) ~== radius c
+  isContaining c p = distance p (center c) ~= radius c
   unit _ = 2 * pi
 
 
@@ -100,9 +100,9 @@ instance Curve Circle where
 
 instance ClosedCurve Circle where
   location c p = res
-    where res | r' ~== radius c = OnCurve
-              | r' < radius c   = Inside
-              | r' > radius c   = Outside
+    where res | r' ~= radius c = OnCurve
+              | r' < radius c  = Inside
+              | r' > radius c  = Outside
           r' = distance (cmp p) (center c)
 
 

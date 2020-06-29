@@ -106,7 +106,7 @@ module Geometry
   , SVGable (..), SVGContext(..)
   -- ** Fuzzy equality
   , AlmostEq
-  , (~<=), (~>=), (~==)
+  , (~<=), (~>=), (~=)
   -- ** Utility fubctions and operators
   , (#)
 )

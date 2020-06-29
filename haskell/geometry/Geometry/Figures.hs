@@ -24,7 +24,7 @@ module Geometry.Figures
   , translate, scaleAt, scaleXAt, scaleYAt, scaleFig
   , at', at, along', along, through', through
   , on, normalTo, flipAt
-  , vertexAngle, height
+  , vertexAngle, altitude
  ) where
 
 import Data.Complex
@@ -319,7 +319,7 @@ Angle is a `Manifold Direction` instance:
 
 -- | The template for an angle with given value.
 anAngle :: Direction -> Angle
-anAngle = Angle 0 0.01
+anAngle = Angle 0 0
 
 -- | Returns the angle equal to the angle between two lines, located on the first one.
 angleBetween :: (Linear l1,  Linear l2) => l1 -> l2 -> Angle
@@ -465,19 +465,19 @@ triangle3s a b c = case intersections c1 c2 of
 
 << figs/rightTriangle.svg >>
 -}
-rightTriangle :: Direction -> RightTriangle
-rightTriangle = RightTriangle . triangle2a 90  . (`mod'` 90)
+rightTriangle :: Direction -> Triangle
+rightTriangle = triangle2a 90  . (`mod'` 90)
 
 {- | Returns a segment, starting from a given vertex,
 perpendicular to the opposite side (for odd number of vertices).
 
-<< figs/height.svg >>
+<< figs/altitude.svg >>
 -}
-height :: Polygonal p => Int -> p -> Segment
-height n p = aSegment
-             # at' (vertex n p)
-             # normalTo (asLine (side (n + verticesNumber p `div` 2) p))
-             # fromJust 
+altitude :: Polygonal p => Int -> p -> Segment
+altitude n p = aSegment
+               # at' (vertex n p)
+               # normalTo (asLine (side (n + verticesNumber p `div` 2) p))
+               # fromJust 
 
 ------------------------------------------------------------
 

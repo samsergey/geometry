@@ -91,11 +91,11 @@ instance AlmostEq Int where a ~== b = a == b
 instance AlmostEq Integer where  a ~== b = a == b
 
 instance AlmostEq Double where
-  a ~== b = abs (a - b) < 1e-8 || abs (a-b) < 1e-8 * abs(a+b)
+  a ~== b = abs (a - b) < 1e-8 || 2*abs (a-b) < 1e-8 * abs(a + b)
 
 instance (RealFloat a, Ord a, Fractional a, Num a, AlmostEq a) =>
          AlmostEq (Complex a) where
-  a ~== b = magnitude (a - b) < 1e-8 || magnitude (a - b) < 1e-8 * magnitude(a + b)
+  a ~== b = magnitude (a - b) ~== 0
 
 instance (AlmostEq a, AlmostEq b) => AlmostEq (a, b) where
   (a1, b1) ~== (a2, b2) = a1 ~== a2 && b1 ~== b2

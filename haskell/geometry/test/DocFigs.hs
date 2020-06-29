@@ -131,11 +131,11 @@ main = do
         c = circle' (p `distanceTo` side 0 t) p
     in t <+> r1 <+> r2 <+> r3 <+> p <+> c
 
-  writeSVG 300 (path <> "height.svg") $
+  writeSVG 300 (path <> "altitude.svg") $
     let t = triangle2a 50 70
-        s1 = t # height 0 #: thin <> white
-        s2 = t # height 1 #: thin <> white
-        s3 = t # height 2 #: thin <> white
+        s1 = t # altitude 0 #: thin <> white
+        s2 = t # altitude 1 #: thin <> white
+        s3 = t # altitude 2 #: thin <> white
         p = intersectionPoints s1 s2
     in t <+> s1 <+> s2 <+> s3 <+> group p
 

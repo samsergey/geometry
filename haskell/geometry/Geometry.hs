@@ -62,7 +62,7 @@ module Geometry
   -- ** Other modificators
   , through', through
   , on, normalTo, flipAt
-  , vertexAngle, height
+  , vertexAngle, altitude
   -- * Decorations
   , WithOptions (..)
   , Options, Option(..)

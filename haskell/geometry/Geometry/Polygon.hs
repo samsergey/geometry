@@ -87,7 +87,7 @@ instance PiecewiseLinear p => PiecewiseLinear (Maybe p) where
 
 -- | A predicate. Returns `True` if any of polyline's segment has zero length.
 isDegenerate :: PiecewiseLinear p => p -> Bool
-isDegenerate p = any isZero (segments  p) ||
+isDegenerate p = any isTrivial (segments  p) ||
                  any isZero (vertexAngles  p)
 
 isNondegenerate :: PiecewiseLinear p => p -> Bool

@@ -167,6 +167,7 @@ newtype Nontrivial a = Nontrivial a deriving
   , Curve
   , ClosedCurve
   , Manifold
+  , PiecewiseLinear
   , Polygonal
   , APoint
   , Linear
@@ -182,21 +183,23 @@ instance (Arbitrary a, Figure a) => Arbitrary (Nontrivial a) where
 --------------------------------------------------------------------------------
 
 newtype NonDegenerate a = NonDegenerate a deriving
-  ( Eq
+  (  Eq
   , Show
   , Figure
   , Affine
   , Trans
+  , Curve
+  , ClosedCurve
+  , Manifold
+  , PiecewiseLinear
   , Polygonal
-  
+  , APoint
+  , Linear
+  , Circular
+  , Angular
   )
 
-deriving instance Curve f => Curve (NonDegenerate f) 
-deriving instance ClosedCurve f => ClosedCurve (NonDegenerate f) 
-deriving instance Manifold m => Manifold (NonDegenerate m)
-deriving instance PiecewiseLinear m => PiecewiseLinear (NonDegenerate m)
-
-instance (Arbitrary a, Figure a, PiecewiseLinear a) => Arbitrary (NonDegenerate a) where
+instance (Arbitrary a, PiecewiseLinear a) => Arbitrary (NonDegenerate a) where
   arbitrary = NonDegenerate <$> arbitrary `suchThat` isNondegenerate
   shrink (NonDegenerate l) = NonDegenerate <$> filter isNondegenerate (shrink l)
 
@@ -221,5 +224,5 @@ instance Arbitrary RightTriangle where
     a <- asDeg <$> choose (0, 90)
     m <- arbitrary
     Positive s <- arbitrary
-    pure $ rightTriangle a # scale s # appMotion m
+    pure . RightTriangle $ rightTriangle a # scale s # appMotion m
   shrink (RightTriangle t) = RightTriangle <$> shrink t

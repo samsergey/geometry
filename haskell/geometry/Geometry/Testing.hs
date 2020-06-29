@@ -164,13 +164,16 @@ newtype Nontrivial a = Nontrivial a deriving
   , Figure
   , Affine
   , Trans
+  , Curve
+  , ClosedCurve
+  , Manifold
+  , Polygonal
+  , APoint
+  , Linear
+  , Circular
+  , Angular
   )
 
-deriving instance Curve f => Curve (Nontrivial f) 
-
-deriving instance ClosedCurve f => ClosedCurve (Nontrivial f) 
-
-deriving instance Manifold m => Manifold (Nontrivial m)
 
 instance (Arbitrary a, Figure a) => Arbitrary (Nontrivial a) where
   arbitrary = Nontrivial <$> arbitrary `suchThat` isNontrivial
@@ -185,6 +188,7 @@ newtype NonDegenerate a = NonDegenerate a deriving
   , Affine
   , Trans
   , Polygonal
+  
   )
 
 deriving instance Curve f => Curve (NonDegenerate f) 

@@ -117,7 +117,7 @@ instance PiecewiseLinear Segment where
 -- >>> asCmp (1 :+ 2) :: Triangle
 -- <Triangle (0.0,0.0) (1.0,2.0) (-1.2320508075688772,1.8660254037844393)>
 --
--- >>> asCmp (1) :: Rectangle
+-- >>> asCmp 1 :: Rectangle
 -- <Rectangle (0.0,0.0) (1.0,0.0) (1.0,1.0) (0.0,1.0)>
 --
 newtype Polyline = Polyline [Cmp]
@@ -364,7 +364,9 @@ newtype RightTriangle = RightTriangle Triangle
 isRightTriangle :: PiecewiseLinear p => p -> Bool
 isRightTriangle t = any (90 ~==) $ vertexAngles t
 
+hypotenuse :: RightTriangle -> Segment
 hypotenuse (RightTriangle t) = side 1 t
 
+catets :: RightTriangle -> (Segment, Segment)
 catets (RightTriangle t) = (side 0 t, side 2 t)
 

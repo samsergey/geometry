@@ -15,11 +15,10 @@ import Geometry.Testing
 type PosReal = Positive Double
 
 pairwise :: (a1 -> a1 -> a2) -> [a1] -> [a2]
-pairwise f [] = []
-pairwise f xs = concat $ zipWith (\x l -> f x <$> l) xs $ tail <$> tails xs
+pairwise f xs = concat . zipWith (fmap . f) xs $ tail <$> tails xs
 
 coinside :: Metric a => [a] -> Bool
-coinside xs = all (~= 0) $ pairwise dist xs
+coinside = all (~= 0) . pairwise dist
 
 isTangentToCircle :: Linear l => Circle -> l -> Bool
 isTangentToCircle c l =
@@ -29,6 +28,7 @@ isTangentToCircle c l =
 
 allIntersections :: (Curve c, Intersections c c) => [c] -> [Cmp]
 allIntersections = concat . pairwise intersections
+
 --------------------------------------------------------------------------------
 
 prop_anglesSum :: Triangle -> Bool
@@ -48,7 +48,7 @@ prop_pytharogas1 t =
 
 prop_pytharogas2 :: PosReal -> PosReal -> Bool
 prop_pytharogas2 (Positive a) (Positive b) =
-  isRightTriangle $ triangle3s a b $ sqrt (a*a + b*b)
+  isRightTriangle . triangle3s a b $ sqrt (a*a + b*b)
 
 --------------------------------------------------------------------------------
 
@@ -57,7 +57,7 @@ bisectrisses t = bisectrisse . (`vertexAngle` t) <$> [0,1,2]
 
 prop_bisectrisses1 :: NonDegenerate Triangle -> Bool
 prop_bisectrisses1 (NonDegenerate t) =
-  coinside $ allIntersections $ bisectrisses t 
+  coinside . allIntersections $ bisectrisses t 
 
 prop_bisectrisses2 :: NonDegenerate Triangle -> Bool
 prop_bisectrisses2 (NonDegenerate t) =
@@ -75,7 +75,9 @@ prop_bisectrisses3 (NonDegenerate t) =
 --------------------------------------------------------------------------------
 
 median :: Int -> Triangle -> Segment
-median i t = aSegment # at' (vertex i t) # through' (side (i+1) t @-> 0.5)
+median i t = aSegment
+             # at' (vertex i t)
+             # through' (side (i+1) t @-> 0.5)
 
 medians :: Triangle -> [Segment]
 medians t = (`median` t) <$> [0,1,2]
@@ -84,11 +86,11 @@ centroid p = sum (vertices p) / fromIntegral (verticesNumber p)
 
 prop_medians1 :: NonDegenerate Triangle -> Bool
 prop_medians1 (NonDegenerate t) =
-  coinside $ allIntersections $ medians t  
+  coinside . allIntersections $ medians t  
 
 prop_medians2 :: NonDegenerate Triangle -> Bool
 prop_medians2 (NonDegenerate t) =
-  all (~= c) $ allIntersections $ medians t
+  all (~= c) . allIntersections $ medians t
   where c = centroid t
 
 prop_medians3 :: NonDegenerate Triangle -> Bool
@@ -108,18 +110,43 @@ prop_Apollonius (NonDegenerate t) =
 
 --------------------------------------------------------------------------------
 
+altitudes :: Triangle -> [Segment]
+altitudes t = (`altitude` t) <$> [0,1,2]
+
+prop_altitudes1 :: NonDegenerate Triangle -> Bool
+prop_altitudes1 (NonDegenerate t) =
+  all (~= orthocenter t) . allIntersections $ altitudes t  
+
+orthocenter :: Triangle -> Cmp
+orthocenter t = head $ intersections h1 h2
+  where h1 = t # altitude 0 # asLine
+        h2 = t # altitude 1 # asLine
+
+--------------------------------------------------------------------------------
+
 main :: IO ()
 main = hspec $ do
   describe "Triangles:" $ do
-    it "The triangle inequality." $ property prop_triangleInequality
-    it "Sum of angles in a triangle is equal to 180." $ property prop_anglesSum
-    it "The right thriangle is pithagorean." $ property prop_pytharogas1
-    it "The pithagorean triangle is right." $ property prop_pytharogas2
-    it "All bisectrisses intersect at one point." $ property prop_bisectrisses1
-    it "Bisectrisses intersect at a center of the inscribed circle." $
-      property $ prop_bisectrisses2 .&&. prop_bisectrisses3
-    it "All medians intersect at one point." $ property prop_medians1
-    it "All medians intersect at the triangle's centroid." $ property prop_medians2
-    it "Centroid divides medians in 1:2 ratio." $ property prop_medians3
-    it "Apollonius' theorem." $ property prop_Apollonius
+    it "The triangle inequality."
+      $ property prop_triangleInequality
+    it "Sum of angles in a triangle is equal to 180."
+      $ property prop_anglesSum
+    it "The right thriangle is pithagorean."
+      $ property prop_pytharogas1
+    it "The pithagorean triangle is right."
+      $ property prop_pytharogas2
+    it "All bisectrisses intersect at one point."
+      $ property prop_bisectrisses1
+    it "Bisectrisses intersect at a center of the inscribed circle."
+      $ property $ prop_bisectrisses2 .&&. prop_bisectrisses3
+    it "All medians intersect at one point."
+      $ property prop_medians1
+    it "All medians intersect at the triangle's centroid."
+      $ property prop_medians2
+    it "Centroid divides medians in 1:2 ratio."
+      $ property prop_medians3
+    it "Apollonius' theorem."
+      $ property prop_Apollonius
+    it "All altitudes intersect at one point (orthocenter)."
+      $ property prop_altitudes1
 

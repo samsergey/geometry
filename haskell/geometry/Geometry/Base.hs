@@ -1,4 +1,4 @@
- FlexibleInstances #-}
+{-# Language FlexibleInstances #-}
 {-# Language FlexibleContexts #-}
 {-# Language GeneralizedNewtypeDeriving #-}
 {-# Language ConstraintKinds #-}
@@ -57,7 +57,7 @@ import Data.List
 import Data.List.Extra (minimumOn)
 import Control.Applicative
 import Control.Monad
-import Data.Semigroup
+import Data.Semigroup hiding (First)
 import Data.Monoid
 import Data.Maybe
 import Data.Bool
@@ -740,3 +740,4 @@ upper = fst
 right = snd
 left  = fst
 
+--------------------------------------------------------------------------------

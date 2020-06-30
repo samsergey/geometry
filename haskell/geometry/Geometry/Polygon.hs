@@ -292,7 +292,7 @@ instance ClosedCurve Polygon where
           x = (x0*y1-x1*y0)/(y1-y0)       
 
 ------------------------------------------------------------
-
+  
 -- | Representation of a triangle as a list of vertices.
 newtype Triangle = Triangle [Cmp]
   deriving ( Figure
@@ -351,7 +351,8 @@ boxRectangle f = Rectangle [ p4, p3, p2, p1 ]
 ------------------------------------------------------------
 
 newtype RightTriangle = RightTriangle Triangle
-  deriving (Show
+  deriving ( Eq
+           , Show
            , Affine
            , Trans
            , Figure

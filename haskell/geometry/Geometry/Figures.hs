@@ -16,7 +16,7 @@ module Geometry.Figures
   , anAngle
   , angleBetween, angleWithin, bisectrisse
   , supplementary, vertical, reflex
-  , aTriangle, triangle2a, triangle3s, rightTriangle
+  , aTriangle, triangle2a, triangle3s, aRightTriangle
   , aSquare, aRectangle, space
   , parametricPoly, polarPoly, regularPoly
   , aCircle, circle, circle'
@@ -24,7 +24,7 @@ module Geometry.Figures
   , translate, scaleAt, scaleXAt, scaleYAt, scaleFig
   , at', at, along', along, through', through
   , on, normalTo, flipAt
-  , vertexAngle, altitude
+  , vertexAngle, altitude, median
  ) where
 
 import Data.Complex
@@ -461,22 +461,29 @@ triangle3s a b c = case intersections c1 c2 of
   where c1 = aCircle # scale b
         c2 = aCircle # scale c # at (a, 0)
 
-{- | Returns a right triangle with unit side and given angle.
-
+{- | A isosceles right triangle with unit side.
 << figs/rightTriangle.svg >>
 -}
-rightTriangle :: Direction -> Triangle
-rightTriangle = triangle2a 90  . (`mod'` 90)
-
-{- | Returns a segment, starting from a given vertex,
-perpendicular to the opposite side (for odd number of vertices).
-
-<< figs/altitude.svg >>
+aRightTriangle = RightTriangle $ triangle2a 90 45
+  
+------------------------------------------------------------
+{- | The median of the polygon from given vertex to given side.
 -}
-altitude :: Polygonal p => Int -> p -> Segment
-altitude n p = aSegment
-               # at' (vertex n p)
-               # normalTo (asLine (side (n + verticesNumber p `div` 2) p))
+median :: PiecewiseLinear p
+  => Int -- ^ vertex index
+  -> Int -- ^ side index
+  -> p -> Segment
+median v s t = Segment (vertex v t, side s t @-> 0.5)
+
+{- | The altitude of the polygon from given vertex to given side.
+-}
+altitude :: PiecewiseLinear p
+  => Int  -- ^ vertex index
+  -> Int  -- ^ side index
+  -> p -> Segment
+altitude v s p = aSegment
+               # at' (vertex v p)
+               # normalTo (asLine (side s p))
                # fromJust 
 
 ------------------------------------------------------------

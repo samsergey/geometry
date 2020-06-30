@@ -14,6 +14,9 @@ module Geometry.Plot
      , intersectionsP
      ) where
 
+import Control.Applicative
+import Control.Monad
+
 import Geometry.Base
 import Geometry.Point
 import Geometry.Line
@@ -64,7 +67,7 @@ instance Pnt a => Manifold (Plot a) where
   param (Plot (f, _)) = f
   project p pt = let x0 = pt ->@ asPolyline p
                      goal x = dot (azimuth (p @-> x) pt) (tangent p x)
-                 in case findZero goal x0 of
+                 in case secant goal x0 of
                       Nothing -> let goal x = dist2 (p @-> x) pt 
                                  in findMin goal x0
                       Just x -> x
@@ -115,7 +118,7 @@ instance Pnt a => Manifold (ClosedPlot a) where
   param (ClosedPlot (f, _)) = f
   project p pt = let x0 = pt ->@ asPolyline p
                      goal x = dot (azimuth (p @-> x) pt) (tangent p x)
-                 in case findZero goal x0 of
+                 in case secant goal x0 of
                       Nothing -> let goal x = dist2 (p @-> x) pt 
                                  in findMin goal x0
                       Just x -> x
@@ -197,14 +200,6 @@ steepestDescent f (x, y) = fixpoint step (x,y)
                  , (f x (y + d) - f x (y - d))/(2*d) )
       where d = 1e-8
 
-findZero :: (Ord a, Fractional a) => (a -> a) -> a -> Maybe a
-findZero f x = go x (x+dx) (f x) (f $ x + dx) 10
-  where go x1 x2 y1 y2 i
-          | y2 == y1 || i <= 0 = Nothing
-          | abs (x2 - x1) < 1e-12 = Just x2            
-          | otherwise = let x = (x1*y2 - x2*y1)/(y2-y1)
-                        in go x2 x y2 (f x) (i-1)
-        dx = 1e-5
 
 goldenMean :: (Double -> Double) -> Double -> Double -> Double
 goldenMean f x1 x2 = go (x1, c, d, x2, 0)
@@ -226,4 +221,25 @@ findMin f x = go x x1 (3*x1 - 2*x)
     go x1 x2 x3 | f x2 < f x3 = goldenMean f x1 x3
                 | otherwise = go x2 x3 (3*x3 - 2*x2)
     
+
+------------------------------------------------------------
+
+bisection f a b
+  | f a * f b > 0       = empty
+  | abs (a - b) < 1e-12 = pure c
+  | otherwise           = bisection f a c <|> bisection f c b
+  where c = (a + b) / 2
+
+findRoot method f xs = msum $ zipWith (method f) xs (tail xs)
+
+secant :: (Ord a, Fractional a) => (a -> a) -> a -> Maybe a
+secant f x = go x (x+dx) (f x) (f $ x + dx) 10
+  where go x1 x2 y1 y2 i
+          | y2 == y1 || i <= 0 = Nothing
+          | abs (x2 - x1) < 1e-12 = Just x2            
+          | otherwise = let x = (x1*y2 - x2*y1)/(y2-y1)
+                        in go x2 x y2 (f x) (i-1)
+        dx = 1e-5
+
+--------------------------------------------------------------------------------
 

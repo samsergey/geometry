@@ -183,7 +183,7 @@ instance (Arbitrary a, Figure a) => Arbitrary (Nontrivial a) where
 --------------------------------------------------------------------------------
 
 newtype NonDegenerate a = NonDegenerate a deriving
-  (  Eq
+  ( Eq
   , Show
   , Figure
   , Affine
@@ -206,23 +206,22 @@ instance (Arbitrary a, PiecewiseLinear a) => Arbitrary (NonDegenerate a) where
 --------------------------------------------------------------------------------
 
 instance Arbitrary Triangle where
-  arbitrary = t `suchThat` isNontrivial
-    where t = do
-            Position p1 <- arbitrary
-            Position p2 <- arbitrary
-            Position p3 <- arbitrary
-            pure $ Triangle [p1,p2,p3]
-  shrink (Triangle [p1,p2,p3]) = filter isNontrivial ts
-    where ts = do
-            p1' <- shrink p1
-            p2' <- shrink p2
-            p3' <- shrink p3
-            pure $ Triangle [p1', p2', p3']
+  arbitrary = (`suchThat` isNontrivial) $ do
+    Position p1 <- arbitrary
+    Position p2 <- arbitrary
+    Position p3 <- arbitrary
+    pure $ Triangle [p1, p2, p3]
+
+  shrink (Triangle [p1, p2, p3]) = filter isNontrivial $ do
+    p1' <- shrink p1
+    p2' <- shrink p2
+    p3' <- shrink p3
+    pure $ Triangle [p1', p2', p3']
 
 instance Arbitrary RightTriangle where
   arbitrary = (`suchThat` isNondegenerate) $ do
-    a <- asDeg <$> choose (0, 90)
+    Positive a <- arbitrary
+    Positive b <- arbitrary
     m <- arbitrary
-    Positive s <- arbitrary
-    pure . RightTriangle $ rightTriangle a # scale s # appMotion m
+    pure $ aRightTriangle # scaleX a # scaleY b # appMotion m
   shrink (RightTriangle t) = RightTriangle <$> shrink t

@@ -40,8 +40,8 @@ module Geometry
   , Polyline (..)
   , Polygonal, Polygon (..)
   , closePolyline
-  , Triangle (..), aTriangle, triangle2a, triangle3s
-  , RightTriangle (..), rightTriangle, isRightTriangle, hypotenuse, catets
+  , Triangle (..), aTriangle, triangle2a, triangle3s, aRightTriangle
+  , RightTriangle (..), isRightTriangle, hypotenuse, catets
   , Rectangle (..), aSquare, aRectangle, space
   , parametricPoly, polarPoly, regularPoly
   , boxRectangle
@@ -62,7 +62,7 @@ module Geometry
   -- ** Other modificators
   , through', through
   , on, normalTo, flipAt
-  , vertexAngle, altitude
+  , vertexAngle, altitude, median
   -- * Decorations
   , WithOptions (..)
   , Options, Option(..)

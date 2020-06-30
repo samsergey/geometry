@@ -74,13 +74,8 @@ prop_bisectrisses3 (NonDegenerate t) =
 
 --------------------------------------------------------------------------------
 
-median :: Int -> Triangle -> Segment
-median i t = aSegment
-             # at' (vertex i t)
-             # through' (side (i+1) t @-> 0.5)
-
 medians :: Triangle -> [Segment]
-medians t = (`median` t) <$> [0,1,2]
+medians t = (\i -> median i (i+1) t) <$> [0,1,2]
 
 centroid p = sum (vertices p) / fromIntegral (verticesNumber p)
 
@@ -102,7 +97,7 @@ prop_medians3 (NonDegenerate t) = and $ pairwise division $ medians t
 
 prop_Apollonius :: NonDegenerate Triangle -> Bool
 prop_Apollonius (NonDegenerate t) =
-  and [ unit (median i t) ~= sqrt (2*b**2 + 2*c**2 - a**2) / 2
+  and [ unit (median i (i+1) t) ~= sqrt (2*b**2 + 2*c**2 - a**2) / 2
       | i <- [0,1,2]
       , let a = unit $ side (i + 1) t
             b = unit $ side i t
@@ -111,7 +106,7 @@ prop_Apollonius (NonDegenerate t) =
 --------------------------------------------------------------------------------
 
 altitudes :: Triangle -> [Segment]
-altitudes t = (`altitude` t) <$> [0,1,2]
+altitudes t = (\i -> altitude i (i+1) t) <$> [0,1,2]
 
 prop_altitudes1 :: NonDegenerate Triangle -> Bool
 prop_altitudes1 (NonDegenerate t) =
@@ -119,8 +114,8 @@ prop_altitudes1 (NonDegenerate t) =
 
 orthocenter :: Triangle -> Cmp
 orthocenter t = head $ intersections h1 h2
-  where h1 = t # altitude 0 # asLine
-        h2 = t # altitude 1 # asLine
+  where h1 = t # altitude 0 1 # asLine
+        h2 = t # altitude 1 2 # asLine
 
 --------------------------------------------------------------------------------
 

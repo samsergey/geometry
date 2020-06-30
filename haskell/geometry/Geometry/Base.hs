@@ -1,4 +1,4 @@
-{-# Language FlexibleInstances #-}
+ FlexibleInstances #-}
 {-# Language FlexibleContexts #-}
 {-# Language GeneralizedNewtypeDeriving #-}
 {-# Language ConstraintKinds #-}
@@ -739,16 +739,4 @@ lower = snd
 upper = fst
 right = snd
 left  = fst
-
-------------------------------------------------------------
-
-bisection f a b
-  | f a * f b > 0       = empty
-  | abs (a - b) < 1e-12 = pure c
-  | otherwise           = bisection f a c <|> bisection f c b
-  where c = (a + b) / 2
-
-findRoot f xs = msum $ zipWith (bisection f) xs (tail xs)
-
---------------------------------------------------------------------------------
 

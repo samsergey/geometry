@@ -29,12 +29,12 @@ version :: Version
 version = Version [0,1,2,0] []
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
 
-bindir     = "/home/sergey/work/webinar/webfigs/haskell/geometry/.stack-work/install/x86_64-linux-nix/b34d52e73bf06c6df136196c2603e7456f87d90c59d9d570bc0959ec2c5dbb81/8.8.3/bin"
-libdir     = "/home/sergey/work/webinar/webfigs/haskell/geometry/.stack-work/install/x86_64-linux-nix/b34d52e73bf06c6df136196c2603e7456f87d90c59d9d570bc0959ec2c5dbb81/8.8.3/lib/x86_64-linux-ghc-8.8.3/geometry-0.1.2.0-3CTFcSZW00g4K978Q4vX2H"
-dynlibdir  = "/home/sergey/work/webinar/webfigs/haskell/geometry/.stack-work/install/x86_64-linux-nix/b34d52e73bf06c6df136196c2603e7456f87d90c59d9d570bc0959ec2c5dbb81/8.8.3/lib/x86_64-linux-ghc-8.8.3"
-datadir    = "/home/sergey/work/webinar/webfigs/haskell/geometry/.stack-work/install/x86_64-linux-nix/b34d52e73bf06c6df136196c2603e7456f87d90c59d9d570bc0959ec2c5dbb81/8.8.3/share/x86_64-linux-ghc-8.8.3/geometry-0.1.2.0"
-libexecdir = "/home/sergey/work/webinar/webfigs/haskell/geometry/.stack-work/install/x86_64-linux-nix/b34d52e73bf06c6df136196c2603e7456f87d90c59d9d570bc0959ec2c5dbb81/8.8.3/libexec/x86_64-linux-ghc-8.8.3/geometry-0.1.2.0"
-sysconfdir = "/home/sergey/work/webinar/webfigs/haskell/geometry/.stack-work/install/x86_64-linux-nix/b34d52e73bf06c6df136196c2603e7456f87d90c59d9d570bc0959ec2c5dbb81/8.8.3/etc"
+bindir     = "/home/sergey/work/webinar/geometry/geometry/haskell/geometry/.stack-work/install/x86_64-linux-nix/b34d52e73bf06c6df136196c2603e7456f87d90c59d9d570bc0959ec2c5dbb81/8.8.3/bin"
+libdir     = "/home/sergey/work/webinar/geometry/geometry/haskell/geometry/.stack-work/install/x86_64-linux-nix/b34d52e73bf06c6df136196c2603e7456f87d90c59d9d570bc0959ec2c5dbb81/8.8.3/lib/x86_64-linux-ghc-8.8.3/geometry-0.1.2.0-3CTFcSZW00g4K978Q4vX2H"
+dynlibdir  = "/home/sergey/work/webinar/geometry/geometry/haskell/geometry/.stack-work/install/x86_64-linux-nix/b34d52e73bf06c6df136196c2603e7456f87d90c59d9d570bc0959ec2c5dbb81/8.8.3/lib/x86_64-linux-ghc-8.8.3"
+datadir    = "/home/sergey/work/webinar/geometry/geometry/haskell/geometry/.stack-work/install/x86_64-linux-nix/b34d52e73bf06c6df136196c2603e7456f87d90c59d9d570bc0959ec2c5dbb81/8.8.3/share/x86_64-linux-ghc-8.8.3/geometry-0.1.2.0"
+libexecdir = "/home/sergey/work/webinar/geometry/geometry/haskell/geometry/.stack-work/install/x86_64-linux-nix/b34d52e73bf06c6df136196c2603e7456f87d90c59d9d570bc0959ec2c5dbb81/8.8.3/libexec/x86_64-linux-ghc-8.8.3/geometry-0.1.2.0"
+sysconfdir = "/home/sergey/work/webinar/geometry/geometry/haskell/geometry/.stack-work/install/x86_64-linux-nix/b34d52e73bf06c6df136196c2603e7456f87d90c59d9d570bc0959ec2c5dbb81/8.8.3/etc"
 
 getBinDir, getLibDir, getDynLibDir, getDataDir, getLibexecDir, getSysconfDir :: IO FilePath
 getBinDir = catchIO (getEnv "geometry_bindir") (\_ -> return bindir)

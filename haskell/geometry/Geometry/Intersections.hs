@@ -1,10 +1,10 @@
+{-# LANGUAGE ConstraintKinds       #-}
+{-# LANGUAGE DerivingVia           #-}
+{-# Language FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# Language MultiParamTypeClasses #-}
-{-# Language FlexibleContexts #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE UndecidableInstances  #-}
 module Geometry.Intersections
   ( Intersections (..)
   , intersections, isIntersecting

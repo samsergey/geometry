@@ -2,7 +2,6 @@
 
 import Test.Hspec
 import Test.QuickCheck hiding (scale)
-import Test.Invariant
 
 import Data.Maybe (isNothing, isJust)
 import Data.List (tails)

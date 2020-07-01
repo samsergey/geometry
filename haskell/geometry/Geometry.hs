@@ -112,20 +112,19 @@ module Geometry
 )
 where
 
-import Prelude hiding (writeFile)
 import Data.Text.Lazy.IO (writeFile)
-
-import Geometry.Base
-import Geometry.Point
-import Geometry.Circle
-import Geometry.Line
-import Geometry.Polygon
-import Geometry.Plot
 import Geometry.Angle
+import Geometry.Base
+import Geometry.Circle
 import Geometry.Decorations
-import Geometry.Intersections
 import Geometry.Figures
+import Geometry.Intersections
+import Geometry.Line
+import Geometry.Plot
+import Geometry.Point
+import Geometry.Polygon
 import Geometry.SVG
+import Prelude hiding (writeFile)
 
 ------------------------------------------------------------
 

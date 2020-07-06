@@ -577,5 +577,3 @@ instance Pnt a => WithOptions (ClosedPlot a) where
   defaultOptions = defaultOptions . asPolyline
 
 --------------------------------------------------------------------------------
-
-

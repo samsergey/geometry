@@ -10,7 +10,7 @@ module Geometry
   -- * Grouping combinators
   (<+>), group, beside, above, (<||>)
   , Groupable (..), Group (..)
---  , put, chart
+--  , put, charty
   -- * Constructors for geometric objects
   -- ** Figures
   , Figure (..), Box
@@ -131,5 +131,3 @@ import Prelude hiding (writeFile)
 -- | Creates SVG for a SVGable object and writes to a file with a given name.
 writeSVG :: (Figure a, SVGable a) => Int -> FilePath -> a -> IO ()
 writeSVG size name = writeFile name . showSVG size
-
-

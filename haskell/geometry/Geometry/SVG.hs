@@ -273,7 +273,7 @@ infixl 3 <+>
 (<+>) :: (Groupable a, Groupable b) => a -> b -> Group
 a <+> b = G a <> G b
 
-put x = (G x,())
+put x = (G x, x)
 chart = fst
 
 instance Trans Group where

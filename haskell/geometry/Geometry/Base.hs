@@ -187,7 +187,7 @@ instance Eq Direction  where  a == b = a ~= b
 
 instance Ord Direction where  a <= b = a == b || rad a < rad b
 
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- | The representation of a linear transformation matrix.
 newtype TMatrix = TMatrix ((Double, Double, Double), (Double, Double, Double))
@@ -449,7 +449,7 @@ isOpposite a b = not (isZero a || isZero b) && cmp a + cmp b ~= 0
 
 -- | Returns `True` if the vector is trivial or a point is equal to the origin.
 isZero :: Affine a => a -> Bool
-isZero a = cmp a ~= 0
+isZero a = cmp a ~= 0y
 
 -- | Returns the opposite vector to a given one.
 opposite :: Affine a => a -> a

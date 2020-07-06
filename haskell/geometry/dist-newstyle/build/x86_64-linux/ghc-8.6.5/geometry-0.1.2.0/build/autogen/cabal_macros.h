@@ -88,17 +88,6 @@
   (major1) == 0 && (major2) == 1 && (minor) <= 1)
 #endif /* MIN_VERSION_svg_builder */
 
-/* package test-invariant-0.4.5.0 */
-#ifndef VERSION_test_invariant
-#define VERSION_test_invariant "0.4.5.0"
-#endif /* VERSION_test_invariant */
-#ifndef MIN_VERSION_test_invariant
-#define MIN_VERSION_test_invariant(major1,major2,minor) (\
-  (major1) <  0 || \
-  (major1) == 0 && (major2) <  4 || \
-  (major1) == 0 && (major2) == 4 && (minor) <= 5)
-#endif /* MIN_VERSION_test_invariant */
-
 /* package text-1.2.3.1 */
 #ifndef VERSION_text
 #define VERSION_text "1.2.3.1"

@@ -1,5 +1,7 @@
 {-# language UndecidableInstances #-}
 
+module TrianglesSpec where
+
 import Test.Hspec
 import Test.QuickCheck hiding (scale)
 
@@ -118,8 +120,8 @@ orthocenter t = head $ intersections h1 h2
 
 --------------------------------------------------------------------------------
 
-main :: IO ()
-main = hspec $ do
+spec :: Spec
+spec = do
   describe "Triangles:" $ do
     it "The triangle inequality."
       $ property prop_triangleInequality

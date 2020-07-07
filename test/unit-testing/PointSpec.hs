@@ -2,12 +2,12 @@ module PointSpec where
   
 import Test.Hspec
 import Test.QuickCheck hiding (scale)
-
+import Test.Invariant
 
 import Data.Complex
 
 import Geometry
-import Testing
+import Geometry.Testing
 
 spec :: Spec
 spec = do
@@ -19,15 +19,15 @@ spec = do
       it "4" $ property $ (Point . cmp) `inverts` cmp
 
     describe "pointOn" $ do
-      it "1" $ pointOn (aCircle # scale 2) 0 == (aPoint # at (2, 0))
-      it "2" $ pointOn (aCircle # scale 2) 0.5 == (aPoint # at (-2, 0))
+      it "1" $ xy (pointOn (aCircle # scale 2) 0) ~= (2, 0)
+      it "2" $ xy (pointOn (aCircle # scale 2) 0.5) ~= (-2, 0)
       it "3" $ property $ \c t ->
         let _ = c :: Circle
-        in c `isContaining` pointOn c t
+        in c `isContaining` asAffine (pointOn c t)
       it "4" $ property $ \(Nontrivial l) t ->
         let _ = l :: Line
-        in l `isContaining` pointOn l t
+        in l `isContaining` asAffine (pointOn l t)
       it "5" $ property $ \n t ->
         let p = regularPoly (3 + abs n)
-        in p `isContaining` pointOn p t
+        in p `isContaining` asAffine (pointOn p t)
                     

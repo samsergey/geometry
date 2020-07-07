@@ -3,7 +3,6 @@
 {-# Language GeneralizedNewtypeDeriving #-}
 {-# Language ConstraintKinds #-}
 {-# Language TypeFamilies #-}
-{-# Language DeriveFunctor #-}
 
 module Geometry.Base
   ( -- * Types

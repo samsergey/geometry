@@ -3,6 +3,7 @@
 {-# Language GeneralizedNewtypeDeriving #-}
 {-# Language ConstraintKinds #-}
 {-# Language TypeFamilies #-}
+{-# Language DeriveFunctor #-}
 
 module Geometry.Base
   ( -- * Types
@@ -449,7 +450,7 @@ isOpposite a b = not (isZero a || isZero b) && cmp a + cmp b ~= 0
 
 -- | Returns `True` if the vector is trivial or a point is equal to the origin.
 isZero :: Affine a => a -> Bool
-isZero a = cmp a ~= 0y
+isZero a = cmp a ~= 0
 
 -- | Returns the opposite vector to a given one.
 opposite :: Affine a => a -> a

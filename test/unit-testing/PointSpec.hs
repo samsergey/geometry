@@ -1,3 +1,5 @@
+module PointSpec where
+  
 import Test.Hspec
 import Test.QuickCheck hiding (scale)
 
@@ -7,8 +9,8 @@ import Data.Complex
 import Geometry
 import Testing
 
-main :: IO ()
-main = hspec $ do
+spec :: Spec
+spec = do
   describe "Point" $ do
     describe "Affinity" $ do
       it "1" $ property $ cmp `inverts` Point 

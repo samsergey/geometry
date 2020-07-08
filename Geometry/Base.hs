@@ -1,8 +1,6 @@
-{-# Language FlexibleInstances #-}
-{-# Language FlexibleContexts #-}
+{-# Language ConstraintKinds            #-}
 {-# Language GeneralizedNewtypeDeriving #-}
-{-# Language ConstraintKinds #-}
-{-# Language TypeFamilies #-}
+{-# Language TypeFamilies               #-}
 
 module Geometry.Base
   ( -- * Types
@@ -427,6 +425,7 @@ instance Affine a => Affine (Maybe a) where
 
 >>> asAffine (1 :: Cmp) :: XY
 (1.0,0.0)
+
 >>> asAffine ((2,3) :: XY) :: Segment
 Segment (0.0 :+ 0.0, 2.0 :+ 3.0)
 >>> asAffine (aSegment # rotate 30) :: Direction
@@ -491,7 +490,7 @@ normalize v
 
 roundUp :: Affine a => Double -> a -> a
 roundUp d = asXY . (\(x,y) -> (rounding x, rounding y)) . xy
-  where rounding x = fromIntegral (ceiling (x /d)) * d
+  where rounding x = fromIntegral (ceiling (x /d) :: Integer) * d
 
 -- | The direction of the vector or a point.
 angle :: Affine a => a -> Direction
@@ -548,10 +547,10 @@ Here are some instances:
   projectMaybe :: m -> Domain m -> Maybe Double
   projectMaybe m p = if inBounds x then Just x else Nothing
     where x = project m p
-          inBounds x = case bounds m of
+          inBounds y = case bounds m of
             Unbound -> True
-            Semibound -> x >= 0
-            Bound -> x >= 0 && x <= 1
+            Semibound -> y >= 0
+            Bound -> y >= 0 && y <= 1
 
   {- | Returns bounds for a parameter of a manifold.
     @[a, b]@ for finite, @[a]@ for semibound manifolds (@a@ is lower bound),
@@ -653,7 +652,7 @@ class (Figure c, Trans c, Manifold c) => Curve c  where
   tangent :: c -> Double -> Direction
   tangent c t = normal c t - 90
 
-  -- | The normal direction for a given parameter on the curve.
+  -- | The normal direction for a given parameter on the curve. 
   normal :: c -> Double -> Direction
   normal c t = tangent c t + 90
 
@@ -661,7 +660,7 @@ tangentLine c x = asCmp 1 # along' (tangent c x) # at' (c @-> x)
 
 instance Curve c => Curve (Maybe c) where
   tangent = maybe (const 0) tangent
-  normal = maybe (const 0) normal 
+  normal = maybe (const 0) normal  
                   
 -- |  Class representing a closed region
 class Curve c => ClosedCurve c where

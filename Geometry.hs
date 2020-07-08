@@ -9,7 +9,7 @@ module Geometry
   writeSVG, showSVG,
   -- * Grouping combinators
   (<+>), group, beside, above, (<||>)
-  , Groupable (..), Group (..)
+  , Groupable, Group (..)
 --  , put, charty
   -- * Constructors for geometric objects
   -- ** Figures
@@ -103,12 +103,12 @@ module Geometry
   , Intersections (..)
   , intersections, isIntersecting
   -- * Miscellaneous classes and functions
-  , SVGable (..), SVGContext(..)
+  , SVGable (..), SVGContext (..)
   -- ** Fuzzy equality
   , AlmostEq
   , (~<=), (~>=), (~=)
   -- ** Utility fubctions and operators
-  , (#)
+  , (#) 
 )
 where
 
@@ -131,3 +131,4 @@ import Prelude hiding (writeFile)
 -- | Creates SVG for a SVGable object and writes to a file with a given name.
 writeSVG :: (Figure a, SVGable a) => Int -> FilePath -> a -> IO ()
 writeSVG size name = writeFile name . showSVG size
+

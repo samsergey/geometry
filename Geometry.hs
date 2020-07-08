@@ -3,7 +3,7 @@ Module      : W
 Description : Reexporting all internal stuff.
 Stability   : experimental
 -}
-module Geometry
+module Geometry 
 (
   -- * Main interface
   writeSVG, showSVG,

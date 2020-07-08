@@ -3,7 +3,7 @@
 
 module Geometry.Point
   ( APoint(..), Point (..), Label (..)
-  , mkPoint, mkLabel
+  , mkPoint, mkLabel 
   ) where
 
 import Data.Complex
@@ -86,5 +86,4 @@ instance Show Label where
   show p = concat ["<Label (", sx, " ", sy, ")>"]
     where sx = show $ getX p
           sy = show $ getY p
-
 

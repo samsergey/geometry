@@ -1,5 +1,9 @@
 {-# language FlexibleInstances, DeriveFunctor #-}
 
+import Data.Semigroup
+import Data.Monoid
+import Data.List 
+
 data Optional b a = Ok a | Fail b
   deriving Show
 
@@ -44,10 +48,10 @@ data Tag s a = Tag s a
   deriving (Show, Functor)
 
 instance Semigroup s => Applicative (Tag (Maybe s)) where
-  pure x = Tag Nothing x
+  pure = Tag Nothing
   Tag a f <*> Tag b x = Tag (a <> b) (f x)
 
-data Func r a = Func (r -> a)
+newtype Func r a = Func (r -> a)
 
 instance Functor (Func r) where
   fmap g (Func f) = Func (g . f)
@@ -56,7 +60,4 @@ instance Applicative (Func r) where
   pure = Func . const
   Func rab <*> Func ra = Func rb
     where rb r = (rab r <$> ra) r
-
-
-data State r a = State (r -> (r, a))
 

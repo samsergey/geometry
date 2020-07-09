@@ -1,10 +1,8 @@
 
-module LineSpec where
+module CircleSpec where
 
 import Test.Hspec
-import Test.QuickCheck -- (property, Arbitrary (..), oneof, sample)
-import Test.Invariant
-import Data.Complex
+import Test.QuickCheck
 import Data.Fixed (mod')
 import Geometry
 import Geometry.Testing
@@ -48,17 +46,13 @@ spec = describe "Circle" $ do
                      normal c n `isOrthogonal` tangent c n
           
       it "2" $
-        property $ \(Nontrivial c) n -> 
-          let types = c :: Circle    
-          in signum (normal c n `cross` tangent c n) == deg (orientation c)
+        property $ \(AnyCircle c) n -> 
+                     signum (normal c n `cross` tangent c n) == deg (orientation c)
 
       it "3" $
-        property $ \(Nontrivial c) n (DInt k) ->
-          let types = c :: Circle
-          in normal c n `isOpposite` normal c (n + k + 1/2)
+        property $ \(AnyCircle c) n (DInt k) ->
+                     normal c n `isOpposite` normal c (n + k + 1/2)
 
       it "4" $
-        property $ \(Nontrivial c) n (DInt k) ->
-          let types = c :: Circle
-          in tangent c n `isOpposite` tangent c (n + k + 1/2)
-
+        property $ \(AnyCircle c) n (DInt k) ->
+                     tangent c n `isOpposite` tangent c (n + k + 1/2)

@@ -1,9 +1,6 @@
 {-# Language ConstraintKinds            #-}
-<<<<<<< HEAD
-=======
 {-# Language FlexibleContexts           #-}
 {-# Language FlexibleInstances          #-}
->>>>>>> d9bf64b18ea0239a4a286214f35e239c8c6ee892
 {-# Language GeneralizedNewtypeDeriving #-}
 {-# Language TypeFamilies               #-}
 
@@ -31,7 +28,7 @@ module Geometry.Base
   , transformCmp, transformXY, transformAt
   -- ** transformations
   , translate', translate, superpose, at, at'
-  , rotate, rotateAt', reflect, reflectAt
+  , rotate, rotateAt, rotateAt', reflect, reflectAt
   , along, along', on
   , scale, scaleX, scaleY, scaleAt', scaleAt
   , scaleXAt', scaleXAt, scaleYAt', scaleYAt, scaleFig
@@ -91,7 +88,6 @@ class AlmostEq a where
   (~=) :: a -> a -> Bool
 
 instance AlmostEq Int where a ~= b = a == b
-instance AlmostEq Integer where  a ~= b = a == b
 
 instance AlmostEq Double where
   a ~= b = 2*abs (a-b) < 1e-10 * abs(a + b) || abs (a - b) < 1e-10
@@ -108,6 +104,7 @@ instance AlmostEq a => AlmostEq [a] where
 
 instance AlmostEq a => AlmostEq (Maybe a) where
   Just a ~= Just b = a ~= b
+  Nothing ~= Nothing = True
   _ ~= _ = False 
 
 -- | The less or almost equal relation.
@@ -206,6 +203,7 @@ instance Semigroup TMatrix where
 instance Monoid TMatrix where
   mempty = TMatrix ((1,0,0),(0,1,0))
 
+inv :: TMatrix -> TMatrix
 inv (TMatrix ((a, b, x), (c, d, y)))
   | d == 0 = error "Transformation is not invertible!"
   | otherwise = res
@@ -219,6 +217,9 @@ class Trans a where
   {-# MINIMAL transform #-}
   -- | The general linear transformation.
   transform :: TMatrix -> a -> a
+
+  transform' :: TMatrix -> a -> a
+  transform' t = transform (inv t)
 
 instance Trans Cmp where
   transform = transformCmp
@@ -373,7 +374,7 @@ along = along' . asDeg
 -- >    aSegment # scale 0.5 # on c 0.3 <+>
 -- >    aSquare # scale 0.5 # on c 0.6 <+>
 -- >    aTriangle # scale 0.5 # on c 0.9
---
+-- 
 -- << figs/on.svg>>
 --
 on :: (Figure f, Affine f, Curve c) => c -> Double -> (f -> f)
@@ -433,8 +434,9 @@ instance Affine a => Affine (Maybe a) where
 
 >>> asAffine ((2,3) :: XY) :: Segment
 Segment (0.0 :+ 0.0, 2.0 :+ 3.0)
+
 >>> asAffine (aSegment # rotate 30) :: Direction
-30°
+30
 -}
 asAffine :: (Affine a, Affine b) => a -> b
 asAffine = asCmp . cmp
@@ -657,10 +659,11 @@ class (Figure c, Trans c, Manifold c) => Curve c  where
   tangent :: c -> Double -> Direction
   tangent c t = normal c t - 90
 
-  -- | The normal direction for a given parameter on the curve. 
+  -- | The normal direction for a given parameter on the curve.
   normal :: c -> Double -> Direction
   normal c t = tangent c t + 90
 
+tangentLine :: (Curve c, Figure l, Affine l) => c -> Double -> l
 tangentLine c x = asCmp 1 # along' (tangent c x) # at' (c @-> x)
 
 instance Curve c => Curve (Maybe c) where

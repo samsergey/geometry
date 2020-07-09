@@ -112,3 +112,11 @@ spec = do
     it "4" $ (right.upper.corner $ l) == 4:+6
     it "5" $ figureHeight l == 4
     it "6" $ figureWidth l == 3
+
+  describe "AlmostEqual" $ do
+    it "1" $ property $ \i j -> let _ = (i :: Int, j :: Int)
+                                in (i == j) == (i ~= j)
+    it "2" $ property $ \i j -> let _ = (i :: Maybe Double, j :: Maybe Double)
+                                in (i == j) == (i ~= j)
+--    it "3" $ property $ \i j -> let _ = (i :: Double, j :: Double)
+--                                in (i == j) == (i ~= j)

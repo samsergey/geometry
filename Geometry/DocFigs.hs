@@ -1,11 +1,14 @@
 {-# language OverloadedStrings #-}
+
+module Geometry.DocFigs where
+
 import Geometry
 import Data.Complex
 import Data.Functor.Const
 
 path = "dist-newstyle/build/x86_64-linux/ghc-8.6.5/geometry-0.1.2.0/doc/html/geometry/figs/"
 
-main = do
+docFigs = do
   writeSVG 400 (path <> "angle1.svg") $
     let t = triangle2a 30 60
         a1 = anAngle 30 #: "#" <> loffs (asDeg 135)
@@ -133,9 +136,9 @@ main = do
 
   writeSVG 300 (path <> "altitude.svg") $
     let t = triangle2a 50 70
-        s1 = t # altitude 0 #: thin <> white
-        s2 = t # altitude 1 #: thin <> white
-        s3 = t # altitude 2 #: thin <> white
+        s1 = t # altitude 0 1 #: thin <> white
+        s2 = t # altitude 1 2 #: thin <> white
+        s3 = t # altitude 2 3 #: thin <> white
         p = intersectionPoints s1 s2
     in t <+> s1 <+> s2 <+> s3 <+> group p
 

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
-    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" style="background : #444;" height="315.0" width="300.0" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.11.1">
-  <circle stroke="orange" stroke-width="2" fill="none" cy="150" r="105" cx="150"/>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="150" r="3" cx="255"/>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="45" r="3" cx="150"/>
-  <circle stroke="#444" stroke-width="1" fill="red" cy="241.04242362227149" r="3" cx="97.6905639393535"/>
-</svg>

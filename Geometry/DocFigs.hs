@@ -6,7 +6,7 @@ import Geometry
 import Data.Complex
 import Data.Functor.Const
 
-path = "dist-newstyle/build/x86_64-linux/ghc-8.6.5/geometry-0.1.2.0/doc/html/geometry/figs/"
+path = ".stack-work/dist/x86_64-linux-nix/Cabal-3.0.1.0/doc/html/geometry/figs/"
 
 docFigs = do
   writeSVG 400 (path <> "angle1.svg") $

@@ -2,16 +2,12 @@ module AngleSpec where
 
 import Test.Hspec
 import Test.QuickCheck hiding (scale)
-import Test.Invariant
-
 import Data.Complex
-import Data.Fixed (mod')
-
 import Geometry
 import Geometry.Testing
 
 spec :: Spec
-spec =  describe "Angle" $ do
+spec = describe "Angle" $ do
     describe "Affinity" $ do
       it "1" $ asCmp 1 == Angle 0 0 0
       it "2" $ property $ \x -> asCmp x == Angle 0 (asCmp x) (asCmp x)

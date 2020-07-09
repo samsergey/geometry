@@ -10,7 +10,6 @@ module Geometry.Circle
 import Data.Complex
 import Data.Bool
 import Data.Semigroup
-
 import Geometry.Base
 import Geometry.Line
 import Geometry.Polygon
@@ -82,7 +81,7 @@ instance Manifold Circle where
   param c t = center c + mkPolar (radius c) (rad x)
     where
       ph = turns $ phaseShift c
-      x = asTurns $ ph + t * (deg (orientation c))
+      x = asTurns $ ph + t * deg (orientation c)
     
   project c p = turns (x - ph)
     where
@@ -113,6 +112,4 @@ instance Figure Circle where
     where c = center cir
           r = radius cir
           x1:+y1 = c-(r:+r)
-          x2:+y2 = c+(r:+r)
-
-
+          x2:+y2 = c+(r:+r)g

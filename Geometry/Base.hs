@@ -53,14 +53,9 @@ where
 
 import Data.Fixed (mod')
 import Data.Complex
-import Data.List
 import Data.List.Extra (minimumOn)
-import Control.Applicative
-import Control.Monad
 import Data.Semigroup hiding (First)
-import Data.Monoid
 import Data.Maybe
-import Data.Bool
 
 ------------------------------------------------------------
 -- | Type alias for a complex number.
@@ -76,6 +71,8 @@ type Pnt a = (Affine a, Trans a, Metric a)
 
 -- | Flipped application used for right chaining of transformations.
 infixl 5 #
+  
+(#) :: a -> (a -> c) -> c
 (#) = flip ($)
 
 ------------------------------------------------------------
@@ -211,7 +208,6 @@ inv (TMatrix ((a, b, x), (c, d, y)))
         res = TMatrix ( (d/dt, -b/dt, (b*y-d*x)/dt)
                       , (-c/dt, a/dt, (c*x-a*y)/dt))
       
-
 -- | Class for objects which could be transformed linearly.
 class Trans a where
   {-# MINIMAL transform #-}
@@ -675,13 +671,13 @@ class Curve c => ClosedCurve c where
   {-# MINIMAL location | isEnclosing #-}
   
   -- | Returns the location of a point with respect to the region.
-  location :: (Metric a, Affine a) => c -> a -> PointLocation
+  location :: (Metric p, Affine p) => c -> p -> PointLocation
   location c p | isContaining c p = OnCurve
                | isEnclosing c p = Inside
                | otherwise = Outside
 
   -- | Returns `True` if point belongs to the region.
-  isEnclosing :: (Metric a, Affine a) => c -> a -> Bool
+  isEnclosing :: (Metric p, Affine p) => c -> p -> Bool
   isEnclosing c p = location c p == Inside
 
 instance ClosedCurve c => ClosedCurve (Maybe c) where
@@ -732,20 +728,30 @@ instance Figure f => Figure (Maybe f) where
 
 -- | Returns the total width of the figure.
 figureWidth :: Figure f => f -> Double
-figureWidth f = let ((Min xmin, Min ymin), (Max xmax, Max ymax)) = box f
+figureWidth f = let ((Min xmin, _), (Max xmax, _)) = box f
           in abs $ xmax - xmin
 
 -- | Returns the total height of the figure.
 figureHeight :: Figure f => f -> Double
-figureHeight f = let ((Min xmin, Min ymin), (Max xmax, Max ymax)) = box f
+figureHeight f = let ((_, Min ymin), (_, Max ymax)) = box f
            in abs $ ymax - ymin
 
+-- | Returns four corners of the figure.
+corner :: Figure f => f -> ((Cmp, Cmp), (Cmp, Cmp))
 corner p = ((x1:+y2, x2:+y2),(x1:+y1, x2:+y1))
     where ((Min x1,Min y1),(Max x2, Max y2)) = box p
 
+-- | Selectors for corners.
+lower :: (a,b) -> b 
 lower = snd
-upper = fst
+
+right :: (a,b) -> b 
 right = snd
+
+upper :: (a,b) -> a
+upper = fst
+
+left :: (a,b) -> a
 left  = fst
 
 --------------------------------------------------------------------------------

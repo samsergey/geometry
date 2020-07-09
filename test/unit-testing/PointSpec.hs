@@ -10,8 +10,7 @@ import Geometry
 import Geometry.Testing
 
 spec :: Spec
-spec = do
-  describe "Point" $ do
+spec = describe "Point" $ do
     describe "Affinity" $ do
       it "1" $ property $ cmp `inverts` Point 
       it "2" $ property $ Point `inverts` cmp 
@@ -23,11 +22,11 @@ spec = do
       it "2" $ xy (pointOn (aCircle # scale 2) 0.5) ~= (-2, 0)
       it "3" $ property $ \c t ->
         let _ = c :: Circle
-        in c `isContaining` asAffine (pointOn c t)
+        in c `isContaining` pointOn c t
       it "4" $ property $ \(Nontrivial l) t ->
         let _ = l :: Line
-        in l `isContaining` asAffine (pointOn l t)
+        in l `isContaining` pointOn l t
       it "5" $ property $ \n t ->
         let p = regularPoly (3 + abs n)
-        in p `isContaining` asAffine (pointOn p t)
+        in p `isContaining` pointOn p t
                     

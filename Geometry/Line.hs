@@ -128,7 +128,7 @@ instance Manifold Ray where
   param = param . asLine
   project = project . asLine
   isContaining r p = isContaining (asLine r) p
-                     && project r p >= 0
+                     && project r (cmp p) >= 0
   unit = norm
 
 instance Figure Ray where
@@ -163,7 +163,7 @@ instance Manifold Segment where
   param = param . asLine
   project = project . asLine
   isContaining r p = isContaining (asRay r) p
-                     && project r p <= 1      
+                     && project r (cmp p) <= 1      
   unit = norm
 
 instance Figure Segment where

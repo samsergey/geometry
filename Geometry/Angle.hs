@@ -91,7 +91,7 @@ instance Manifold Angle where
 
   project an p = rad (p - angleStart an) / rad (angleValue an)
 
-  isContaining a p = let x = project a p in 0 <= x && x <= 1 
+  isContaining a p = let x = project a (asAffine p) in 0 <= x && x <= 1 
 
 
 instance Figure Angle where

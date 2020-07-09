@@ -1,4 +1,9 @@
 {-# Language ConstraintKinds            #-}
+<<<<<<< HEAD
+=======
+{-# Language FlexibleContexts           #-}
+{-# Language FlexibleInstances          #-}
+>>>>>>> d9bf64b18ea0239a4a286214f35e239c8c6ee892
 {-# Language GeneralizedNewtypeDeriving #-}
 {-# Language TypeFamilies               #-}
 
@@ -531,9 +536,9 @@ Here are some instances:
   project :: m -> Domain m -> Double
 
   -- | Returns `True` if point belongs to the manifold.
-  isContaining :: m -> Domain m -> Bool
-  isContaining c p = case projectMaybe c p >>= paramMaybe c  of
-                       Just p' -> p' `dist` p ~= 0
+  isContaining :: (Metric p, Affine p) => m -> p -> Bool
+  isContaining c p = case projectMaybe c (asAffine p) >>= paramMaybe c  of
+                       Just p' -> p' `distance` p ~= 0
                        Nothing -> False
 
   {- | Returns a point on a manifold for given parameter, or Nothing
@@ -667,20 +672,21 @@ class Curve c => ClosedCurve c where
   {-# MINIMAL location | isEnclosing #-}
   
   -- | Returns the location of a point with respect to the region.
-  location :: Affine a => c -> a -> PointLocation
-  location c p | isContaining c (asAffine p) = OnCurve
+  location :: (Metric a, Affine a) => c -> a -> PointLocation
+  location c p | isContaining c p = OnCurve
                | isEnclosing c p = Inside
                | otherwise = Outside
 
   -- | Returns `True` if point belongs to the region.
-  isEnclosing :: Affine a => c -> a -> Bool
+  isEnclosing :: (Metric a, Affine a) => c -> a -> Bool
   isEnclosing c p = location c p == Inside
 
 instance ClosedCurve c => ClosedCurve (Maybe c) where
   location = maybe (const Outside) location
   isEnclosing = maybe (const False) isEnclosing
   
--- | The type representing the relation /belongs to/ between an affine point and a curve.
+-- | The type representing the relation /belongs to/ between an affine point
+-- | and a curve.
 data PointLocation = Inside
                    | Outside
                    | OnCurve

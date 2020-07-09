@@ -30,12 +30,12 @@ class (Manifold a, Manifold b) => Intersections a b where
 intersections :: (Figure a, Figure b, Intersections a b)
   => a -> b -> [Cmp]
 intersections a b  
-  | isTrivial a = filter (isContaining b . asAffine) [refPoint a]
-  | isTrivial b = filter (isContaining a . asAffine) [refPoint b]
+  | isTrivial a = filter (isContaining b) [cmp $ refPoint a]
+  | isTrivial b = filter (isContaining a) [cmp $ refPoint b]
   | otherwise =
     nub $
-    filter (isContaining a . asAffine) $
-    filter (isContaining b . asAffine) $
+    filter (isContaining a) $
+    filter (isContaining b) $
     intersections' a b
 
 -- | Returns `True` if tho curves have intersection points.

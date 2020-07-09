@@ -1,19 +1,18 @@
 {-# Language TypeApplications #-}
+
+module LineSpec where
+
 import Test.Hspec
 import Test.QuickCheck
 import Test.Invariant
-
 import Data.Complex
 import Data.Fixed (mod')
 import Data.Maybe
-
 import Geometry
-import Testing
+import Geometry.Testing
 
-main :: IO ()
-main = hspec $
-  describe "Line" $ do
-
+spec :: Spec
+spec = describe "Line" $ do
     describe "Affinity" $ do
       it "1" $ (asCmp 1 :: Line) == Line (0,1)
       it "2" $ (asCmp 1 :: Ray) == Ray (0,1)
@@ -26,15 +25,15 @@ main = hspec $
       it "8" $ property $ \x -> cmp (asCmp x :: Segment) == x
       
     describe "parametrization" $ do
-      it "1" $ property $ \(AnyLine l) x -> (l @-> x) ->@ l ~== x
+      it "1" $ property $ \(AnyLine l) x -> (l @-> x) ->@ l ~= x
 
       it "2" $ property $ \(AnyLine l) x ->
         let p = l @-> x
-        in l @-> (p ->@ l) ~== p
+        in l @-> (p ->@ l) ~= p
 
-      it "3" $ line' @CN @CN 0 1 @-> 0 == 0
-      it "4" $ line' @CN @CN 0 2 @-> 1 == 2
-      it "5" $ line' @CN @CN 0 2 @-> 0.5 == 1
+      it "3" $ line' @Cmp @Cmp 0 1 @-> 0 == 0
+      it "4" $ line' @Cmp @Cmp 0 2 @-> 1 == 2
+      it "5" $ line' @Cmp @Cmp 0 2 @-> 0.5 == 1
 
       it "6" $ property $ \(AnyLine l) x ->
         isJust (l @->? x)
@@ -82,11 +81,11 @@ main = hspec $
       it "3.6" $ not $ aSegment `isContaining` ((3,0) :: XY)
 
     describe "tangent and family" $ do
-      it "1" $ angle (line' @CN @CN 0 (1:+1)) == 45
-      it "2" $ normal (line' @CN @CN 0 (1:+2)) 0 == asCmp ((-2):+1)
+      it "1" $ angle (line' @Cmp @Cmp 0 (1:+1)) == 45
+      it "2" $ normal (line' @Cmp @Cmp 0 (1:+2)) 0 == asCmp ((-2):+1)
 
     describe "unit" $ do
-      it "1" $ unit (line' @CN @CN 0 (3:+4)) == 5
+      it "1" $ unit (line' @Cmp @Cmp 0 (3:+4)) == 5
       it "2" $ unit (asCmp 1 :: Ray) == 1
       it "3" $ unit (asCmp 1 :: Segment) == 1
       it "4" $ property $ \l -> unit l == norm (l :: Line)
@@ -101,27 +100,27 @@ main = hspec $
       it "2" $ aLine # at (2,3) # along 90 == line (2,3) (2,4)
       it "3" $
         property $ \a p l ->
-                     let _ = (a :: Angular, p :: Point, l :: Line)
+                     let _ = (a :: Direction, p :: Point, l :: Line)
                      in l # at' p # along' a == l # along' a # at' p
 
     describe "extendToLength" $ 
       it "1" $ property $ \(AnySegment s) d ->
-        unit (s # extendToLength d) ~== abs d
+        unit (s # extendToLength d) ~= abs d
 
     describe "extendTo" $ do
       it "1" $ property $ \(AnySegment s) (AnyLine l) ->
         (asRay s `isIntersecting` l) ==>
-        l `isContaining` ((s #! extendTo l) @-> 1)
+        l `isContaining` ((s # extendTo l) @-> 1)
       it "2" $ property $ \(AnySegment s) (AnyCircle c) ->
         (asRay s `isIntersecting` c) ==>
-        c `isContaining` ((s #! extendTo c) @-> 1)
+        c `isContaining` ((s # extendTo c) @-> 1)
 
-    describe "heightTo" $ do
+    describe "heightTo" $
       it "1" $ property $ \(AnyPoint p) (AnyLine l) ->
-        not (l `isContaining` p) ==>
+        not (l `isContaining` cmp p) ==>
         fromMaybe False $ do
-          h <- p # heightTo l
-          return $ l `isContaining` (end h) && l `isOrthogonal` h
+          h <- l # heightFrom p
+          return $ l `isContaining` end h && l `isOrthogonal` h
 
       -- it "2" $ property $ \(AnyPoint p) (AnyCircle c) ->
       --   not (c `isContaining` p) ==>
@@ -134,14 +133,14 @@ main = hspec $
     describe "distanceTo" $ do
       it "1" $ origin `distanceTo` aLine == 0
       it "2" $ origin `distanceTo` (aLine # at (0,1)) == 1
-      it "3" $ origin `distanceTo` (aLine # at (0,1) # along 45) ~== 1/sqrt 2
+      it "3" $ origin `distanceTo` (aLine # at (0,1) # along 45) ~= 1/sqrt 2
       it "4" $ origin `distanceTo` aRay == 0
       it "5" $ origin `distanceTo` (aRay # at (3,4)) == 5
       it "6" $ origin `distanceTo` (aRay # at (-1,0)) == 0
       it "7" $ origin `distanceTo` aSegment == 0
-      it "8" $ origin `distanceTo` (aSegment # at (3,4)) ~== 5
-      it "9" $ origin `distanceTo` (aSegment # at (-2,0)) ~== 1
-      it "10" $ origin `distanceTo` segment (-1,0) (0,1) ~== 1/sqrt 2
+      it "8" $ origin `distanceTo` (aSegment # at (3,4)) ~= 5
+      it "9" $ origin `distanceTo` (aSegment # at (-2,0)) ~= 1
+      it "10" $ origin `distanceTo` segment (-1,0) (0,1) ~= 1/sqrt 2
       
     describe "intersections" $ do
       it "1" $
@@ -161,39 +160,39 @@ main = hspec $
       it "4.4" $ s `intersections` (s # rotate 90 # translate (1,1) ) == [1:+1]
       it "4.5" $ s `intersections` (s # rotate 90) == [0]
       it "4.6" $ s `intersections` (s # rotate 90 # translate (1.01,1.01) ) # null
-      it "4.7" $ s `intersections` (s # rotate 90 # translate (0.5,0.5) ) ~== [0.5:+0.5]
+      it "4.7" $ s `intersections` (s # rotate 90 # translate (0.5,0.5) ) ~= [0.5:+0.5]
 
       it "5.1" $
         property $ \(AnyLine l) (AnyRay r) ->
             if l `isCollinear` r
             then null (l `intersections` r) ||
-                 (r `intersections` l ~== [start r]
-                   && l `intersections` r ~== [start l])
-            else l `intersections` r ~== r `intersections` l
+                 (r `intersections` l ~= [start r]
+                   && l `intersections` r ~= [start l])
+            else l `intersections` r ~= r `intersections` l
 
       it "5.2" $
         property $ \(AnyLine l) (AnySegment s) ->
              if l `isCollinear` s
              then null (l `intersections` s) ||
-                  (s `intersections` l ~== [start s]
-                   && l `intersections` s ~== [start l])
-             else l `intersections` s ~== s `intersections` l
+                  (s `intersections` l ~= [start s]
+                   && l `intersections` s ~= [start l])
+             else l `intersections` s ~= s `intersections` l
 
       it "5.3" $
           property $ \(AnySegment s) (AnyRay r) ->
              if s `isCollinear` r
              then null (s `intersections` r) ||
-                  (r `intersections` s ~== [start r]
-                   && s `intersections` r ~== [start s])
-             else s `intersections` r ~== r `intersections` s
+                  (r `intersections` s ~= [start r]
+                   && s `intersections` r ~= [start s])
+             else s `intersections` r ~= r `intersections` s
 
     describe "clipping" $ do
-      it "1" $ (aLine # rotate 45) `clipBy` aSquare == [Segment (0, 1:+1)]
-      it "2" $ ((aLine # rotate 45 # at (0.5,0.5)) `clipBy` aSquare ==
-                [Segment (0, 1:+1)])
-      it "3" $ ((aRay # rotate 45 # at (0.5,0.5)) `clipBy` aSquare ==
-                [Segment (0.5:+0.5, 1:+1)])
-      it "4" $ ((aSegment # rotate 45 # at (0.1,0.1)) `clipBy` aSquare ==
-                [Segment (0.1:+0.1, 0.8071067811865475:+0.8071067811865475)])
-      it "5" $ ((aLine # rotate 45 # at (-0.5,0)) `clipBy` aSquare ==
-                [Segment (0:+0.5, 0.5:+1)])
+      it "1" $ aLine # rotate 45 # clipBy aSquare == [Segment (0, 1:+1)]
+      it "2" $ aLine # rotate 45 # at (0.5,0.5) # clipBy aSquare ==
+                [Segment (0, 1:+1)]
+      it "3" $ aRay # rotate 45 # at (0.5,0.5) # clipBy aSquare ==
+                [Segment (0.5:+0.5, 1:+1)]
+      it "4" $ aSegment # rotate 45 # at (0.1,0.1) # clipBy aSquare ==
+                [Segment (0.1:+0.1, 0.8071067811865475:+0.8071067811865475)]
+      it "5" $ aLine # rotate 45 # at (-0.5,0) # clipBy aSquare ==
+                [Segment (0:+0.5, 0.5:+1)]

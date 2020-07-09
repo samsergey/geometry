@@ -214,9 +214,6 @@ class Trans a where
   -- | The general linear transformation.
   transform :: TMatrix -> a -> a
 
-  transform' :: TMatrix -> a -> a
-  transform' t = transform (inv t)
-
 instance Trans Cmp where
   transform = transformCmp
 

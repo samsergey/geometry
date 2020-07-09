@@ -1,23 +1,14 @@
 {-# language FlexibleInstances, DeriveFunctor, DeriveFoldable, TupleSections #-}
+{-# language LambdaCase,FlexibleContexts #-}
 
 import Prelude hiding ((**))
 import Data.Semigroup
 import Data.Monoid
 import Data.List 
 import Data.Foldable
+import Data.Char
+import Control.Applicative
 
-data Optional b a = Ok a | Fail b
-  deriving Show
-
-instance Functor (Optional a) where
-  f `fmap` Ok x = Ok (f x)
-  _ `fmap` Fail y = Fail y
-
-instance Applicative (Optional a) where
-  pure = Ok
-  Ok f <*> Ok x = Ok (f x)
-  Fail y <*> _ = Fail y
-  _ <*> Fail y = Fail y
 
 infixr 5 :::
 data List a = Empty
@@ -141,9 +132,101 @@ instance (Functor h, Functor f, Functor g) => Functor (Compose3 h f g) where
 --unfoldr :: [a] <- b <- (Maybe (a, b) <- b)
 --foldr :: ((a, b) -> b) -> b -> [a] -> b
 
+-- cata 
 fromBase b = foldr (\d r -> r * b + d ) 0 . reverse
 
+-- ana
 toBase b = reverse . unfoldr go
   where go n = case n `divMod` b of
                 (0, 0) -> Nothing
                 (q, r) -> Just (r, q)
+
+--------------------------------------------------------------------------------
+
+data Result s a = Ok a s | Fail String s
+  deriving (Functor)
+
+instance (Show a, Show s) => Show (Result s a) where
+  show (Ok a s) = "Ok " <> show a <> " " <> show s
+  show (Fail m s) = "Parsing error: Expected " <> m <> " in " <> show s
+
+newtype Parser s a = Parser { run :: s -> Result s a }
+  deriving Functor 
+
+
+instance Semigroup a => Semigroup (Parser s a) where
+  p1 <> p2 = (<>) <$> p1 <*> p2
+
+instance Monoid a => Monoid (Parser s a) where
+  mempty = pure mempty
+
+instance Applicative (Parser s) where
+  pure = Parser . Ok
+  
+  pf <*> px = Parser $ \s -> case run pf s of
+                               Ok f s' -> run (f <$> px) s'
+                               Fail m x -> Fail m x
+
+instance Alternative (Parser s) where
+  empty = Parser $ Fail ""
+  
+  p1 <|> p2 = Parser $ \s -> case run p1 s of
+                               Fail _ _ -> run p2 s
+                               x -> x
+
+------------------------------------------------------------
+
+next = Parser $ \case [] -> Fail "Unexpected end of line" []
+                      (h : t) -> Ok h t
+
+test p = Parser $ \case (h:t) | p h -> Ok () (h:t)
+                        x -> Fail "" x
+
+infix 3 @?
+p @? n = Parser $ \s -> case run p s of
+                          Fail m x -> Fail n x
+                          x -> x
+
+------------------------------------------------------------
+
+char c = test (==c) *> next  @? "char " <> show c
+
+digit = test isDigit *> next  @? "digit"
+
+int :: Parser String Int
+int = read <$> some digit @? "integer number"
+
+string s = traverse char s @? s
+
+oneof p xs = (asum $ p <$> xs) @? "one of " <> show xs
+
+collect m p = fold <$> many ((m <$> p) <|> mempty <$ next)
+
+only = (:[])
+
+forAll m p = fold <$> many (only (m <$> p) <|> only next)
+
+sepBy p s = (:) <$> p <*> many (s *> p)
+
+spaces = many (char ' ')
+
+sp p = spaces *> p <* spaces
+
+data P = P Int String Bool deriving Show
+
+str = char '"' *> many (test (/= '"') *> next) <* char '"'
+
+bool = read <$> (string `oneof` ["True", "False"])
+
+pP = P <$> sp int
+       <*> sp str
+       <*> sp bool
+                                  
+csv p = (sp p `sepBy` char ',') `sepBy` char '\n'
+
+add,sub,mul :: Parser String (Int -> Int -> Int)
+add = (+) <$ char '+'
+sub = (-) <$ char '-'
+mul = (*) <$ char '*'
+
+------------------------------------------------------------

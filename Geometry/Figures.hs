@@ -14,7 +14,7 @@ module Geometry.Figures
   , line, line', ray, ray', segment, segment'
   , extendToLength, extendTo, normalSegment, heightFrom, clipBy
   , anAngle
-  , angleBetween, angleWithin, bisectrisse
+  , angleBetween, angleWithin, innerAngle, bisectrisse
   , supplementary, vertical, reflex
   , aTriangle, triangle2a, triangle3s, aRightTriangle
   , aSquare, aRectangle, space
@@ -258,7 +258,7 @@ through = through'
 normalTo :: (Curve c, Linear l) => c -> l -> Maybe l
 normalTo c l = turn <*> Just l
   where s = start l
-        turn = if c `isContaining` asAffine s
+        turn = if c `isContaining` s
                then along' . normal c <$> (s ->@? c)
                else along' . ray' s <$> (point' s # projectOn c)
 

@@ -16,7 +16,7 @@ module Geometry
   , Figure (..), Box
   -- ** Figures' size and bounding box corners.
   , figureHeight, figureWidth
---  , corner, left, right, lower, upper
+  , corner, left, right, lower, upper
   -- ** Point constructors
   , APoint(..), Point (..), Label (..)
   , origin
@@ -32,7 +32,7 @@ module Geometry
   -- ** Angle constructors
   , Angular (..), Angle(..)
   , anAngle
-  , angleBetween, angleWithin, bisectrisse
+  , angleBetween, angleWithin, innerAngle, bisectrisse
   , supplementary, vertical, reflex
   -- ** Polygon constructors
   , PiecewiseLinear (..)

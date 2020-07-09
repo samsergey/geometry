@@ -1,8 +1,10 @@
-{-# language FlexibleInstances, DeriveFunctor #-}
+{-# language FlexibleInstances, DeriveFunctor, DeriveFoldable, TupleSections #-}
 
+import Prelude hiding ((**))
 import Data.Semigroup
 import Data.Monoid
 import Data.List 
+import Data.Foldable
 
 data Optional b a = Ok a | Fail b
   deriving Show
@@ -61,3 +63,87 @@ instance Applicative (Func r) where
   Func rab <*> Func ra = Func rb
     where rb r = (rab r <$> ra) r
 
+data F a = F a | G (F a) (F a) deriving Show
+
+foldR :: Foldable t => (a -> b -> b) -> b -> t a -> b
+foldR f b as = fold as `appEndo` b
+  where fold = foldMap (Endo . f)
+
+foldL :: Foldable t => (b -> a -> b) -> b -> t a -> b
+foldL f b as = fold as `appEndo` b
+  where fold = getDual . foldMap (Dual . Endo . flip f)
+
+data BT a = BLeaf a | BNode (BT a) (BT a) deriving Show
+
+instance Foldable BT where
+  foldMap m t = case t of
+    BLeaf x -> m x
+    BNode l r -> foldMap m l <> foldMap m r
+
+data RT b a = Leaf a | Node b [RT b a] 
+  deriving (Show, Functor, Foldable)
+
+-- instance Foldable (RT b) where
+--   foldMap m t = case t of
+--     Leaf x -> m x
+--     Node b xs -> foldMap (foldMap m) xs
+
+infix 3 <&>
+
+class Functor f => Monoidal f where
+  pure' :: a -> f a
+  pure' x = x <$ unit
+
+  (<&>) :: f (a -> b) -> f a -> f b
+  fab <&> fa = uncurry ($) <$> (fab ** fa)
+
+  unit :: f ()
+  unit = pure' ()
+
+  (**) :: f a -> f b -> f (a, b)
+  fa ** fb = (,) <$> fa <&> fb
+
+instance Monoidal Maybe where
+  unit = Just ()
+  Just x ** Just y = Just (x, y)
+  _ ** _ = Nothing
+
+instance Monoidal [] where
+  unit = [()]
+  xs ** ys = foldMap (\x -> (x,) <$> ys) xs
+
+instance Monoidal ((->) r)  where
+  unit = const ()
+  f ** g = \r -> (f r, g r)
+
+data Unit a = Unit deriving Show
+
+instance Functor Unit where
+  fmap _ Unit = Unit
+
+newtype Compose f g a = Compose { getCompose :: f (g a) }
+  deriving (Show)
+
+instance (Functor f, Functor g) => Functor (Compose f g) where
+  fmap f = Compose . (fmap . fmap) f . getCompose
+
+newtype Compose3 h f g a = Compose3 { getCompose3 :: h (f (g a)) }
+  deriving (Show)
+
+instance (Functor h, Functor f, Functor g) => Functor (Compose3 h f g) where
+  fmap f = Compose3 . (fmap . fmap . fmap) f . getCompose3
+
+(<$$>) :: (Functor f0, Functor f1, Functor f2) 
+       => (a -> b) -> f0 (f1 (f2 a)) -> f0 (f1 (f2 b))
+(<$$>) = fmap . fmap . fmap 
+
+
+--unfoldr :: [a] <- b <- (Maybe (a, b) <- b)
+--foldr :: ((a, b) -> b) -> b -> [a] -> b
+
+fromBase b = foldr (\d r -> r * b + d ) 0 . reverse
+
+toBase b = reverse . unfoldr go
+  where go n = case n `divMod` b of
+                (0, 0) -> Nothing
+                (q, r) -> Just (r, q)

@@ -1,9 +1,8 @@
-{-# Language FlexibleInstances #-}
+{-# Language DerivingVia                #-}
+{-# Language FlexibleInstances          #-}
 {-# Language GeneralizedNewtypeDeriving #-}
-{-# Language DerivingVia #-}
-{-# Language StandaloneDeriving #-}
-{-# Language MultiParamTypeClasses #-}
-{-# Language UndecidableInstances #-}
+{-# Language MultiParamTypeClasses      #-}
+{-# Language UndecidableInstances       #-}
 
 module Geometry.Testing where
 
@@ -49,7 +48,7 @@ instance (Eq a, Pnt a, Arbitrary a) =>
 
 shrinkPos :: (Eq a, Affine a, Metric a) => Double -> a -> [a]
 shrinkPos d x = res
-  where res = filter (\y -> not (y == x)) $
+  where res = filter (/= x) $
               map (roundUp d) $
               takeWhile (\p -> distance x p >= d/2) $
               map (\s -> asCmp $ (1 - s) * cmp x) $
@@ -73,7 +72,7 @@ newtype AnyPoint = AnyPoint Point
 instance Arbitrary Circle where
   arbitrary = do (Position c) <- arbitrary
                  (Position r) <- arbitrary :: Gen (Position Cmp)
-                 return $ (mkCircle (norm r) c # rotateAt' c (angle r))
+                 return (mkCircle (norm r) c # rotateAt' c (angle r))
                  
   shrink cir =
     do Position c <- shrink (Position (center cir))
@@ -88,9 +87,7 @@ newtype AnyCircle = AnyCircle Circle
 
 instance Arbitrary Angle where
   arbitrary = do (Position p) <- arbitrary
-                 s <- arbitrary
-                 e <- arbitrary
-                 return $ Angle p s e
+                 Angle p <$> arbitrary <*> arbitrary
                  
   shrink an =
     do Position p <- shrink (Position (refPoint an))

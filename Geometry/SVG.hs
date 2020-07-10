@@ -6,14 +6,15 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# language DerivingVia #-}
 {-# language StandaloneDeriving #-}
+{-# language ApplicativeDo #-}
 
 -- | This module defines representation of all figures as SVG elements. as well as default style settings.
 module Geometry.SVG
-  ( Groupable, Group (..)
-  , (<+>), group
+  ( Groupable, Group (..) 
+  , (<+>), group, row
   , (<||>), beside, above
   , SVGable (..), SVGContext(..)
-  , showSVG, put, chart
+  , showSVG
   ) where
 
 import Prelude hiding (writeFile, unwords)
@@ -25,9 +26,9 @@ import Graphics.Svg.Attributes
 import Data.Complex
 import Data.Monoid
 import Data.Maybe
-import Data.Text (Text, pack, unwords)
+import Data.Text (Text, pack)
 import qualified Data.Text.Lazy as LT
-import Data.Double.Conversion.Text (toShortest, toPrecision)
+import Data.Double.Conversion.Text (toShortest)
 
 import Geometry.Base
 import Geometry.Decorations
@@ -105,9 +106,9 @@ attributes f ctx = mconcat fmt . getOptions $ opts
           , attr optThickness Stroke_width_
           , attr optDashing Stroke_dasharray_ ]
 
-attr :: (Option -> Maybe String) -> AttrTag -> [Option] -> [Attribute]
-attr opt a x = maybeToList $ (\s -> a <<- pack s) <$> find opt x
-  where find p = getFirst . foldMap (First . p)
+    attr opt a x = maybeToList $ (\s -> a <<- pack s) <$> findOp opt x
+    findOp p = getFirst . foldMap (First . p)
+    
 ------------------------------------------------------------
 
 instance SVGable Point where
@@ -150,10 +151,10 @@ instance SVGable Ray where
     foldMap (toSVG . relabel) $ clipBy bx r 
 
 instance SVGable Segment where
-  toSVG s = elem . attr <> labelElement s
+  toSVG s = element . attr <> labelElement s
     where
       (a, b) = refPoints s
-      elem = if isTrivial s then mempty else line_
+      element = if isTrivial s then mempty else line_
       attr = attributes s <>
              const [ X1_ <<- fmtSVG (getX a)
                    , Y1_ <<- fmtSVG (getY a)
@@ -197,11 +198,11 @@ instance SVGable Angle where
     where
       an = reflex an'
       t = extractOption optLabelText (figureOptions ctx)
-      label = case t of
+      labelText = case t of
         Just "#" -> show (angleValue an)
-        Just s -> s
+        Just v -> v
         Nothing -> ""
-      ctx' = updateOptions (options an <> mkOptions [LabelText label]) ctx
+      ctx' = updateOptions (options an <> mkOptions [LabelText labelText]) ctx
       Just ns = extractOption optMultiStroke (figureOptions ctx')
       Angle p s e = an
       rays = mkPolyline [p + cmp s, p, p + cmp e] # scaleAt' p 20
@@ -273,11 +274,8 @@ infixl 3 <+>
 (<+>) :: (Groupable a, Groupable b) => a -> b -> Group
 a <+> b = G a <> G b
 
-put x = (G x, x)
-chart = fst
-
 instance Trans Group where
-  transform t EmptyFig = EmptyFig
+  transform _ EmptyFig = EmptyFig
   transform t (G f) = G $ transform t f 
   transform t (Append x xs) = Append (transform t x) (transform t xs)
 
@@ -334,7 +332,7 @@ infixl 2 <||>
 above :: (Groupable a, Groupable b) => a -> b -> Group
 above f1 f2 = f2 <+> f1 # superpose (refPoint f2) (left . upper . corner $ f2)
 
-
+row fs = foldl beside EmptyFig fs
 ------------------------------------------------------------
 
 -- | The record containing image parameters and options.

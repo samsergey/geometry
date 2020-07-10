@@ -9,8 +9,8 @@ module Geometry
   writeSVG, showSVG,
   -- * Grouping combinators
   (<+>), group, beside, above, (<||>)
+  , row
   , Groupable, Group (..)
---  , put, charty
   -- * Constructors for geometric objects
   -- ** Figures
   , Figure (..), Box

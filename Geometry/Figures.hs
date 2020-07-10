@@ -218,6 +218,12 @@ heightFrom p c = (aSegment # at' p # normalTo c) >>= extendTo c
 
 {- | Returns a list of segments as a result of clipping the line by a closed curve.
 
+> let star = polarPoly (\x -> 2 + cos (5*x)) [0,0.1..1] # closePolyline
+>     rs =  [ aSegment # scale 3 # rotate 35 # at (-1, x)
+>           | x <- [-4,-3.5..4] ]
+> in star <+> foldMap (group . clipBy star) rs
+
+<< figs/clipBy.svg >>
 -}
 clipBy :: (Linear l, Intersections l c, ClosedCurve c)
        => c -> l -> [Segment]
@@ -408,6 +414,8 @@ parametricPoly f range =
   mkPolyline [ x :+ y | t <- range , let (x,y) = f t ]
 
 {- | Constructs a polar graph as a `Polyline`.
+
+> polarPoly (\x -> 2 + cos (5*x)) [0,0.1..1] # closePolyline
 
 << figs/polarPoly.svg >>
 -}

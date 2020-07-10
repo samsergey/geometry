@@ -3,8 +3,6 @@
 module Geometry.DocFigs where
 
 import Geometry
-import Data.Complex
-import Data.Functor.Const
 
 path = ".stack-work/dist/x86_64-linux-nix/Cabal-3.0.1.0/doc/html/geometry/figs/"
 
@@ -142,6 +140,19 @@ docFigs = do
         p = intersectionPoints s1 s2
     in t <+> s1 <+> s2 <+> s3 <+> group p
 
+  writeSVG 300 (path <> "clipBy.svg") $
+    let star = polarPoly (\x -> 2 + cos (5*x)) [0,0.1..1] # closePolyline
+        rs =  [ aSegment # scale 3 # rotate 35 # at (-1, x)
+              | x <- [-4,-3.5..4] ]
+    in star <+> foldMap (group . clipBy star) rs
+
+  writeSVG 300 (path <> "polarPoly.svg") $
+    polarPoly (\x -> 2 + cos (5*x)) [0,0.1..1] # closePolyline
+
+  writeSVG 300 (path <> "triangle2a.svg") $
+    row $ triangle2a 60 <$> [10,20..80]
+
+
   fractals
   plots
 
@@ -183,3 +194,5 @@ fractals = do
   writeSVG 300 (path <> "serp.svg") $
     let tr t = t `above` (t `beside` t)
     in G aCircle # iterate tr # take 5 # mconcat # rotate 225 # scaleX 0.6
+
+  

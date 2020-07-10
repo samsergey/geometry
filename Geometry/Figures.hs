@@ -216,8 +216,10 @@ heightFrom :: (Affine p, Curve c, Intersections Ray c)
            => p -> c -> Maybe Segment
 heightFrom p c = (aSegment # at' p # normalTo c) >>= extendTo c
 
--- | Returns a list of segments as a result of clipping the line by a closed curve.
-clipBy :: (Linear l, Intersections l c, Figure c, ClosedCurve c)
+{- | Returns a list of segments as a result of clipping the line by a closed curve.
+
+-}
+clipBy :: (Linear l, Intersections l c, ClosedCurve c)
        => c -> l -> [Segment]
 clipBy c l = filter internal $ Segment <$> zip ints (tail ints) 
   where

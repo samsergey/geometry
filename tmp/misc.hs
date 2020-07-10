@@ -176,6 +176,9 @@ instance Alternative (Parser s) where
 
 ------------------------------------------------------------
 
+put x = Parser $ \s -> Ok x x
+get = Parser $ \s -> Ok s s
+
 next = Parser $ \case [] -> Fail "Unexpected end of line" []
                       (h : t) -> Ok h t
 
@@ -210,6 +213,12 @@ sepBy p s = (:) <$> p <*> many (s *> p)
 
 spaces = many (char ' ')
 
+chainr p op = p <**> fmany (op <*> p)
+  where fmany x = appEndo . foldMap Endo <$> many x
+
+chainl p op = p <**> fmany (flip <$> op <*> p)
+  where fmany x = appEndo . getDual . foldMap (Dual . Endo) <$> many x
+
 sp p = spaces *> p <* spaces
 
 data P = P Int String Bool deriving Show
@@ -218,15 +227,47 @@ str = char '"' *> many (test (/= '"') *> next) <* char '"'
 
 bool = read <$> (string `oneof` ["True", "False"])
 
-pP = P <$> sp int
-       <*> sp str
-       <*> sp bool
+pPerson = P <$> sp int
+          <*> sp str
+          <*> sp bool
                                   
 csv p = (sp p `sepBy` char ',') `sepBy` char '\n'
 
-add,sub,mul :: Parser String (Int -> Int -> Int)
-add = (+) <$ char '+'
-sub = (-) <$ char '-'
-mul = (*) <$ char '*'
+--add,sub,mul :: Parser String (Int -> Int -> Int)
+-- add = (+) <$ char '+'
+-- sub = (-) <$ char '-'
+-- mul = (*) <$ char '*'
+-- frac = div <$ char '/'
+-- neg = negate <$ char '-'
+-- number = int
 
-------------------------------------------------------------
+-- add = (\x y -> x <> y <> ["+"]) <$ char '+'
+-- sub = (\x y -> x <> y <> ["-"]) <$ char '-'
+-- mul = (\x y -> x <> y <> ["*"]) <$ char '*'
+-- frac = (\x y -> x <> y <> ["/"]) <$ char '/'
+-- neg = (\x -> x <> ["n"]) <$ char '-'
+-- number = only . show <$> int
+
+add = Add <$ char '+'
+sub = Sub <$ char '-'
+mul = Mul <$ char '*'
+frac = Div <$ char '/'
+neg = Neg <$ char '-'
+number = N <$> int
+
+data Exp a = N a
+           | Add (Exp a) (Exp a)
+           | Sub (Exp a) (Exp a)
+           | Mul (Exp a) (Exp a)
+           | Div (Exp a) (Exp a)
+           | Neg (Exp a)
+  deriving (Show, Functor)
+
+
+pE = chainl pT (add <|> sub)
+pT = chainl pP (mul <|> frac)
+pP = number <|> (char '(' *> pE <* char ')' ) <|> (neg <*> pP)
+
+--------------------------------------------------------------------------------
+
+

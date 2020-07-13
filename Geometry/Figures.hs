@@ -115,7 +115,7 @@ projectOn c p = pointOn c <$> (p ->@? c)
 
 > let p1 = regularPoly 7
 >     c = aCircle
-> in p1 <+> c <+> group (intersectionPoints c p1)
+> in p1 <+> c <+> intersectionPoints c p1
 << figs/intersectionPoints.svg >>
 -}
 intersectionPoints :: ( Curve a, Curve b, Intersections a b )
@@ -191,9 +191,9 @@ aRay = asCmp 1
 
 {- | Returns a line, ray or a segment with given unit, in case of a segment -- with given length.
 
-> group [aSegment # rotate x # extendToLength r
->       | x <- [0,5..360] 
->       , let r = 2 + sin (7 * rad x) ]
+> [ aSegment # rotate x # extendToLength r
+> | x <- [0,5..360] 
+> , let r = 2 + sin (7 * rad x) ]
 << figs/extendToLength.svg >>
 -}
 extendToLength :: Double -> Segment -> Segment
@@ -205,8 +205,8 @@ extendToLength l s = s # through' (paramL l (asLine s))
 >     s1 = aSegment # at (1,1)
 >     s2 = aSegment # at (0.3,0.3)
 > in t <+>
->    group [s1 # along a # extendTo t | a <- [0,10..360] ] <+>
->    group [s2 # along a # extendTo t | a <- [0,10..360] ]
+>    [ s1 # along a # extendTo t | a <- [0,10..360] ] <+>
+>    [ s2 # along a # extendTo t | a <- [0,10..360] ]
 << figs/extendTo.svg >>
 -}
 extendTo :: (Curve c, Intersections Ray c)
@@ -233,7 +233,7 @@ heightFrom p c = (aSegment # at' p # normalTo c) >>= extendTo c
 > let star = polarPoly (\x -> 2 + cos (5*x)) [0,0.1..1] # closePolyline
 >     rs =  [ aSegment # scale 3 # rotate 35 # at (-1, x)
 >           | x <- [-4,-3.5..4] ]
-> in star <+> foldMap (group . clipBy star) rs
+> in star <+> foldMap (clipBy star) rs
 g
 << figs/clipBy.svg >>
 -}
@@ -271,8 +271,8 @@ through = through'
 
 > let c = Plot $ (\t -> t :+ sin t) . (*6)
 > in c <+>
->    group [ aSegment # at (x,0) # normalTo c
->          | x <- [0,1..7] ]
+>     [ aSegment # at (x,0) # normalTo c
+>     | x <- [0,1..7] ]
 << figs/normalTo.svg >>
 -}
 normalTo :: (Curve c, Linear l) => c -> l -> Maybe l
@@ -464,7 +464,7 @@ aRectangle a b = aSquare # scaleX a . scaleY b
 {- | Returns a triangle with base 1 and two given angles.
 
 > -- a family of triangles, sharing one side and opposite vertex angle value (30°)
-> group [ triangle2a a (150-a) #: thin | a <- [10,20..170] ]
+> [ triangle2a a (150-a) #: thin | a <- [10,20..170] ]
 
 << figs/triangle2a.svg >>
 -}
@@ -477,6 +477,9 @@ triangle2a a1 a2 = case intersections r1 r2 of
 
 {- | Returns a triangle with given three sides.
 
+> -- a family of triangles, sharing two sides
+> [ triangle3s 10 a 9 #: thin | a <- [2..18] ]
+
 << figs/triangle3s.svg >>
 -}
 triangle3s :: Double -> Double -> Double -> Maybe Triangle
@@ -486,8 +489,14 @@ triangle3s a b c = case intersections c1 c2 of
   where c1 = aCircle # scale b
         c2 = aCircle # scale c # at (a, 0)
 
+
+
 {- | A isosceles right triangle with unit side.
-<< figs/rightTriangle.svg >>
+
+> [ aRightTriangle # scaleX a # scaleY (10-a) #: thin
+> | a <- [0.5,1..10] ]
+
+<< figs/aRightTriangle.svg >>
 -}
 aRightTriangle = RightTriangle $ triangle2a 90 45
   
@@ -510,7 +519,15 @@ altitude v s p = heightFrom (vertex v p) (asLine (side s p)) # fromJust
 
 ------------------------------------------------------------
 
--- | Creates a scale as a list of labeled points on a given curve
+{- | Creates a scale as a list of labeled points on a given curve
+
+> let p = polarPoly id [0,0.1..1]
+>     sc = linearScale (round . (*10)) [0,0.1..1] p
+> in p <+> sc
+
+
+<< figs/linearScale.svg>>
+-}
 linearScale :: (Show s, Curve c)
             => (Double -> s) -- ^ labeling function
             -> [Double] -- ^ range of the curve parameter
@@ -522,9 +539,9 @@ linearScale fn rng c = [ pointOn c x #:: label (show (fn x))
 {- | Creates a circular integer scale, representing modular arithmetics.
 
 > let c  = aCircle # rotate 90
->     s1 = group $ modularScale 12 c
+>     s1 = modularScale 12 c
 >     t  = aTriangle # scale 2
->     s2 = group $ modularScale 9 t
+>     s2 = modularScale 9 t
 > in (c <+> s1) `beside` space 1 `beside` (s2 <+> t)
 << figs/modularScale.svg>>
 -}
@@ -582,6 +599,7 @@ instance WithOptions Polyline where
 
 deriving via Polyline instance WithOptions Polygon
 deriving via Polyline instance WithOptions Triangle
+deriving via Triangle instance WithOptions RightTriangle
 deriving via Polyline instance WithOptions Rectangle
 
 instance WithOptions Angle where

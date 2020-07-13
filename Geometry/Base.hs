@@ -216,18 +216,19 @@ class Trans a where
   -- | The general linear transformation.
   transform :: TMatrix -> a -> a
 
-instance Trans Cmp where
+instance
+  {-# OVERLAPPABLE #-}
+  (Functor f, Trans a) => Trans (f a) where
+  transform  = fmap . transform
+
+instance {-# OVERLAPPING #-} Trans Cmp where
   transform = transformCmp
 
-instance Trans XY where
+instance {-# OVERLAPPING #-} Trans XY where
   transform  = transformXY
 
 instance Trans Direction where
   transform t  = asCmp . transformCmp t . cmp
-
-instance Trans a => Trans (Maybe a) where
-  transform  = fmap . transform
-
 
 -- | Returns @1@ if transformation preserves curve orientation, and @-1@ otherwise.
 transformOrientation :: TMatrix -> Double
@@ -724,9 +725,13 @@ instance Bounded Double where
   minBound = -1/0
   maxBound = 1/0
 
-instance Figure f => Figure (Maybe f) where
-  box = maybe mempty box
-  isTrivial  = maybe False isTrivial
+-- instance Figure f => Figure (Maybe f) where
+--   box = maybe mempty box
+--   isTrivial  = maybe False isTrivial
+
+instance {-# OVERLAPPABLE #-} (Functor t, Foldable t, Figure f) => Figure (t f) where
+  box = foldMap box
+  isTrivial = null
 
 -- | Returns the total width of the figure.
 figureWidth :: Figure f => f -> Double

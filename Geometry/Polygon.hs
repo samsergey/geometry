@@ -65,7 +65,7 @@ class (Trans p, Manifold p) => PiecewiseLinear p where
   -- | The indexed selector for sides of a polyline.
   side :: Int -> p -> Segment
   side i p = segments p !! j
-    where j = (0 `max` i) `min` (n - 1)
+    where j = (0 `max` i) `min` (n - 2)
           n = verticesNumber p         
 
   -- | The list of angles of a polyline.

@@ -76,9 +76,11 @@ class WithOptions a where
   defaultOptions :: a -> Options
   defaultOptions _ = mempty
 
-instance WithOptions a => WithOptions (Maybe a) where
-  options = maybe mempty options
-  setOptions o f = setOptions o <$> f
+instance
+  {-# OVERLAPPABLE #-}
+  (Functor t, Foldable t, WithOptions a) => WithOptions (t a) where
+  options = foldMap options
+  setOptions o a = setOptions o <$> a
 
 ------------------------------------------------------------
 
@@ -99,7 +101,7 @@ instance Monad Decorated where
     let Decorated (d', y) = f x
     in Decorated (d <> d', y)
 
-instance WithOptions (Decorated a) where
+instance {-# OVERLAPPING #-} WithOptions (Decorated a) where
   options (Decorated (o, _)) = o
   setOptions o' f = Decorated (o', id) <*> f
 
@@ -122,7 +124,7 @@ instance Affine a => Affine (Decorated a) where
   cmp = cmp . fromDecorated
   asCmp = pure . asCmp
 
-instance Trans a => Trans (Decorated a) where
+instance {-# OVERLAPPING #-}  Trans a => Trans (Decorated a) where
   transform t = fmap (transform t)
 
 instance Manifold m => Manifold (Decorated m) where
@@ -142,7 +144,7 @@ instance ClosedCurve c => ClosedCurve (Decorated c) where
   isEnclosing = isEnclosing . fromDecorated
   location = location . fromDecorated
 
-instance Figure a => Figure (Decorated a) where
+instance {-# OVERLAPPING #-} Figure a => Figure (Decorated a) where
   isTrivial = isTrivial . fromDecorated
   refPoint = refPoint . fromDecorated
   box = box . fromDecorated

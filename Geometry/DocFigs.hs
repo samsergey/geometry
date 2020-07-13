@@ -33,11 +33,17 @@ docFigs = do
        a #: "a" <+> b #: "b"
 
   writeSVG 400 (path <> "modularScale.svg") $
-    let c = aCircle # rotate 90
-        s1 = group $ modularScale 12 c
-        t = aTriangle # scale 2
-        s2 = group $ modularScale 9 t
+    let c  = aCircle # rotate 90
+        s1 = modularScale 12 c
+        t  = aTriangle # scale 2
+        s2 = modularScale 9 t
     in (c <+> s1) `beside` space 0.3 `beside` (s2 <+> t)
+
+  writeSVG 400 (path <> "linearScale.svg") $
+    let p = polarPoly id [0,0.1..1]
+        sc = linearScale (round . (*10)) [0,0.1..1] p
+    in p <+> sc
+
 
   writeSVG 300 (path <> "points.svg") $
     aPoint #: "O" <+>
@@ -53,15 +59,15 @@ docFigs = do
   writeSVG 300 (path <> "intersectionPoints.svg") $
     let p = regularPoly 7
         c = aCircle # scale 0.95
-    in p <+> c <+> group (intersectionPoints c p)
+    in p <+> c <+> intersectionPoints c p
 
   writeSVG 400 (path <> "extendTo.svg") $
     let t = aTriangle
         s1 = aSegment # at (1,1)
         s2 = aSegment # at (0.3,0.3)
     in t <+>
-       group [s1 # along a # extendTo t | a <- [0,10..360] ] <+>
-       group [s2 # along a # extendTo t | a <- [0,10..360] ]
+       [s1 # along a # extendTo t | a <- [0,10..360] ] <+>
+       [s2 # along a # extendTo t | a <- [0,10..360] ]
 
   writeSVG 300 (path <> "groups.svg") $
     group $ take 10 $ iterate (rotate 3 . scale 1.1) $ regularPoly 3
@@ -72,10 +78,10 @@ docFigs = do
   writeSVG 300 (path <> "above.svg") $
     aTriangle `above` aSquare
 
-  writeSVG 400 (path <> "extendToLength.svg") $
-   group [aSegment # rotate x # extendToLength r
-         | x <- [0,5..360] 
-         , let r = 2 + sin (7 * rad x) ]
+  writeSVG 400 (path <> "extendToLength.svg") 
+    [ aSegment # rotate x # extendToLength r
+    | x <- [0,5..360] 
+    , let r = 2 + sin (7 * rad x) ]
 
   writeSVG 300 (path <> "on.svg") $
    let c = aCircle
@@ -138,19 +144,26 @@ docFigs = do
         s2 = t # altitude 1 2 #: thin <> white
         s3 = t # altitude 2 3 #: thin <> white
         p = intersectionPoints s1 s2
-    in t <+> s1 <+> s2 <+> s3 <+> group p
+    in t <+> s1 <+> s2 <+> s3 <+> p
 
   writeSVG 300 (path <> "clipBy.svg") $
     let star = polarPoly (\x -> 2 + cos (5*x)) [0,0.1..1] # closePolyline
         rs =  [ aSegment # scale 3 # rotate 35 # at (-1, x)
               | x <- [-4,-3.5..4] ]
-    in star <+> foldMap (group . clipBy star) rs
+    in star <+> foldMap (clipBy star) rs
 
   writeSVG 300 (path <> "polarPoly.svg") $
     polarPoly (\x -> 2 + cos (5*x)) [0,0.1..1] # closePolyline
 
   writeSVG 350 (path <> "triangle2a.svg") $
-    group [ triangle2a a (150-a) #: thin | a <- [10,20..170] ]
+    [ triangle2a a (150-a) #: thin | a <- [10,20..170] ]
+
+  writeSVG 350 (path <> "triangle3s.svg") $
+    [ triangle3s 10 a 9 #: thin | a <- [2..18] ]
+
+  writeSVG 350 (path <> "aRightTriangle.svg") $
+    [ aRightTriangle # scaleX a # scaleY (11-a) #: thin
+    | a <- [0.5,1..10.5] ]
 
   fractals
   plots
@@ -159,8 +172,8 @@ plots = do
   writeSVG 400 (path <> "normalTo.svg") $
    let p = plot (\t -> (t, sin t)) # range (0,7) #: white
    in p <+>
-      group [ aSegment # at (x,0) # normalTo p
-            | x <- [0,0.3..7] ]
+       [ aSegment # at (x,0) # normalTo p
+       | x <- [0,0.3..7] ]
 
   writeSVG 300 (path <> "plot.svg") $
     let p1 = plot (\t -> (t, abs (sin t)))

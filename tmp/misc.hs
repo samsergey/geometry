@@ -1,5 +1,6 @@
 {-# language FlexibleInstances, DeriveFunctor, DeriveFoldable, TupleSections #-}
 {-# language LambdaCase,FlexibleContexts #-}
+{-# language DeriveTraversable,TupleSections #-}
 
 import Prelude hiding ((**))
 import Data.Semigroup
@@ -317,29 +318,29 @@ get = Prog $ \s -> (s, s)
 modify f = Prog $ \s -> ((), f s)
 
 data Tree a = Leaf a | Node (Tree a) (Tree a)
-  deriving Show
+  deriving (Show, Traversable, Foldable, Functor)
 
-execProg p = fst . runProg p
-evalProg p = snd . runProg p
+execProg s p = fst $ runProg p s
+evalProg s p = snd $ runProg p s
 
 tree 0 = modify (+1) *> (Leaf <$> get)
 tree n = Node <$> tree (n-1) <*> tree (n-1)
 
-nextRND k = Prog $ \x -> (x `mod` k, (x * a + c) `mod` m)
+nextRND k = do x <- get
+               put $ (x * a + c) `mod` m
+               return $ x `mod` k
   where (a, c, m) = (141, 28411, 134456)
 
 nextRNDF = (\r -> fromIntegral r / 1000) <$> nextRND 1000
 
 randomPair = (,) <$> nextRNDF <*> nextRNDF
 
-randTree n = execProg (prog n) 42
+randTree n = execProg 42 $ prog n
   where prog 0 = Leaf <$> nextRND 100
         prog n = Node <$> prog (n-1) <*> prog (n-1)
 
-montePi n = execProg prog
+montePi n s = execProg s prog
   where
     countMatches = length . filter (\(x, y) -> sqrt (x*x + y*y) < 1)
     prog = countMatches <$> sequenceA (replicate n randomPair)
           
-
-

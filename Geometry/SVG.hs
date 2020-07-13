@@ -180,6 +180,7 @@ instance SVGable Polygon where
              const [ Points_ <<- foldMap fmtSVG (vertices p) ]
 
 deriving via Polygon instance SVGable Triangle
+deriving via Triangle instance SVGable RightTriangle
 deriving via Polygon instance SVGable Rectangle
 
 ------------------------------------------------------------

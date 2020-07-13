@@ -463,6 +463,9 @@ aRectangle a b = aSquare # scaleX a . scaleY b
 
 {- | Returns a triangle with base 1 and two given angles.
 
+> -- a family of triangles, sharing one side and opposite vertex angle value (30°)
+> group [ triangle2a a (150-a) #: thin | a <- [10,20..170] ]
+
 << figs/triangle2a.svg >>
 -}
 triangle2a :: Direction -> Direction -> Triangle

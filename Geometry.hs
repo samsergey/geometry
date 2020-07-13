@@ -9,7 +9,7 @@ module Geometry
   writeSVG, showSVG,
   -- * Grouping combinators
   (<+>), group, beside, above, (<||>)
-  , row
+  , row, rowSep
   , Groupable, Group (..)
   -- * Constructors for geometric objects
   -- ** Figures

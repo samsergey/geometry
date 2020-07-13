@@ -11,7 +11,7 @@
 -- | This module defines representation of all figures as SVG elements. as well as default style settings.
 module Geometry.SVG
   ( Groupable, Group (..) 
-  , (<+>), group, row
+  , (<+>), group, row, rowSep
   , (<||>), beside, above
   , SVGable (..), SVGContext(..)
   , showSVG
@@ -332,7 +332,14 @@ infixl 2 <||>
 above :: (Groupable a, Groupable b) => a -> b -> Group
 above f1 f2 = f2 <+> f1 # superpose (refPoint f2) (left . upper . corner $ f2)
 
-row fs = foldl beside EmptyFig fs
+--
+row :: Groupable f => [f] -> Group
+row [] = EmptyFig
+row fs = foldl1 beside (G <$> fs)
+
+rowSep :: (Groupable s, Groupable f) => s -> [f] -> Group
+rowSep s [] = EmptyFig
+rowSep s fs = foldl1 (\g f -> g `beside` s `beside` f) (G <$> fs)
 ------------------------------------------------------------
 
 -- | The record containing image parameters and options.

@@ -149,9 +149,8 @@ docFigs = do
   writeSVG 300 (path <> "polarPoly.svg") $
     polarPoly (\x -> 2 + cos (5*x)) [0,0.1..1] # closePolyline
 
-  writeSVG 300 (path <> "triangle2a.svg") $
-    row $ triangle2a 60 <$> [10,20..80]
-
+  writeSVG 350 (path <> "triangle2a.svg") $
+    group [ triangle2a a (150-a) #: thin | a <- [10,20..170] ]
 
   fractals
   plots
@@ -194,5 +193,3 @@ fractals = do
   writeSVG 300 (path <> "serp.svg") $
     let tr t = t `above` (t `beside` t)
     in G aCircle # iterate tr # take 5 # mconcat # rotate 225 # scaleX 0.6
-
-  

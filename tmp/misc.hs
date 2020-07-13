@@ -8,7 +8,7 @@ import Data.List
 import Data.Foldable
 import Data.Char
 import Control.Applicative
-
+import Control.Monad
 
 infixr 5 :::
 data List a = Empty
@@ -70,9 +70,6 @@ instance Foldable BT where
   foldMap m t = case t of
     BLeaf x -> m x
     BNode l r -> foldMap m l <> foldMap m r
-
-data RT b a = Leaf a | Node b [RT b a] 
-  deriving (Show, Functor, Foldable)
 
 -- instance Foldable (RT b) where
 --   foldMap m t = case t of
@@ -176,9 +173,6 @@ instance Alternative (Parser s) where
 
 ------------------------------------------------------------
 
-put x = Parser $ \s -> Ok x x
-get = Parser $ \s -> Ok s s
-
 next = Parser $ \case [] -> Fail "Unexpected end of line" []
                       (h : t) -> Ok h t
 
@@ -219,11 +213,13 @@ chainr p op = p <**> fmany (op <*> p)
 chainl p op = p <**> fmany (flip <$> op <*> p)
   where fmany x = appEndo . getDual . foldMap (Dual . Endo) <$> many x
 
+between [ch1, ch2] p = char ch1 *> p <* char ch2
+
 sp p = spaces *> p <* spaces
 
 data P = P Int String Bool deriving Show
 
-str = char '"' *> many (test (/= '"') *> next) <* char '"'
+str = between "\"\"" $ many (test (/= '"') *> next)
 
 bool = read <$> (string `oneof` ["True", "False"])
 
@@ -241,19 +237,14 @@ csv p = (sp p `sepBy` char ',') `sepBy` char '\n'
 -- neg = negate <$ char '-'
 -- number = int
 
--- add = (\x y -> x <> y <> ["+"]) <$ char '+'
--- sub = (\x y -> x <> y <> ["-"]) <$ char '-'
--- mul = (\x y -> x <> y <> ["*"]) <$ char '*'
--- frac = (\x y -> x <> y <> ["/"]) <$ char '/'
--- neg = (\x -> x <> ["n"]) <$ char '-'
--- number = only . show <$> int
 
-add = Add <$ char '+'
-sub = Sub <$ char '-'
-mul = Mul <$ char '*'
-frac = Div <$ char '/'
-neg = Neg <$ char '-'
-number = N <$> int
+
+-- add = Add <$ char '+'
+-- sub = Sub <$ char '-'
+-- mul = Mul <$ char '*'
+-- frac = Div <$ char '/'
+-- neg = Neg <$ char '-'
+-- number = N <$> int
 
 data Exp a = N a
            | Add (Exp a) (Exp a)
@@ -263,11 +254,92 @@ data Exp a = N a
            | Neg (Exp a)
   deriving (Show, Functor)
 
+class Calc a where
+  add :: Parser String (a -> a -> a)
+  sub :: Parser String (a -> a -> a)
+  mul :: Parser String (a -> a -> a)
+  frac :: Parser String (a -> a -> a)
+  neg :: Parser String (a -> a)
+  number :: Parser String a
+  eval :: Parser String a
+  eval = expr
+    where
+      expr = term `chainl` (add <|> sub)
+      term = mult `chainl` (mul <|> frac)
+      mult = number
+        <|> between "()" expr
+        <|> neg <*> mult
 
-pE = chainl pT (add <|> sub)
-pT = chainl pP (mul <|> frac)
-pP = number <|> (char '(' *> pE <* char ')' ) <|> (neg <*> pP)
+-- newtype RPN = RPN [String] deriving Show
 
+-- instance Calc RPN where
+--   add = (\x y -> x <> y <> ["+"]) <$ char '+'
+--   sub = (\x y -> x <> y <> ["-"]) <$ char '-'
+--   mul = (\x y -> x <> y <> ["*"]) <$ char '*'
+--   frac = (\x y -> x <> y <> ["/"]) <$ char '/'
+--   neg = (\x -> x <> ["n"]) <$ char '-'
+--   number = only . show <$> int
+  
 --------------------------------------------------------------------------------
+-- Hask
+
+-- fmap ::   (a -> b) -> (f a -> f b)
+
+-- ap   :: f (a -> b) -> (f a -> f b)  ~  ** :: f a -> f b -> f (a,b)
+-- pure :: a -> f a                    ~  unit :: f ()
+
+-- bind :: (a -> f b) -> (f a -> f b)  ~  join :: f (f a) -> f a
+-- bind f fa = join (f <$> fa)         ~  join x = ...
+
+
+
+newtype State s a = Prog (s -> (a, s))
+
+runProg :: State s a -> s -> (a, s)
+runProg (Prog f) = f
+
+instance Functor (State s) where
+  fmap g prog = Prog prog'
+    where prog' s = let (a, s') = runProg prog s
+                    in (g a, s')
+
+instance Applicative (State s) where
+  pure x = Prog $ \s -> (x, s)
+  sf <*> sx = Prog $ \s -> let (f, s') = runProg sf s
+                        in runProg (f <$> sx) s'
+
+instance Monad (State s) where
+  prog >>= f = Prog $ \s -> let (x, s') = runProg prog s
+                         in runProg (f x) s'
+  
+put x = Prog $ \s -> ((), x)
+get = Prog $ \s -> (s, s)
+modify f = Prog $ \s -> ((), f s)
+
+data Tree a = Leaf a | Node (Tree a) (Tree a)
+  deriving Show
+
+execProg p = fst . runProg p
+evalProg p = snd . runProg p
+
+tree 0 = modify (+1) *> (Leaf <$> get)
+tree n = Node <$> tree (n-1) <*> tree (n-1)
+
+nextRND k = Prog $ \x -> (x `mod` k, (x * a + c) `mod` m)
+  where (a, c, m) = (141, 28411, 134456)
+
+nextRNDF = (\r -> fromIntegral r / 1000) <$> nextRND 1000
+
+randomPair = (,) <$> nextRNDF <*> nextRNDF
+
+randTree n = execProg (prog n) 42
+  where prog 0 = Leaf <$> nextRND 100
+        prog n = Node <$> prog (n-1) <*> prog (n-1)
+
+montePi n = execProg prog
+  where
+    countMatches = length . filter (\(x, y) -> sqrt (x*x + y*y) < 1)
+    prog = countMatches <$> sequenceA (replicate n randomPair)
+          
 
 

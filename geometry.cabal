@@ -82,11 +82,13 @@ library
   build-depends: base >=4.12
                , text >=1.2
                , hspec >=2.7
+               , test-invariant >= 0.4
                , QuickCheck >=2.13
                , extra >=1.7
                , svg-builder >=0.1
                , double-conversion >=2.0
                , ieee754 >=0.8
+               , math-functions >=0.3
                , transformers >= 0.5
 
   -- Directories containing source files.

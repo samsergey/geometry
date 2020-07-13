@@ -8,7 +8,7 @@ module Geometry.Point
 
 import Data.Complex
 import Data.Bool
-
+import Numeric
 import Geometry.Base
 
 ------------------------------------------------------------

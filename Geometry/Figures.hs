@@ -10,6 +10,7 @@ module Geometry.Figures
   , aPoint, aLabel
   , point, point'
   , pointOn, projectOn, intersectionPoints, closestTo
+  , aligned
   , aLine, aRay, aSegment, oX, oY
   , line, line', ray, ray', segment, segment'
   , extendToLength, extendTo, normalSegment, heightFrom, clipBy
@@ -126,6 +127,17 @@ closestTo :: (Metric a, Affine a, Metric b, Affine b) => a -> [b] -> Maybe b
 closestTo p [] = Nothing
 closestTo p ps  = Just $ minimumOn (distance p) ps
 
+{- | Returns @True@ if all points in a given list belong to one line
+-}
+aligned :: (AlmostEq a, Metric a, Affine a) => [a] -> Bool
+aligned [] = False
+aligned [_] = True
+aligned [_, _] = True
+aligned [x, y, z] | x ~= y = aligned [x, z]
+                  | x ~= z || y ~= z = aligned [x, y]
+                  | otherwise = line' x y `isContaining` z
+aligned (x : y : ps) = (\p -> aligned [x, y, p]) `all` ps
+
 ------------------------------------------------------------
 
 -- | The generalized version of `circle`.
@@ -222,7 +234,7 @@ heightFrom p c = (aSegment # at' p # normalTo c) >>= extendTo c
 >     rs =  [ aSegment # scale 3 # rotate 35 # at (-1, x)
 >           | x <- [-4,-3.5..4] ]
 > in star <+> foldMap (group . clipBy star) rs
-
+g
 << figs/clipBy.svg >>
 -}
 clipBy :: (Linear l, Intersections l c, ClosedCurve c)
@@ -455,8 +467,8 @@ aRectangle a b = aSquare # scaleX a . scaleY b
 -}
 triangle2a :: Direction -> Direction -> Triangle
 triangle2a a1 a2 = case intersections r1 r2 of
-                    [p] -> mkTriangle [(0,0), (1,0), xy p]
-                    [] -> mkTriangle @XY [(0,0), (1,0), (0,0)]
+                    [p] -> mkTriangle (0,0) (1,0) (xy p)
+                    [] -> mkTriangle @XY (0,0) (1,0) (0,0)
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
@@ -491,10 +503,7 @@ altitude :: PiecewiseLinear p
   => Int  -- ^ vertex index
   -> Int  -- ^ side index
   -> p -> Segment
-altitude v s p = aSegment
-               # at' (vertex v p)
-               # normalTo (asLine (side s p))
-               # fromJust 
+altitude v s p = heightFrom (vertex v p) (asLine (side s p)) # fromJust 
 
 ------------------------------------------------------------
 

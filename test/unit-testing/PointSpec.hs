@@ -30,3 +30,9 @@ spec = describe "Point" $ do
         let p = regularPoly (3 + abs n)
         in p `isContaining` pointOn p t
                     
+    describe "aligned" $ do
+      it "1" $ property $ \(AnyLine l) xs ->
+        length xs > 1 ==> aligned (param l <$> xs) 
+      it "2" $ property $ \(Position a) (Position b) (Position c) ->
+        (aligned [a,b,c] ==> isDegenerate (Triangle [a,b,c])) .&.
+        (not (aligned [a,b,c]) ==> not (isDegenerate (Triangle [a,b,c])))

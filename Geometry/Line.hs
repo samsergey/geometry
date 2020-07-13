@@ -88,6 +88,10 @@ instance Manifold Line where
                      || l `isCollinear` azimuth (refPoint l) p
   unit = norm
 
+  distanceTo p l = abs ((y2-y1)*x - (x2-x1)*y + x2*y1 - y2*x1)/ unit l
+    where (x1:+y1, x2:+y2) = refPoints l
+          x:+y = cmp p
+
 instance Curve Line where
   tangent l _ = angle l
 

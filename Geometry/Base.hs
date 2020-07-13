@@ -35,7 +35,7 @@ module Geometry.Base
   -- * Manifolds and curves
   , Manifold (..), Bounding (..)
   , (->@), (->@?), (@->), (@->?)
-  , start, end, paramL, projectL, distanceTo
+  , start, end, paramL, projectL
   , Curve (..), PointLocation (..), ClosedCurve(..)
   , tangentLine
   -- * Figures
@@ -56,6 +56,7 @@ import Data.Complex
 import Data.List.Extra (minimumOn)
 import Data.Semigroup hiding (First)
 import Data.Maybe
+import Numeric.MathFunctions.Comparison
 
 ------------------------------------------------------------
 -- | Type alias for a complex number.
@@ -87,11 +88,12 @@ class AlmostEq a where
 instance AlmostEq Int where a ~= b = a == b
 
 instance AlmostEq Double where
-  a ~= b = 2*abs (a-b) < 1e-10 * abs(a + b) || abs (a - b) < 1e-10
+  a ~= b = a == b
+           || 2*abs (a-b) < 1e-12 * abs(a + b)
+           || abs (a - b) < 1e-12
 
-instance (RealFloat a, Ord a, Fractional a, Num a, AlmostEq a) =>
-         AlmostEq (Complex a) where
-  a ~= b = magnitude (a - b) ~= 0
+instance AlmostEq (Complex Double) where
+  (ax:+ay) ~= (bx:+by) = ax ~= bx && ay ~= by -- magnitude (a - b) ~= 0
 
 instance (AlmostEq a, AlmostEq b) => AlmostEq (a, b) where
   (a1, b1) ~= (a2, b2) = a1 ~= a2 && b1 ~= b2
@@ -436,11 +438,13 @@ asAffine = asCmp . cmp
     
 -- | Returns `True` if two points represent orthogonal vectors.
 isOrthogonal :: (Affine a, Affine b) => a -> b -> Bool
-isOrthogonal a b = not (isZero a || isZero b) && cmp a `dot` cmp b ~= 0
+isOrthogonal a b = not (isZero a || isZero b)
+                   && normalize a `dot` normalize b ~= 0
 
 -- | Returns `True` if two points represent collinear vectors.
 isCollinear :: (Affine a, Affine b) => a -> b -> Bool
-isCollinear a b = not (isZero a || isZero b) && cmp a `cross` cmp b ~= 0
+isCollinear a b = not (isZero a || isZero b)
+                  && normalize a `cross` normalize b ~= 0
 
 -- | Returns `True` if two points represent collinear opposite vectors.
 isOpposite :: (Affine a, Affine b) => a -> b -> Bool
@@ -563,6 +567,23 @@ Here are some instances:
   unit :: m -> Double
   unit _ = 1
 
+  {- | The dist between a manifold and a given point.
+
+>>> aCircle # distTo (point (2,0))
+1.0
+>>> aCircle # distTo (point (2,0))
+1.0
+-}
+  distanceTo :: (Metric p, Affine p) => p -> m -> Double
+  distanceTo p m = p `dist` p'
+    where p' = case p ->@? m of
+                 Just x -> asAffine $ m @-> x
+                 Nothing -> minimumOn (dist p) (asAffine . param m <$> ends)
+          ends = case bounds m of
+            Unbound -> []
+            Semibound -> [0]
+            Bound -> [0,1]
+
 instance Manifold m => Manifold (Maybe m) where
   type Domain (Maybe m) = Domain m
   param   = maybe (const (asCmp 0)) param
@@ -613,22 +634,6 @@ paramL l m = param m (l / unit m)
 projectL :: (Affine p, Manifold m) => p -> m -> Double
 projectL p m = unit m * (p ->@ m)
 
-{- | The dist between a manifold and a given point.
-
->>> aCircle # distTo (point (2,0))
-1.0
->>> aCircle # distTo (point (2,0))
-1.0
--}
-distanceTo :: (Metric p, Affine p, Manifold m) => p -> m -> Double
-distanceTo p m = p `dist` p'
-  where p' = case p ->@? m of
-               Just x -> asAffine $ m @-> x
-               Nothing -> minimumOn (dist p) (asAffine . param m <$> ends)
-        ends = case bounds m of
-          Unbound -> []
-          Semibound -> [0]
-          Bound -> [0,1]
 
 {- | The starting point on the manifold.
 

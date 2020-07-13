@@ -22,7 +22,7 @@ module Geometry
   , origin
   , aPoint, aLabel
   , point, point'
-  , pointOn, projectOn, intersectionPoints, closestTo
+  , pointOn, projectOn, intersectionPoints, closestTo, aligned
   -- ** Line constructors
   , Linear (..), Line (..), Ray (..), Segment (..)
   , aLine, aRay, aSegment, oX, oY
@@ -40,7 +40,7 @@ module Geometry
   , Polyline (..)
   , Polygonal, Polygon (..)
   , closePolyline
-  , Triangle (..), aTriangle, triangle2a, triangle3s, aRightTriangle
+  , Triangle (..), mkTriangle, aTriangle, triangle2a, triangle3s, aRightTriangle
   , RightTriangle (..), isRightTriangle, hypotenuse, catets
   , Rectangle (..), aSquare, aRectangle, space
   , parametricPoly, polarPoly, regularPoly
@@ -96,7 +96,7 @@ module Geometry
   -- ** Manifolds and curves
   , Manifold (..), Bounding (..)
   , (->@), (->@?), (@->), (@->?)
-  , start, end, paramL, projectL, distanceTo
+  , start, end, paramL, projectL
   , plotManifold
   , Curve (..), PointLocation (..), ClosedCurve(..)
   -- ** Intersections of curves

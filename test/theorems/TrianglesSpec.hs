@@ -56,6 +56,11 @@ prop_pytharogas2 (Positive a) (Positive b) =
 bisectrisses :: Triangle -> [Ray]
 bisectrisses t = bisectrisse . (`vertexAngle` t) <$> [0,1,2]
 
+incenter :: Triangle -> Cmp
+incenter t = head $ intersections b1 b2
+  where b1 = vertexAngle 0 t # bisectrisse
+        b2 = vertexAngle 1 t # bisectrisse
+
 prop_bisectrisses1 :: NonDegenerate Triangle -> Bool
 prop_bisectrisses1 (NonDegenerate t) =
   coinside . allIntersections $ bisectrisses t 
@@ -120,6 +125,45 @@ orthocenter t = head $ intersections h1 h2
 
 --------------------------------------------------------------------------------
 
+circumcenter t = head $ intersections m1 m2
+  where m1 = midPerpendicular $ side 1 t
+        m2 = midPerpendicular $ side 2 t
+
+circle3p [p1, p2, p3] = circle' r c
+  where c = circumcenter t
+        r = distance c p1
+        t = mkTriangle p1 p2 p3
+
+ninePointCircle t = circle3p $ (@-> 0.5) <$> segments t
+
+prop_ninePointCircle :: NonDegenerate Triangle -> Bool
+prop_ninePointCircle (NonDegenerate t) =
+  let altitudeBases = end <$> altitudes t
+      feuerbachVerts = (\v -> segment' v o @-> 0.5) <$> vertices t
+      o = orthocenter t
+  in (ninePointCircle t `isContaining`) `all` (altitudeBases <> feuerbachVerts)
+
+prop_ninePointCircle_center :: NonDegenerate Triangle -> Bool
+prop_ninePointCircle_center (NonDegenerate t) =
+  let c = center (ninePointCircle t)
+      s = segment' (orthocenter t) (circumcenter t)
+  in c ->@ s ~= 0.5
+
+prop_ninePointCircle_radius :: NonDegenerate Triangle -> Bool
+prop_ninePointCircle_radius (NonDegenerate t) =
+  let r = radius (ninePointCircle t)
+      c = circumcenter t
+  in all (\v -> distance c v ~= 2*r) $ vertices t
+
+prop_Euler_line :: NonDegenerate Triangle -> Bool
+prop_Euler_line (NonDegenerate t) =
+  aligned [ center (ninePointCircle t)
+          , orthocenter t
+          , centroid t
+          , circumcenter t ]
+
+--------------------------------------------------------------------------------
+
 spec :: Spec
 spec = do
   describe "Triangles:" $ do
@@ -145,4 +189,12 @@ spec = do
       $ property prop_Apollonius
     it "All altitudes intersect at one point (orthocenter)."
       $ property prop_altitudes1
+    it "The Euler line contains four trieangle's centers."
+      $ property prop_Euler_line
+    it "The nine-point circle of the triangle passes through the altitude bases and Feuerbach's triangle vertices."
+      $ property prop_ninePointCircle
+    it "The center of the nine-point circle divides the segment between the ortocenter and circumcenter in halves."
+      $ property prop_ninePointCircle_center
+    it "The radius of the nine-point circle is two times smaller then the radius of the circumcircle."
+      $ property prop_ninePointCircle_radius
 

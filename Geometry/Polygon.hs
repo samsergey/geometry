@@ -305,9 +305,11 @@ newtype Triangle = Triangle [Cmp]
            , Polygonal
            ) via Polygon
 
--- | The main triangle constructor.
-mkTriangle :: Affine a => [a] -> Triangle
-mkTriangle = Triangle . fmap cmp
+{- | The main triangle constructor.
+
+-}
+mkTriangle :: Affine a => a -> a -> a -> Triangle
+mkTriangle a b c = Triangle [cmp a, cmp b, cmp c]
 
 instance Show Triangle where
   show t = concat ["<Triangle ", ss, ">"]
@@ -315,7 +317,7 @@ instance Show Triangle where
 
 instance Affine Triangle where
   cmp = cmp . asPolyline
-  asCmp = mkTriangle . scanl (+) 0 . take 2 . iterate (rotate 120)
+  asCmp = Triangle . scanl (+) 0 . take 2 . iterate (rotate 120)
 
 ------------------------------------------------------------
 

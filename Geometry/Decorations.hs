@@ -51,7 +51,8 @@ data Option = Invisible Bool
             | LabelPosition Cmp
             | LabelOffset Cmp
             | LabelAngle Direction
-            | SegmentMark Int  deriving (Show)
+            | SegmentMark Int
+            deriving (Show)
 
 -- | Monoidal options list wrapper. Concatenates dually to a usual list.
 newtype Options = Options (Dual [Option])
@@ -192,14 +193,14 @@ instance WithOptions a => IsString (Decorator a) where
   fromString = label
 
 infixl 5 #:
--- | The infix operator for decorator application.
---
--- >>> aPoint # at (4, 5) #: label "A"
--- A:<Point (4.0, 5.0)>
---
--- >>> segment (4,5) (6,9) #: "s" <> dotted <> white
--- s:<Segment (4.0,5.0) (6.0,9.0)>
---
+{- | The infix operator for decorator application.
+
+>>> aPoint # at (4, 5) #: label "A"
+A:<Point (4.0, 5.0)>
+
+>>> segment (4,5) (6,9) #: "s" <> dotted <> white
+s:<Segment (4.0,5.0) (6.0,9.0)>
+-}
 (#:) :: WithOptions a => a -> Decorator a -> Decorated a
 a #: (Decorator d) = d a
 
@@ -267,4 +268,3 @@ lparam :: (WithOptions m, Manifold m) => Double -> Decorator m
 lparam x = Decorator $ \f -> f #: lpos (f @-> x)
 
 ------------------------------------------------------------
-

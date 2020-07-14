@@ -673,13 +673,19 @@ instance Curve c => Curve (Maybe c) where
 class Curve c => ClosedCurve c where
   {-# MINIMAL location | isEnclosing #-}
   
-  -- | Returns the location of a point with respect to the region.
+  {- | Returns the location of a point with respect to the closed curve area.
+>>> location aCircle <$> ([(0,0),(1,0),(2,0)] :: [XY])
+[Inside, OnCurve, Outside]
+    -}
   location :: (Metric p, Affine p) => c -> p -> PointLocation
   location c p | isContaining c p = OnCurve
                | isEnclosing c p = Inside
                | otherwise = Outside
 
-  -- | Returns `True` if point belongs to the region.
+  {- | Returns `True` if point belongs to the region
+>>> aCircle `isEnclosing` <$> ([(0,0),(1,0),(2,0)] :: [XY])
+[True, False, False]
+    -}
   isEnclosing :: (Metric p, Affine p) => c -> p -> Bool
   isEnclosing c p = location c p == Inside
 
@@ -721,15 +727,14 @@ class Trans a => Figure a where
   refPoint :: a -> Cmp
   refPoint = left . lower . corner
 
+  
 instance Bounded Double where
   minBound = -1/0
   maxBound = 1/0
 
--- instance Figure f => Figure (Maybe f) where
---   box = maybe mempty box
---   isTrivial  = maybe False isTrivial
-
-instance {-# OVERLAPPABLE #-} (Functor t, Foldable t, Figure f) => Figure (t f) where
+instance
+  {-# OVERLAPPABLE #-}
+  (Functor t, Foldable t, Figure f) => Figure (t f) where
   box = foldMap box
   isTrivial = null
 
@@ -752,12 +757,15 @@ corner p = ((x1:+y2, x2:+y2),(x1:+y1, x2:+y1))
 lower :: (a,b) -> b 
 lower = snd
 
+-- |
 right :: (a,b) -> b 
 right = snd
 
+-- |
 upper :: (a,b) -> a
 upper = fst
 
+-- |
 left :: (a,b) -> a
 left  = fst
 

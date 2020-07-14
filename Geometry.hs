@@ -6,11 +6,11 @@ Stability   : experimental
 module Geometry 
 (
   -- * Main interface
-  writeSVG, showSVG,
+  writeSVG, showSVG
   -- * Grouping combinators
-  (<+>), group, beside, above, (<||>)
-  , row, rowSep
   , Groupable, Group (..)
+  ,(<+>), group, beside, above, (<||>)
+  , row, rowSep
   -- * Constructors for geometric objects
   -- ** Figures
   , Figure (..), Box

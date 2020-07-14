@@ -1,6 +1,6 @@
 {-# language OverloadedStrings #-}
 
-module Geometry.DocFigs where
+module Geometry.DocFigs () where
 
 import Geometry
 
@@ -155,15 +155,21 @@ docFigs = do
   writeSVG 300 (path <> "polarPoly.svg") $
     polarPoly (\x -> 2 + cos (5*x)) [0,0.1..1] # closePolyline
 
-  writeSVG 350 (path <> "triangle2a.svg") $
+  writeSVG 350 (path <> "triangle2a.svg")
     [ triangle2a a (150-a) #: thin | a <- [10,20..170] ]
 
-  writeSVG 350 (path <> "triangle3s.svg") $
+  writeSVG 350 (path <> "triangle3s.svg")
     [ triangle3s 10 a 9 #: thin | a <- [2..18] ]
 
-  writeSVG 350 (path <> "aRightTriangle.svg") $
+  writeSVG 350 (path <> "aRightTriangle.svg")
     [ aRightTriangle # scaleX a # scaleY (11-a) #: thin
     | a <- [0.5,1..10.5] ]
+
+  writeSVG 350 (path <> "row.svg") $
+    row [ regularPoly n | n <- [3..7] ]
+
+  writeSVG 400 (path <> "rowSep.svg") $
+    rowSep (space 1) [ regularPoly n | n <- [3..7] ]
 
   fractals
   plots

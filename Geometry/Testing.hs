@@ -4,7 +4,20 @@
 {-# Language MultiParamTypeClasses      #-}
 {-# Language UndecidableInstances       #-}
 
-module Geometry.Testing where
+module Geometry.Testing (
+    DInt (..)
+  , Parameter (..)
+  , Position (..)
+  , AnyPoint (..)
+  , AnyCircle (..)
+  , AnyAngle (..)
+  , AnyLine (..)
+  , AnyRay (..)
+  , AnySegment (..)
+  , Motion (..)
+  , Nontrivial (..)
+  , NonDegenerate (..)
+) where
 
 import Data.Complex
 import Data.Foldable
@@ -22,21 +35,47 @@ a <==> b = (a ==> b) .&&. (b ==> a)
 
 ------------------------------------------------------------
 
+{- |  A type for an interger double number.
+>>>  sample (arbitrary :: Gen DInt)
+DInt 0.0
+DInt 2.0
+DInt 0.0
+DInt (-1.0)
+DInt 7.0
+...
+-}
 newtype DInt = DInt Double deriving Show
 
 instance Arbitrary DInt where
   arbitrary = DInt . fromIntegral <$> (arbitrary :: Gen Int)
   shrink (DInt l) = DInt <$> shrink l
 
+{- |  A type for a double number parameterizing the `Manifold`.
+>>>  sample (arbitrary :: Gen Parameter)
+Parameter 0.6977012699848539
+Parameter 0.5321234247634057
+Parameter 9.832672492232597e-2
+Parameter 0.9510866292762408
+...
+-}
 newtype Parameter = Parameter Double deriving Show
 
 instance Arbitrary Parameter where
-  arbitrary = Parameter <$> oneof [pure 0, choose (0, 1), pure 1]
+  arbitrary = Parameter <$> choose (0, 1)
   shrink (Parameter l) = Parameter <$> shrink l
 
 ------------------------------------------------------------
 
-newtype Position a = Position {getPosition :: a}
+{- |  A type for an affine position (`XY`, `Cmp`, `Point` etc).
+>>>  sample (arbitrary :: Gen (Position XY))
+Position (0.0,0.0)
+Position (-1.0,2.0)
+Position (-3.0,3.0)
+Position (6.0,4.0)
+Position (-1.0,-1.0
+...
+-}
+newtype Position a = Position a
   deriving (Show, Affine, Trans, Metric, Eq)
 
 
@@ -55,8 +94,9 @@ shrinkPos d x = res
               iterate (/2) 1
 
 ------------------------------------------------------------
+
 instance Arbitrary Direction where
-  arbitrary = oneof [asDeg <$> arbitrary, asCmp <$> arbitrary]
+  arbitrary = oneof [asDeg  <$> arbitrary, asCmp <$> arbitrary]
   shrink = shrinkPos 1
 
 ------------------------------------------------------------
@@ -64,6 +104,7 @@ instance Arbitrary Point where
   arbitrary = Point <$> arbitrary
   shrink = shrinkPos 1
 
+{- |  A wrapper for a `Point`. -}
 newtype AnyPoint = AnyPoint Point
   deriving (Show, Arbitrary)
 
@@ -79,6 +120,7 @@ instance Arbitrary Circle where
        r <- shrink (radius cir)
        return $ mkCircle r c
 
+{- |  A wrapper for nondegenative `Circle`. -}
 newtype AnyCircle = AnyCircle Circle
   deriving Show
   deriving Arbitrary via Nontrivial Circle
@@ -95,12 +137,12 @@ instance Arbitrary Angle where
        e <- shrink (angleEnd an)
        return $ Angle p s e
 
+{- |  A wrapper for nontrivial `Angle`. -}
 newtype AnyAngle = AnyAngle Angle
   deriving Show
   deriving Arbitrary via Nontrivial Angle
 
 ------------------------------------------------------------
-
 
 instance Arbitrary Segment where
   arbitrary =
@@ -121,29 +163,31 @@ instance Arbitrary Ray where
   arbitrary = asRay <$> (arbitrary :: Gen Segment)      
   shrink l = asRay <$> shrink (asSegment l)
 
+{- |  A wrapper for nontrivial `Line`. -}
 newtype AnyLine = AnyLine Line
   deriving Show
   deriving Arbitrary via Nontrivial Line
 
+{- |  A wrapper for nontrivial `Ray`. -}
 newtype AnyRay = AnyRay Ray
   deriving Show
   deriving Arbitrary via Nontrivial Ray
 
+{- |  A wrapper for nontrivial `Segment`. -}
 newtype AnySegment = AnySegment Segment
   deriving Show
   deriving Arbitrary via Nontrivial Segment
 
 ------------------------------------------------------------
-  
+
+{- |  A wrapper for a motion `translate`, `rotate` or `reflect`. -}  
 newtype Motion a = Motion (String, Endo a)
 
 appMotion :: Motion a -> a -> a
 appMotion (Motion (_, m)) = appEndo m
 
-
 instance Show (Motion a) where
   show (Motion (s, _)) = s
-
 
 instance Trans a => Arbitrary (Motion a) where
   arbitrary = Motion . fold <$> listOf (oneof motions)
@@ -155,6 +199,7 @@ instance Trans a => Arbitrary (Motion a) where
 
 ------------------------------------------------------------
 
+{- |  A wrapper for a nontrivial `Figure`. -}  
 newtype Nontrivial a = Nontrivial a deriving
   ( Eq
   , Show
@@ -179,6 +224,7 @@ instance (Arbitrary a, Figure a) => Arbitrary (Nontrivial a) where
 
 --------------------------------------------------------------------------------
 
+{- |  A wrapper for a nondegenerate `Figure`. -}  
 newtype NonDegenerate a = NonDegenerate a deriving
   ( Eq
   , Show

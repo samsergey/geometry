@@ -62,7 +62,7 @@ optLabelOffset   = \case {LabelOffset x -> Just x; _ -> Nothing }
 optLabelCorner   = \case {LabelCorner x -> Just x; _ -> Nothing }
 optLabelAngle    = \case {LabelAngle x -> Just x; _ -> Nothing }
 optSegmentMark   = \case {SegmentMark x -> Just x; _ -> Nothing }
-
+  
 ------------------------------------------------------------
 -- | Class for objects that could be represented as SVG elements.
 -- Differs from @Graphics.Svg.ToElement@ class in adding
@@ -333,11 +333,18 @@ infixl 2 <||>
 above :: (Groupable a, Groupable b) => a -> b -> Group
 above f1 f2 = f2 <+> f1 # superpose (refPoint f2) (left . upper . corner $ f2)
 
---
+{- | Arranges a homogeneous list of figures in a row
+
+<<figs/row.svg>>
+-}
 row :: Groupable f => [f] -> Group
 row [] = EmptyFig
 row fs = foldl1 beside (G <$> fs)
 
+{- | Arranges a homogeneous list of figures in a row, separated by a given separator.
+
+<<figs/rowSep.svg>>
+-}
 rowSep :: (Groupable s, Groupable f) => s -> [f] -> Group
 rowSep s [] = EmptyFig
 rowSep s fs = foldl1 (\g f -> g `beside` s `beside` f) (G <$> fs)

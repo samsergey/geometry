@@ -82,18 +82,18 @@ infix 4 ~=, ~<=, ~>=
 
 -- | Type class for values for which equality could be stated with some known tolerance.
 class AlmostEq a where
-  -- | The equality operator.
+  -- | The approximate equality operator.
   (~=) :: a -> a -> Bool
 
 instance AlmostEq Int where a ~= b = a == b
 
 instance AlmostEq Double where
   a ~= b = a == b
-           || 2*abs (a-b) < 1e-12 * abs(a + b)
+           || abs (a-b) < 1e-12 * abs(a + b)
            || abs (a - b) < 1e-12
 
 instance AlmostEq (Complex Double) where
-  (ax:+ay) ~= (bx:+by) = ax ~= bx && ay ~= by -- magnitude (a - b) ~= 0
+  (ax:+ay) ~= (bx:+by) = ax ~= bx && ay ~= by
 
 instance (AlmostEq a, AlmostEq b) => AlmostEq (a, b) where
   (a1, b1) ~= (a2, b2) = a1 ~= a2 && b1 ~= b2
@@ -216,9 +216,7 @@ class Trans a where
   -- | The general linear transformation.
   transform :: TMatrix -> a -> a
 
-instance
-  {-# OVERLAPPABLE #-}
-  (Functor f, Trans a) => Trans (f a) where
+instance {-# OVERLAPPABLE #-} (Functor f, Trans a) => Trans (f a) where
   transform  = fmap . transform
 
 instance {-# OVERLAPPING #-} Trans Cmp where
@@ -449,7 +447,7 @@ isCollinear a b = not (isZero a || isZero b)
 
 -- | Returns `True` if two points represent collinear opposite vectors.
 isOpposite :: (Affine a, Affine b) => a -> b -> Bool
-isOpposite a b = not (isZero a || isZero b) && cmp a + cmp b ~= 0
+isOpposite a b = cmp a + cmp b ~= 0
 
 -- | Returns `True` if the vector is trivial or a point is equal to the origin.
 isZero :: Affine a => a -> Bool
@@ -485,7 +483,7 @@ norm = magnitude . cmp
 
 -- | The distance between two affine points.
 distance :: (Affine a, Metric a, Affine b, Metric b) => a -> b -> Double
-distance p1 p2 = dist (cmp p1) (cmp p2)
+distance p1 p2 = cmp p1 `dist` cmp p2
 
 -- | The normalized vector, or a projection of a point on a unit circle.
 normalize :: Affine a => a -> a

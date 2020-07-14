@@ -44,6 +44,8 @@ spec = do
     describe "dot" $ do
       it "pair" $ dot @XY @XY (1, 2) (3, 6) == 15
       it "complex" $ dot @Cmp @Cmp (1 :+ 2) (3 :+ 6) == 15
+      it "orthogonality" $ property $ \x ->
+        not (isZero x) ==> rotate 90 x `isOrthogonal` (x :: XY)
   
     describe "cross" $ do
       it "pair" $ cross @XY @XY (1, 2) (3, 6) == 0
@@ -58,6 +60,9 @@ spec = do
       it "complex" $ norm (normalize @Cmp (3 :+ 4)) == 1
       it "trivial" $ normalize @Cmp 0 == 0
 
+    describe "opposite" $ 
+      it "1" $ property $ \x -> x `isOpposite` opposite @XY x
+        
   describe "Transformations" $ do
     describe "translate" $ do
       it "1" $ translate' @XY @XY (10, 20) (3, 4)  == (13, 24)

@@ -36,6 +36,7 @@ a <==> b = (a ==> b) .&&. (b ==> a)
 ------------------------------------------------------------
 
 {- |  A type for an interger double number.
+
 >>>  sample (arbitrary :: Gen DInt)
 DInt 0.0
 DInt 2.0
@@ -51,6 +52,7 @@ instance Arbitrary DInt where
   shrink (DInt l) = DInt <$> shrink l
 
 {- |  A type for a double number parameterizing the `Manifold`.
+
 >>>  sample (arbitrary :: Gen Parameter)
 Parameter 0.6977012699848539
 Parameter 0.5321234247634057
@@ -67,6 +69,7 @@ instance Arbitrary Parameter where
 ------------------------------------------------------------
 
 {- |  A type for an affine position (`XY`, `Cmp`, `Point` etc).
+
 >>>  sample (arbitrary :: Gen (Position XY))
 Position (0.0,0.0)
 Position (-1.0,2.0)

@@ -88,6 +88,7 @@ instance Manifold Circle where
   isContaining c p = distance p (center c) ~= radius c
   unit _ = 2 * pi
 
+  distanceTo p c = abs (distance p (center c) - radius c)
 
 instance Curve Circle where
   normal c t = azimuth (center c) (c @-> t)

@@ -165,7 +165,7 @@ prop_Euler_line (NonDegenerate t) =
 --------------------------------------------------------------------------------
 
 spec :: Spec
-spec = do
+spec =
   describe "Triangles:" $ do
     it "The triangle inequality."
       $ property prop_triangleInequality

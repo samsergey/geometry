@@ -93,7 +93,7 @@ module Geometry
   , isOrthogonal, isCollinear, isOpposite, isZero
   -- *** Vector and point operations
   , dot, det, cross, norm, opposite
-  , distance, angle, normalize, columns, azimuth
+  , distance, (<-?->), angle, normalize, columns, azimuth
   -- ** Manifolds and curves
   , Manifold (..), Bounding (..)
   , (->@), (->@?), (@->), (@->?)

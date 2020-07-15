@@ -91,6 +91,23 @@ spec = do
       it "3" $ rotateAt' @XY @XY (1, 0) 90 (0, 0) ~= (1, -1)
       it "4" $ rotateAt' @XY @XY (1, 1) 180 (0, 0) ~= (2, 2)
 
+  describe "distanceTo" $ do
+    let c1 = aCircle
+        c2 = aCircle # scale 2
+        c3 = aCircle # scale 3
+    it "1" $ property $ \x -> distanceTo (c1 @-> x) c2 ~= 1
+    it "2" $ property $ \x -> distanceTo (c3 @-> x) c2 ~= 1
+    it "3" $ distanceTo aPoint c2 == 2
+    it "4" $ distanceTo aPoint c3 == 3
+    it "5" $ property $ \x a ->
+      let l1 = aLine # rotate a
+          l2 = l1 # translate' (normal l1 0)
+      in distanceTo (l1 @-> x) l2 ~= 1
+    it "6" $ property $ \x (Positive n) ->
+      let t1 = regularPoly (n + 3)
+          t2 = t1 # scale 2
+      in distanceTo (t1 @-> x) t2 ~= cos (pi/ fromIntegral (n + 3))
+      
   describe "Box" $ do
     let l = Segment (1:+2, 4:+6)
     it "0" $ box l == ((1,2),(4,6))

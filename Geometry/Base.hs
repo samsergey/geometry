@@ -21,7 +21,8 @@ module Geometry.Base
   -- ** Predicates
   , isOrthogonal, isCollinear, isOpposite, isZero, opposite
   -- ** Vector and point operations
-  , dot, det, cross, norm, distance, angle, normalize, columns, azimuth
+  , dot, det, cross, norm, distance, (<-?->)
+  , angle, normalize, columns, azimuth
   -- * Linear transformations
   , TMatrix, transformOrientation
   , Trans (..)
@@ -89,7 +90,7 @@ instance AlmostEq Int where a ~= b = a == b
 
 instance AlmostEq Double where
   a ~= b = a == b
-           || abs (a-b) < 1e-10 * abs(a + b)
+           || abs (a - b) < 1e-10 * abs(a + b)
            || abs (a - b) < 1e-10
 
 instance AlmostEq (Complex Double) where
@@ -391,7 +392,7 @@ class Affine a where
 
   -- | Constructs an affine point from a coordinates.
   asXY :: XY -> a
-  asXY = asCmp . cmp
+  asXY = asAffine
 
   -- | Returns a representation of an afine point as a coordinate.
   xy :: a -> XY
@@ -414,7 +415,7 @@ instance Affine XY where
   asXY = id
 
 instance Affine Direction where
-  cmp a = mkPolar 1 (rad a)
+  cmp = cis . rad
   asCmp = asRad . phase
 
 instance Affine a => Affine (Maybe a) where
@@ -485,12 +486,15 @@ norm = magnitude . cmp
 distance :: (Affine a, Metric a, Affine b, Metric b) => a -> b -> Double
 distance p1 p2 = cmp p1 `dist` cmp p2
 
+(<-?->):: (Affine a, Metric a, Affine b, Metric b) => a -> b -> Double
+(<-?->) = distance
+
 -- | The normalized vector, or a projection of a point on a unit circle.
 normalize :: Affine a => a -> a
 normalize v
   | cmp v == 0 = v
-  | otherwise = asCmp $ (1/norm v :+ 0) * cmp v
-
+  | otherwise = asCmp . cis . phase . cmp $ v
+  
 roundUp :: Affine a => Double -> a -> a
 roundUp d = asXY . (\(x,y) -> (rounding x, rounding y)) . xy
   where rounding x = fromIntegral (ceiling (x /d) :: Integer) * d
@@ -535,9 +539,10 @@ Here are some instances:
 
   -- | Returns `True` if point belongs to the manifold.
   isContaining :: (Metric p, Affine p) => m -> p -> Bool
-  isContaining c p = case projectMaybe c (asAffine p) >>= paramMaybe c  of
-                       Just p' -> p' `distance` p ~= 0
-                       Nothing -> False
+  isContaining c p =
+    case projectMaybe c (asAffine p) >>= paramMaybe c of
+      Just p' -> p' `distance` p ~= 0
+      Nothing -> False
 
   {- | Returns a point on a manifold for given parameter, or Nothing
      if parameter runs out of the range defined for a manifold. -}
@@ -566,7 +571,7 @@ Here are some instances:
   unit :: m -> Double
   unit _ = 1
 
-  {- | The dist between a manifold and a given point.
+{- | The dist between a manifold and a given point.
 
 >>> aCircle # distTo (point (2,0))
 1.0
@@ -585,9 +590,13 @@ Here are some instances:
 
 instance Manifold m => Manifold (Maybe m) where
   type Domain (Maybe m) = Domain m
-  param   = maybe (const (asCmp 0)) param
+  param = maybe (const (asCmp 0)) param
   project = maybe (const 0) project 
   isContaining = maybe (const False) isContaining
+  paramMaybe m x = m >>= (`paramMaybe` x)
+  projectMaybe m x = m >>= (`projectMaybe` x)
+  bounds = maybe Bound bounds
+  unit = maybe 1 unit
 
 infix 8 @->
 -- | Operator form of the `param` function.
@@ -602,12 +611,12 @@ infix 8 @->?
 infix 8 ->@
 -- | Generalized operator form for `project` with flipped arguments.
 (->@) :: (Affine a, Manifold m) => a -> m -> Double
-p ->@ m = project m (asAffine p)
+(->@) = flip project . asAffine
 
 infix 8 ->@?
 -- | Operator for `projectMaybe` with flipped arguments. 
 (->@?) :: (Affine a, Manifold m) => a -> m -> Maybe Double
-p ->@? m = projectMaybe m (asAffine p)
+(->@?) = flip projectMaybe . asAffine
 
 {- | Point on the curve, parameterized by length.
 
@@ -619,7 +628,7 @@ True
 True
 -}
 paramL :: Manifold m => Double -> m -> Domain m
-paramL l m = param m (l / unit m)
+paramL l m = m @-> (l / unit m)
 
 {- | Projection on a manifold, parameterized by length.
 
@@ -719,7 +728,7 @@ class Trans a => Figure a where
 
   -- | Returns `True` is figure is not trivial in a certain sence.
   isNontrivial :: a -> Bool
-  isNontrivial x = not (isTrivial x)
+  isNontrivial = not . isTrivial
 
   -- | Returns a refference point using for superposing and figure locataion.
   refPoint :: a -> Cmp

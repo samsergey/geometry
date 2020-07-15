@@ -3,9 +3,7 @@ module PointSpec where
 import Test.Hspec
 import Test.QuickCheck hiding (scale)
 import Test.Invariant
-
 import Data.Complex
-
 import Geometry
 import Geometry.Testing
 
@@ -20,12 +18,8 @@ spec = describe "Point" $ do
     describe "pointOn" $ do
       it "1" $ xy (pointOn (aCircle # scale 2) 0) ~= (2, 0)
       it "2" $ xy (pointOn (aCircle # scale 2) 0.5) ~= (-2, 0)
-      it "3" $ property $ \c t ->
-        let _ = c :: Circle
-        in c `isContaining` pointOn c t
-      it "4" $ property $ \(Nontrivial l) t ->
-        let _ = l :: Line
-        in l `isContaining` pointOn l t
+      it "3" $ property $ \(AnyCircle c) t -> c `isContaining` pointOn c t
+      it "4" $ property $ \(AnyLine l) t -> l `isContaining` pointOn l t
       it "5" $ property $ \n t ->
         let p = regularPoly (3 + abs n)
         in p `isContaining` pointOn p t

@@ -28,7 +28,7 @@ instance APoint XY where
 
 instance APoint p => APoint (Maybe p) where
   toPoint = maybe (asCmp 0) toPoint
-  asPoint = Just . asPoint
+  asPoint = pure . asPoint
 
 ------------------------------------------------------------
 
@@ -52,8 +52,8 @@ instance Eq Point where
   p1 == p2 = cmp p1 ~= cmp p2
 
 instance Metric Point where
-  dist p1 p2 = dist (cmp p1) (cmp p2)
-  dist2 p1 p2 = dist2 (cmp p1) (cmp p2)
+  dist p1 p2 = cmp p1 `dist` cmp p2
+  dist2 p1 p2 = cmp p1 `dist2` cmp p2
 
 instance Trans Point where
   transform t (Point p) = Point $ transformCmp t p 
@@ -63,7 +63,7 @@ instance Affine Point where
   asCmp = Point
 
 instance Figure Point where
-  isTrivial _ = False
+  isTrivial _ = Fals
   refPoint = cmp
   box = pointBox
           

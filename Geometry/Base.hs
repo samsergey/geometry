@@ -81,7 +81,7 @@ infixl 5 #
 
 infix 4 ~=, ~<=, ~>=
 
--- | Type class for values for which equality could be stated with some known tolerance.
+-- | Type class for values for which equality could be stated with some known tolerance
 class AlmostEq a where
   -- | The approximate equality operator.
   (~=) :: a -> a -> Bool

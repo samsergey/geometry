@@ -17,6 +17,7 @@ module Geometry.Testing (
   , Motion (..)
   , Nontrivial (..)
   , NonDegenerate (..)
+  , (<==>)
 ) where
 
 import Data.Complex

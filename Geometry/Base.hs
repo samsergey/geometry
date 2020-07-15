@@ -89,8 +89,8 @@ instance AlmostEq Int where a ~= b = a == b
 
 instance AlmostEq Double where
   a ~= b = a == b
-           || abs (a-b) < 1e-12 * abs(a + b)
-           || abs (a - b) < 1e-12
+           || abs (a-b) < 1e-10 * abs(a + b)
+           || abs (a - b) < 1e-10
 
 instance AlmostEq (Complex Double) where
   (ax:+ay) ~= (bx:+by) = ax ~= bx && ay ~= by

@@ -295,14 +295,14 @@ normalTo c l = turn <*> Just l
 normalSegment :: Curve c => Double -> c -> Maybe Segment
 normalSegment x c =
   do p <- paramMaybe c x
-     aSegment # at' p # normalTo c
+     return $ aSegment # at' p # along' (normal c x)
 
 {- | Reflects the curve  at a given parameter against the normal, if it exists, or does nothing otherwise.
+
+<< figs/flipAt.svg >>
 -}
-flipAt :: Curve c => Double -> c -> c
-flipAt x c = case c # normalSegment x of
-               Just n -> c # reflectAt n
-               Nothing -> c
+flipAt :: Curve c => Double -> c -> Maybe c
+flipAt x c = (`reflectAt` c) <$> normalSegment x c
 
 ------------------------------------------------------------
 

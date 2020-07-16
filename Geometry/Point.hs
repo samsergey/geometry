@@ -11,7 +11,7 @@ import Data.Bool
 import Numeric
 import Geometry.Base
 
-------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 -- | The transparent class fot point-like objects.
 class APoint p where
@@ -30,7 +30,7 @@ instance APoint p => APoint (Maybe p) where
   toPoint = maybe (asCmp 0) toPoint
   asPoint = pure . asPoint
 
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- | The type representing a point.
 newtype Point = Point Cmp
@@ -63,12 +63,11 @@ instance Affine Point where
   asCmp = Point
 
 instance Figure Point where
-  isTrivial _ = Fals
+  isTrivial _ = False
   refPoint = cmp
   box = pointBox
           
-------------------------------------------------------------
-
+--------------------------------------------------------------------------------
 -- | The type representing a label.
 newtype Label = Label Cmp
   deriving ( Eq

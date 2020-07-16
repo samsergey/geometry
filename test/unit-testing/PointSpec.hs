@@ -1,3 +1,4 @@
+{-# Language TypeApplications #-}
 module PointSpec where
   
 import Test.Hspec
@@ -30,3 +31,8 @@ spec = describe "Point" $ do
       it "2" $ property $ \(Position a) (Position b) (Position c) ->
         (aligned [a,b,c] ==> isDegenerate (Triangle [a,b,c])) .&.
         (not (aligned [a,b,c]) ==> not (isDegenerate (Triangle [a,b,c])))
+
+    describe "APoint" $ do
+      it "1" $ property $ toPoint `inverts` (asPoint @XY)
+      it "2" $ property $ toPoint `inverts` (asPoint @Cmp)
+      it "3" $ property $ toPoint `inverts` (asPoint @(Maybe Point))

@@ -90,6 +90,7 @@ isDegenerate :: PiecewiseLinear p => p -> Bool
 isDegenerate p = any isTrivial (segments  p) ||
                  any (0 ~=) (vertexAngles  p)
 
+-- | Returns @True@ for non degenerate polyline or polygon.
 isNondegenerate :: PiecewiseLinear p => p -> Bool
 isNondegenerate = not . isDegenerate
 
@@ -347,11 +348,17 @@ instance Affine Rectangle where
   asCmp = Rectangle . scanl (+) 0 . take 3 . iterate (rotate 90)
 
 -- | Returns a figures' box as a rectangle.
+boxRectangle :: Figure f => f -> Rectangle
 boxRectangle f = Rectangle [ p4, p3, p2, p1 ]
   where ((p4,p3),(p1,p2)) = corner f
 
 ------------------------------------------------------------
 
+{- | A wrapper for the right triangles.
+
+>>> aRightTriangle # scaleX 2
+RightTriangle <Triangle (0.0,0.0) (2.0,0.0) (1.0,1.0)>
+-}
 newtype RightTriangle = RightTriangle Triangle
   deriving ( Eq
            , Show
@@ -364,12 +371,25 @@ newtype RightTriangle = RightTriangle Triangle
            , Polygonal
            , PiecewiseLinear)
 
+{- | Returns `True` if polygon is a right triangle. -}
 isRightTriangle :: PiecewiseLinear p => p -> Bool
 isRightTriangle t = any (90 ~=) $ vertexAngles t
 
+{- | Returns a hypotenuse for a rigth triangle.
+
+>>> hypotenuse aRightTriangle
+Segment (1.0 :+ 0.0, 1.0 :+ 0.0)
+
+-}
 hypotenuse :: RightTriangle -> Segment
 hypotenuse (RightTriangle t) = side 1 t
 
+{- | Returns a pair of catets for a rigth triangle.
+
+>>> catets aRightTriangle
+(Segment (0.0 :+ 0.0, 1.0 :+ 0.0),Segment (0.0 :+ 1.0, 0.0 :+ 0.0))
+
+-}
 catets :: RightTriangle -> (Segment, Segment)
 catets (RightTriangle t) = (side 0 t, side 2 t)
 

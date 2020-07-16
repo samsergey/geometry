@@ -486,6 +486,7 @@ norm = magnitude . cmp
 distance :: (Affine a, Metric a, Affine b, Metric b) => a -> b -> Double
 distance p1 p2 = cmp p1 `dist` cmp p2
 
+-- | Operator form for `distance` function.  
 (<-?->):: (Affine a, Metric a, Affine b, Metric b) => a -> b -> Double
 (<-?->) = distance
 
@@ -571,8 +572,8 @@ Here are some instances:
   unit :: m -> Double
   unit _ = 1
 
-{- | The dist between a manifold and a given point.
-
+  {- | The dist between a manifold and a given point.
+    
 >>> aCircle # distTo (point (2,0))
 1.0
 >>> aCircle # distTo (point (2,0))

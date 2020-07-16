@@ -52,7 +52,7 @@ library
   -- Modules exported by the library.
   exposed-modules:  Geometry
                   , Geometry.Testing
---                  , Geometry.DocFigs
+                  , Geometry.DocFigs
                   
   -- Modules included in this library but not exported.
   other-modules: Geometry.Line
@@ -131,24 +131,17 @@ test-suite unit-testing
   default-language:    Haskell2010
 
   
- -- test-suite figures
- --   type: exitcode-stdio-1.0
- --   main-is: Main.hs
- --   build-depends:
- --                 base
- --               , geometry
- --   other-modules:
- --                 Geometry.Line
- --               , Geometry.Decorations
- --               , Geometry.Angle
- --               , Geometry.Circle
- --               , Geometry.Polygon
- --               , Geometry.Plot
- --               , Geometry.SVG
- --               , Geometry.Figures
- --               , Geometry.Base
- --               , Geometry.Point
- --               , Geometry.Intersections
- --  default-language:    Haskell2010
+test-suite figures
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs:
+      test/figures
+  build-depends:
+                base
+              , geometry
+              , hspec
+  other-modules:
+                FigSpec
+  default-language:    Haskell2010
               
                 

@@ -141,7 +141,5 @@ test-suite figures
               , geometry
               , hspec
   other-modules:
-                FigSpec
+                FiguresSpec
   default-language:    Haskell2010
-              
-                

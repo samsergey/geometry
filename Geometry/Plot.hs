@@ -21,6 +21,8 @@ import Geometry.Base
 import Geometry.Point
 import Geometry.Line
 import Geometry.Polygon
+import Numeric.MathFunctions.Comparison
+import qualified Numeric.RootFinding as RF
 
 --------------------------------------------------------------------------------
 -- | Class for objects representing plots.
@@ -65,13 +67,16 @@ instance Pnt a => Manifold (Plot a) where
   type Domain (Plot a) = a
   bounds = const Bound
   param (Plot (f, _)) = f
-  project p pt = let x0 = pt ->@ asPolyline p
-                     goal x = dot (azimuth (p @-> x) pt) (tangent p x)
-                 in case secant goal x0 of
-                      Nothing -> let goal x = dist2 (p @-> x) pt 
-                                 in findMin goal x0
-                      Just x -> x
-  isContaining p pt = 0 ~<= x && x ~<= 1 && (p @-> x) `distance` pt <= 1e-10
+  project p@(Plot (f, _)) pt =
+    let x0 = pt ->@ asPolyline p
+        goal x = dot (azimuth (f x) pt) (tangent p x)
+    in case secant goal x0 of
+         Nothing -> let goal2 = dist2 pt . f 
+                    in findMin goal2 x0
+         Just x -> x
+  paramMaybe p x | 0 <= x && x <= 1 = pure $ param p x
+                   | otherwise = Nothing
+  isContaining p pt = 0 ~<= x && x ~<= 1 && (p @-> x) `distance` pt ~<= 1e-10
     where x = pt ->@ p
     
   unit = unit . asPolyline
@@ -117,7 +122,7 @@ instance Pnt a => Manifold (ClosedPlot a) where
   bounds = const Unbound
   param (ClosedPlot (f, _)) = f
   project p pt = let x0 = pt ->@ asPolyline p
-                     goal x = dot (azimuth (p @-> x) pt) (tangent p x)
+                     goal x = dot (azimuth (p @-> x) pt) (tangent p x) 
                  in case secant goal x0 of
                       Nothing -> let goal x = dist2 (p @-> x) pt 
                                  in findMin goal x0
@@ -179,11 +184,9 @@ limit [] = Nothing
 limit xs = case res of
              [] -> Nothing
              ((_,y):_) -> Just y
-  where res = dropWhile (\(x, y) -> dist x y > 1e-12) $
+  where res = dropWhile (\(x, y) -> dist x y > 1e-14) $
               take 100 $
               zip xs (tail xs)
-
-fib = 0 : 1 : zipWith (+) fib (tail fib)
 
 fixpoint f = limit . iterate f
 
@@ -233,13 +236,15 @@ bisection f a b
 findRoot method f xs = msum $ zipWith (method f) xs (tail xs)
 
 secant :: (Ord a, Fractional a) => (a -> a) -> a -> Maybe a
-secant f x = go x (x+dx) (f x) (f $ x + dx) 10
+secant f x = go x (x+dx) (f x) (f $ x + dx) 100
   where go x1 x2 y1 y2 i
           | y2 == y1 || i <= 0 = Nothing
-          | abs (x2 - x1) < 1e-12 = Just x2            
+          | abs (x2 - x1) < 1e-14 = Just x2            
+          | abs (x2 - x1) < 1e-14 * abs (x1 + x2) = Just x2            
           | otherwise = let x = (x1*y2 - x2*y1)/(y2-y1)
                         in go x2 x y2 (f x) (i-1)
         dx = 1e-5
 
 --------------------------------------------------------------------------------
 
+diff f x = [ (f (x+dx) - f (x-dx))/(2*dx) | dx <- iterate (/2) 1e-3 ]

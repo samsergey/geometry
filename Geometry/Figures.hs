@@ -299,6 +299,8 @@ normalSegment x c =
 
 {- | Reflects the curve  at a given parameter against the normal, if it exists, or does nothing otherwise.
 
+> let p = plot (\t -> (t, sin t)) # range (0, 2*pi)
+> in [ p # flipAt x #: thin | x <- [0,0.01..1] ]
 << figs/flipAt.svg >>
 -}
 flipAt :: Curve c => Double -> c -> Maybe c

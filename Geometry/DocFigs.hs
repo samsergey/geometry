@@ -205,7 +205,7 @@ plots = do
 
   writeSVG 300 (path <> "flipAt.svg") $
     let p = plot (\t -> (t, sin t)) # range (0, 2*pi)
-    in p <+> [ p # flipAt x #: thin | x <- [0,0.5001,1] ]
+    in [ p # flipAt x #: thin | x <- [0,0.01..1] ]
 
 
 fractals = do

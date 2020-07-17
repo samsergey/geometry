@@ -69,9 +69,10 @@ instance Pnt a => Manifold (Plot a) where
   param (Plot (f, _)) = f
   project p@(Plot (f, _)) pt =
     let x0 = pt ->@ asPolyline p
-        goal x = dot (azimuth (f x) pt) (tangent p x)
-    in case secant goal x0 of
-         Nothing -> let goal2 = dist2 pt . f 
+        goal x = cross (azimuth (f x) pt) (normal p x)
+        dx = 1e-3
+    in case findRoot bisection goal [x0-dx, x0, x0 + dx] of
+         Nothing -> let goal2 = dist pt . f 
                     in findMin goal2 x0
          Just x -> x
   paramMaybe p x | 0 <= x && x <= 1 = pure $ param p x
@@ -211,8 +212,8 @@ goldenMean f x1 x2 = go (x1, c, d, x2, 0)
     c = x2 - (x2 - x1)*phi
     d = x1 + (x2 - x1)*phi
     go (a, c, d, b, i) 
-      | abs (d - c) <= 1e-14 || i > 50 = (d+c)/2 
-      | f c < f d = go (a, d - (d - a)*phi, c, d, i+1)
+      | abs (d - c) <= 1e-14 || i > 500 = (d+c)/2
+      | f c <= f d = go (a, d - (d - a)*phi, c, d, i+1)
       | otherwise  = go (c, d, c + (b - c)*phi, b, i+1)
 
 findMin :: (Double -> Double) -> Double -> Double
@@ -243,7 +244,7 @@ secant f x = go x (x+dx) (f x) (f $ x + dx) 100
           | abs (x2 - x1) < 1e-14 * abs (x1 + x2) = Just x2            
           | otherwise = let x = (x1*y2 - x2*y1)/(y2-y1)
                         in go x2 x y2 (f x) (i-1)
-        dx = 1e-5
+        dx = 1e-3
 
 --------------------------------------------------------------------------------
 

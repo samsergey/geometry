@@ -6,7 +6,7 @@ import Test.Hspec
 import Test.QuickCheck hiding (scale)
 
 import Data.Maybe (isNothing, isJust)
-import Data.List (tails)
+import Data.List
 
 import Geometry
 import Geometry.Testing
@@ -163,7 +163,42 @@ prop_Euler_line (NonDegenerate t) =
           , circumcenter t ]
 
 --------------------------------------------------------------------------------
+prop_Thales :: NonDegenerate Triangle -> Parameter -> Bool
+prop_Thales (NonDegenerate t) (Parameter x) =
+  let [a,b,c] = segments t
+      l = aLine # at' (a @-> x) # along' b
+  in head (intersections l c) ->@ c ~= (1-x)
+      
+--------------------------------------------------------------------------------
 
+newtype Parameters = Parameters [Parameter] 
+
+instance Show Parameters where
+  show (Parameters ps) = show $ take 5 ps
+
+instance Arbitrary Parameters where
+  arbitrary = Parameters <$> sequence (repeat arbitrary) 
+
+prop_Similar142 :: AnyCircle -> Parameters -> Bool
+prop_Similar142 (AnyCircle cir) (Parameters ps) =
+  let [a,b,c,d] = param cir <$> sort (getParameter <$> take 4 ps)
+      t1 = mkTriangle a e d
+      t2 = mkTriangle b e c
+      [e] = segment' a c `intersections` segment' b d
+  in t1 `isSimilarTo` t2
+  
+isSimilarTo t1 t2 = null $ innerAngles t1 \\ innerAngles t2
+  
+prop_Similar1
+  :: NonDegenerate Triangle
+     -> Motion Triangle -> NonZero Double -> Bool
+prop_Similar1 (NonDegenerate t) m (NonZero s) =
+  t `isSimilarTo` scale s (appMotion m t)
+
+
+
+--------------------------------------------------------------------------------
+  
 spec :: Spec
 spec =
   describe "Triangles:" $ do
@@ -197,4 +232,10 @@ spec =
       $ property prop_ninePointCircle_center
     it "The radius of the nine-point circle is two times smaller then the radius of the circumcircle."
       $ property prop_ninePointCircle_radius
+    it "The Thales theorem"
+      $ property prop_Thales
+    it "The similarity property"
+      $ property prop_Similar1
+    it "The fig.142"
+      $ property prop_Similar142
 

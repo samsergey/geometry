@@ -32,7 +32,7 @@ module Geometry
   -- ** Angle constructors
   , Angular (..), Angle(..)
   , anAngle
-  , angleBetween, angleWithin, innerAngle, bisectrisse
+  , angleBetween, angleWithin, innerAngle, innerAngles, bisectrisse
   , supplementary, vertical, reflex
   -- ** Polygon constructors
   , PiecewiseLinear (..)

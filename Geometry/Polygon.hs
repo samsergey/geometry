@@ -12,6 +12,7 @@ module Geometry.Polygon
   , Polyline (..)
   , mkPolyline, trivialPolyline
   , Polygonal, Polygon (..)
+  , innerAngles
   , mkPolygon, trivialPolygon, closePolyline
   , Triangle (..)
   , mkTriangle
@@ -74,6 +75,10 @@ class (Trans p, Manifold p) => PiecewiseLinear p where
     [] -> []
     [x] -> []
     s -> zipWith (\a b -> angle a - angle b) s (tail s)
+
+innerAngles t = flip <$> vertexAngles t
+  where flip a | deg a > 180 = 360 - a
+               | otherwise = a
 
 instance PiecewiseLinear p => PiecewiseLinear (Maybe p) where
   vertices = maybe mempty vertices

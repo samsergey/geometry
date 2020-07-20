@@ -14,7 +14,7 @@ module Geometry.Testing (
   , AnyLine (..)
   , AnyRay (..)
   , AnySegment (..)
-  , Motion (..)
+  , Motion (..), appMotion 
   , Nontrivial (..)
   , NonDegenerate (..)
   , (<==>)
@@ -61,7 +61,7 @@ Parameter 9.832672492232597e-2
 Parameter 0.9510866292762408
 ...
 -}
-newtype Parameter = Parameter Double deriving Show
+newtype Parameter = Parameter { getParameter :: Double} deriving Show
 
 instance Arbitrary Parameter where
   arbitrary = Parameter <$> choose (0, 1)

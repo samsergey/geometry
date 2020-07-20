@@ -33,8 +33,8 @@ import Data.Maybe
 import Data.List.Extra (minimumOn, sortOn)
 import Control.Applicative
 import Data.Fixed (mod')
-
 import Geometry.Base
+
 import Geometry.Point
 import Geometry.Circle
 import Geometry.Line
@@ -470,10 +470,9 @@ aRectangle a b = aSquare # scaleX a . scaleY b
 
 << figs/triangle2a.svg >>
 -}
-triangle2a :: Direction -> Direction -> Triangle
-triangle2a a1 a2 = case intersections r1 r2 of
-                    [p] -> mkTriangle (0,0) (1,0) (xy p)
-                    [] -> mkTriangle @XY (0,0) (1,0) (0,0)
+triangle2a :: Direction -> Direction -> Maybe Triangle
+triangle2a a1 a2 = (\p -> mkTriangle (0,0) (1,0) (xy p)) <$>
+                   (listToMaybe $ intersections r1 r2)
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
@@ -500,7 +499,7 @@ triangle3s a b c = case intersections c1 c2 of
 
 << figs/aRightTriangle.svg >>
 -}
-aRightTriangle = RightTriangle $ triangle2a 90 45
+aRightTriangle = RightTriangle $ fromJust $ triangle2a 90 45
   
 ------------------------------------------------------------
 {- | The median of the polygon from given vertex to given side.

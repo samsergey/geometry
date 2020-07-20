@@ -83,11 +83,10 @@ instance SVGable Cmp where
 instance SVGable XY where
   fmtSVG (x, y) = fmtSVG x <> "," <> fmtSVG y <> " "
 
-instance SVGable a => SVGable (Maybe a) where
-  toSVG = maybe mempty toSVG
-
-instance SVGable a => SVGable [a] where
+instance {-# OVERLAPPABLE #-}
+  (Foldable t, SVGable a) => SVGable (t a) where
   toSVG = foldMap toSVG
+
 
 ------------------------------------------------------------
 

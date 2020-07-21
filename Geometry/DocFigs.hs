@@ -3,10 +3,22 @@
 module Geometry.DocFigs (docFigs) where
 
 import Geometry
+import System.Directory
+import Control.Monad
 
-path = ".stack-work/dist/x86_64-linux-nix/Cabal-3.0.1.0/doc/html/geometry/figs/"
+
+paths = [ ".stack-work/dist/x86_64-linux-nix/Cabal-3.0.1.0/doc/html/geometry/figs/"
+        , "C:\\Users\\karas\\geometry\\.stack-work\\dist\\29cc6475\\doc\\html\\geometry\\figs\\" ]
 
 docFigs = do
+  [path] <- filterM doesDirectoryExist paths
+  figs path
+  fractals path
+  plots path
+
+
+figs path = do
+  
   writeSVG 400 (path <> "angle1.svg") $
     let t = triangle2a 30 60
         a1 = anAngle 30 #: "#" <> loffs (asDeg 135)
@@ -15,7 +27,7 @@ docFigs = do
     in t <+> a1 <+> a2 <+> a3
 
   writeSVG 300 (path <> "angle2.svg") $
-    let a = anAngle 60
+    let a = anAngle 60 
         b = supplementary a
     in aLine <+> aLine # rotate 60 <+>
        a #: "a" <+> b #: "b"
@@ -171,15 +183,12 @@ docFigs = do
   writeSVG 400 (path <> "rowSep.svg") $
     rowSep (space 1) [ regularPoly n | n <- [3..7] ]
 
-  fractals
-  plots
-
-plots = do
+plots path = do
   writeSVG 400 (path <> "normalTo.svg") $
-   let p = plot (\t -> (t, sin t)) # range (0,7) #: white
-   in p <+>
-       [ aSegment # at (x,0) # normalTo p
-       | x <- [0,0.3..7] ]
+    let p = plot (\t -> (t, sin t)) # range (0,7) #: white
+    in p <+>
+        [ aSegment # at (x,0) # normalTo p
+        | x <- [0,0.3..7] ]
 
   writeSVG 300 (path <> "plot.svg") $
     let p1 = plot (\t -> (t, abs (sin t)))
@@ -199,16 +208,16 @@ plots = do
         pC = point (4,0) #: "C"
         pD = point (6,1) #: "D"
     in c  <+> pA <+> pA # projectOn c #: "A'" <+>
-       pB <+> pB # projectOn c #: "B'" <+>
-       pC <+> pC # projectOn c #: "C'" <+>
-       pD <+> pD # projectOn c #: "D'"
+      pB <+> pB # projectOn c #: "B'" <+>
+      pC <+> pC # projectOn c #: "C'" <+>
+      pD <+> pD # projectOn c #: "D'"
 
   writeSVG 300 (path <> "flipAt.svg") $
     let p = plot (\t -> (t, sin t)) # range (0, 2*pi)
     in [ p # flipAt x #: thin | x <- [0,0.01..1] ]
 
 
-fractals = do
+fractals path = do
   writeSVG 300 (path <> "compose.svg") $
     let f = G . translate (1,0) . scale 0.7 . rotate 30 <>
             G . translate (1,0) . scale 0.6 . rotate (-45)
@@ -217,3 +226,4 @@ fractals = do
   writeSVG 300 (path <> "serp.svg") $
     let tr t = t `above` (t `beside` t)
     in G aCircle # iterate tr # take 5 # mconcat # rotate 225 # scaleX 0.6
+

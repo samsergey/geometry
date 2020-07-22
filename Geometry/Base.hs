@@ -175,7 +175,7 @@ turns :: Direction -> Double
 turns (Direction a) = (a / 360)  `mod'` 1
 
 instance Show Direction where
-  show a = show (deg a) <> "°"
+  show a = show (round $ deg a) <> "°"
 
 instance Metric Direction where
   dist x y = abs (rad x - rad y)

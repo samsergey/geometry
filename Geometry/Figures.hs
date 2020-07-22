@@ -33,8 +33,8 @@ import Data.Maybe
 import Data.List.Extra (minimumOn, sortOn)
 import Control.Applicative
 import Data.Fixed (mod')
-import Geometry.Base
 
+import Geometry.Base
 import Geometry.Point
 import Geometry.Circle
 import Geometry.Line
@@ -272,7 +272,7 @@ through = through'
 > let c = Plot $ (\t -> t :+ sin t) . (*6)
 > in c <+>
 >     [ aSegment # at (x,0) # normalTo c
->     | x <- [0,1..7] ]
+>     | x <- [0..7] ]
 << figs/normalTo.svg >>
 -}
 normalTo :: (Curve c, Linear l) => c -> l -> Maybe l
@@ -301,6 +301,7 @@ normalSegment x c =
 
 > let p = plot (\t -> (t, sin t)) # range (0, 2*pi)
 > in [ p # flipAt x #: thin | x <- [0,0.01..1] ]
+
 << figs/flipAt.svg >>
 -}
 flipAt :: Curve c => Double -> c -> Maybe c
@@ -355,6 +356,9 @@ angleWithin :: (Affine a1, Affine a2, Affine a3)
 angleWithin p1 p2 p3 = angleBetween (ray' p2 p1) (ray' p2 p3)
 
 {- | Returns the Angle mark for the angle at given polyline vertex.
+
+> let p = regularPoly 5 # rotate 20 # scaleX 2
+> in p <+> [ vertexAngle i p #: "#" | i <- [1..5] ]
 
 << figs/vertexAngle.svg >>
 -}
@@ -470,9 +474,10 @@ aRectangle a b = aSquare # scaleX a . scaleY b
 
 << figs/triangle2a.svg >>
 -}
-triangle2a :: Direction -> Direction -> Maybe Triangle
-triangle2a a1 a2 = (\p -> mkTriangle (0,0) (1,0) (xy p)) <$>
-                   (listToMaybe $ intersections r1 r2)
+triangle2a :: Direction -> Direction -> Triangle
+triangle2a a1 a2 = case intersections r1 r2 of
+                    [p] -> mkTriangle (0,0) (1,0) (xy p)
+                    [] -> mkTriangle @XY (0,0) (1,0) (0,0)
   where r1 = aRay # along' a1
         r2 = aRay # at (1,0) # along' (180 - a2)
 
@@ -499,10 +504,15 @@ triangle3s a b c = case intersections c1 c2 of
 
 << figs/aRightTriangle.svg >>
 -}
-aRightTriangle = RightTriangle $ fromJust $ triangle2a 90 45
+aRightTriangle = RightTriangle $ triangle2a 90 45
   
 ------------------------------------------------------------
 {- | The median of the polygon from given vertex to given side.
+
+> let p = regularPoly 9 # rotate 20 # scaleX 2
+> in p <+> [ p # median 0 i #: thin <> white | i <- [1..7] ]
+ 
+<< figs/median.svg>>
 -}
 median :: PiecewiseLinear p
   => Int -- ^ vertex index
@@ -511,6 +521,13 @@ median :: PiecewiseLinear p
 median v s t = Segment (vertex v t, side s t @-> 0.5)
 
 {- | The altitude of the polygon from given vertex to given side.
+
+> let p = regularPoly 9 # rotate 20 # scaleX 2
+> in p <+> [ p # altitude 0 i #: thin <> white <+>
+>            p # side i # asLine #: thin <> dashed
+>          | i <- [1..8] ]
+
+<< figs/altitude.svg >>
 -}
 altitude :: PiecewiseLinear p
   => Int  -- ^ vertex index

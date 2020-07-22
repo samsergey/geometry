@@ -183,6 +183,21 @@ figs path = do
   writeSVG 400 (path <> "rowSep.svg") $
     rowSep (space 1) [ regularPoly n | n <- [3..7] ]
 
+  writeSVG 400 (path <> "vertexAngle.svg") $
+    let p = regularPoly 5 # rotate 20 # scaleX 2
+    in p <+> [ vertexAngle i p #: "#" | i <- [1..5] ]
+  
+  writeSVG 400 (path <> "altitude.svg") $
+    let p = regularPoly 9 # rotate 20 # scaleX 2
+    in p <+> [ p # altitude 0 i #: thin <> white <+>
+               p # side i # asLine #: thin <> dashed
+             | i <- [1..7] ]
+
+  writeSVG 400 (path <> "median.svg") $
+    let p = regularPoly 9 # rotate 20 # scaleX 2
+    in p <+> [ p # median 0 i #: thin <> white
+             | i <- [1..7] ]
+    
 plots path = do
   writeSVG 400 (path <> "normalTo.svg") $
     let p = plot (\t -> (t, sin t)) # range (0,7) #: white

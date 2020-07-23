@@ -197,6 +197,8 @@ figs path = do
     let p = regularPoly 9 # rotate 20 # scaleX 2
     in p <+> [ p # median 0 i #: thin <> white
              | i <- [1..7] ]
+
+
     
 plots path = do
   writeSVG 400 (path <> "normalTo.svg") $
@@ -241,4 +243,3 @@ fractals path = do
   writeSVG 300 (path <> "serp.svg") $
     let tr t = t `above` (t `beside` t)
     in G aCircle # iterate tr # take 5 # mconcat # rotate 225 # scaleX 0.6
-

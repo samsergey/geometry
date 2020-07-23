@@ -445,6 +445,7 @@ polarPoly rho range =
 {- | Constructs a regular polygon with given number of sides, enscribed in a unit circle.
 
 << figs/regularPoly.svg >>
+<< figs/pentaflake.svg >>
 -}
 regularPoly :: Int -> Polygon
 regularPoly n' = rotate 90 $ closePolyline $

@@ -12,8 +12,8 @@ paths = [ ".stack-work/dist/x86_64-linux-nix/Cabal-3.0.1.0/doc/html/geometry/fig
 
 docFigs = do
   [path] <- filterM doesDirectoryExist paths
-  figs path
-  fractals path
+--  figs path
+--  fractals path
   plots path
 
 

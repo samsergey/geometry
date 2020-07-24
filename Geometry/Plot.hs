@@ -23,7 +23,8 @@ import Geometry.Line
 import Geometry.Polygon
 import Numeric.MathFunctions.Comparison
 import qualified Numeric.RootFinding as RF
-
+import qualified Data.DList
+import Data.Monoid
 --------------------------------------------------------------------------------
 -- | Class for objects representing plots.
 class APlot p where
@@ -153,20 +154,23 @@ plotManifold = plotParam . param
 --------------------------------------------------------------------------------
 
 plotParam :: Affine a => (Double -> a) -> Polyline
-plotParam mf = Polyline pts
+plotParam mf = Polyline $ clean $ pts -- Data.DList.toList pts
   where
     f = cmp . mf
     phi = (sqrt 5 - 1) / 2
-    pts = clean $ [f 0] <> mconcat (zipWith tree xs (tail xs)) <> [f 1]
-    xs = 0 : (reverse $ take 5 $ iterate (*phi) 1)
-    tree a b | xa `distance` xb < 1e-3 = [xc]
-             | abs (azimuth xa xc - azimuth xc xb) < asDeg 3 = [xc]
-             | otherwise = tree a c <> tree c b
-          where
-            c = a + (b - a) * phi
-            xa = f a
-            xb = f b
-            xc = f c
+    pts = pure (f 0) <> (mconcat . zipWith tree xs . tail) xs <> pure (f 1)
+    xs = 0 : (reverse . take 10 . iterate (* phi)) 1
+    ((a, _), (_, b)) = corner $ Point . f <$> xs
+    eps = distance a b * 1e-3
+    tree a b
+      | abs (azimuth xa xc - azimuth xc xb) <= asDeg 1.5 = pure xc
+      | distance xa xb < eps = pure xc
+      | otherwise = tree a c <> tree c b
+      where
+        c = a + (b - a) * phi
+        xa = f a
+        xb = f b
+        xc = f c
     clean (x:y:z:t) | Segment (x,z) `isContaining` y = clean (x:z:t)
                     | otherwise = x : clean (y:z:t)
     clean xs = xs

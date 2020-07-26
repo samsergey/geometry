@@ -90,7 +90,7 @@ instance Pnt a => Trans (Plot a) where
   transform t (Plot (f, p)) = Plot (transform t . f, transform t p)
 
 instance Pnt a => PiecewiseLinear (Plot a) where
-  asPolyline (Plot (_,!p)) = p
+  asPolyline (Plot (_, p)) = p
 
 instance Pnt a => Curve (Plot a) where
   tangent p t = asCmp $ cmp (p @-> (t + dt)) - cmp (p @-> (t - dt))

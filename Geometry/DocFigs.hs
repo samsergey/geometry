@@ -198,8 +198,6 @@ figs path = do
     in p <+> [ p # median 0 i #: thin <> white
              | i <- [1..7] ]
 
-
-    
 plots path = do
   writeSVG 400 (path <> "normalTo.svg") $
     let p = plot (\t -> (t, sin t)) # range (0,7) #: white

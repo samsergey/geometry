@@ -12,8 +12,8 @@ paths = [ ".stack-work/dist/x86_64-linux-nix/Cabal-3.0.1.0/doc/html/geometry/fig
 
 docFigs = do
   [path] <- filterM doesDirectoryExist paths
---  figs path
---  fractals path
+  figs path
+  fractals path
   plots path
 
 
@@ -198,6 +198,14 @@ figs path = do
     in p <+> [ p # median 0 i #: thin <> white
              | i <- [1..7] ]
 
+  writeSVG 500 (path <> "boxRectangle.svg") $
+    let fs = scanl1 (<+>) [ G $ segment (-1,1) (1,2)
+                          , G $ point (1, 3)
+                          , G $ circle 1 (3, 4)
+                          , G $ aTriangle ]
+        withBox f = f <+> boxRectangle f #: thin <> dotted
+    in rowSep (space 1) $ withBox <$> fs
+         
 plots path = do
   writeSVG 400 (path <> "normalTo.svg") $
     let p = plot (\t -> (t, sin t)) # range (0,7) #: white

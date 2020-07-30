@@ -64,9 +64,10 @@ optLabelAngle    = \case {LabelAngle x -> Just x; _ -> Nothing }
 optSegmentMark   = \case {SegmentMark x -> Just x; _ -> Nothing }
   
 ------------------------------------------------------------
--- | Class for objects that could be represented as SVG elements.
--- Differs from @Graphics.Svg.ToElement@ class in adding
--- parameter context to a main render function `toSVG`.
+{- | Class for objects that could be represented as SVG elements.
+Differs from @Graphics.Svg.ToElement@ class in adding
+parameter context to a main render function `toSVG`.
+-}
 class SVGable a where
   toSVG :: a -> SVGContext -> Element
   toSVG _ _ = mempty
@@ -251,11 +252,11 @@ labelElement ff ctx = case lb of
 -- | Constrain for an object that could be included to a group.
 type Groupable a = (SVGable a, Show a, Trans a, Figure a, Eq a)
 
--- | The group of inhomogeneous Groupable objects.
+-- | The group of inhomogeneous `Groupable` objects.
 --
 -- > let f = G . translate (1,0) . scale 0.7 . rotate 30 <>
 -- >         G . translate (1,0) . scale 0.6 . rotate (-45)
--- > in G aSegment # iterate f # take 8 # mconcat # rotate 90
+-- > in G aSegment # iterate f # take 8 # rotate 90
 -- << figs/compose.svg >>
 --
 data Group where
@@ -326,7 +327,7 @@ infixl 2 <||>
 -- <<figs/above.svg>>
 --
 -- > let tr t = t `above` (t `beside` t)
--- > in G aCircle # iterate tr # take 5 # mconcat # rotate 225 # scaleX 0.6
+-- > in G aCircle # iterate tr # take 5 # rotate 225 # scaleX 0.6
 -- <<figs/serp.svg>>
 --
 above :: (Groupable a, Groupable b) => a -> b -> Group
@@ -334,6 +335,7 @@ above f1 f2 = f2 <+> f1 # superpose (refPoint f2) (left . upper . corner $ f2)
 
 {- | Arranges a homogeneous list of figures in a row
 
+> row [ regularPoly n | n <- [3..7] ]
 <<figs/row.svg>>
 -}
 row :: Groupable f => [f] -> Group
@@ -342,6 +344,7 @@ row fs = foldl1 beside (G <$> fs)
 
 {- | Arranges a homogeneous list of figures in a row, separated by a given separator.
 
+> rowSep (space 1) [ regularPoly n | n <- [3..7] ]
 <<figs/rowSep.svg>>
 -}
 rowSep :: (Groupable s, Groupable f) => s -> [f] -> Group

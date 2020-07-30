@@ -4,6 +4,7 @@
 {-# language GeneralizedNewtypeDeriving #-}
 {-# language TypeFamilies #-}
 {-# language DerivingVia #-}
+{-# language DeriveTraversable #-}
 {-# language UndecidableInstances #-}
 {-# language FlexibleContexts #-}
 
@@ -88,7 +89,7 @@ instance
 -- | The transparent decoration wrapper for geometric objects.
 -- Inherits all properties of embedded object.
 newtype Decorated a = Decorated (Options, a)
-  deriving Functor
+  deriving (Functor, Foldable, Traversable)
 
 -- | The selector for the embedded object.
 fromDecorated (Decorated (_, x)) = x
@@ -101,6 +102,7 @@ instance Monad Decorated where
   Decorated (d, x) >>= f =
     let Decorated (d', y) = f x
     in Decorated (d <> d', y)
+  
 
 instance {-# OVERLAPPING #-} WithOptions (Decorated a) where
   options (Decorated (o, _)) = o

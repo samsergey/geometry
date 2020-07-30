@@ -12,13 +12,12 @@ paths = [ ".stack-work/dist/x86_64-linux-nix/Cabal-3.0.1.0/doc/html/geometry/fig
 
 docFigs = do
   [path] <- filterM doesDirectoryExist paths
---  figs path
---  fractals path
+  figs path
+  fractals path
   plots path
 
 
 figs path = do
-  
   writeSVG 400 (path <> "angle1.svg") $
     let t = triangle2a 30 60
         a1 = anAngle 30 #: "#" <> loffs (asDeg 135)
@@ -198,6 +197,15 @@ figs path = do
     in p <+> [ p # median 0 i #: thin <> white
              | i <- [1..7] ]
 
+  writeSVG 500 (path <> "boxRectangle.svg") $
+    let fs = scanl1 (<+>) [ G $ segment (-1,1) (1,2)
+                          , G $ point (1, 3)
+                          , G $ circle 1 (3, 4)
+                          , G $ aTriangle ]
+        withBox f = f <+> boxRectangle f #: thin <> dotted
+    in rowSep (space 1) $ withBox <$> fs
+         
+
 plots path = do
   writeSVG 400 (path <> "normalTo.svg") $
     let p = plot (\t -> (t, sin t)) # range (0,7) #: white
@@ -236,8 +244,8 @@ fractals path = do
   writeSVG 300 (path <> "compose.svg") $
     let f = G . translate (1,0) . scale 0.7 . rotate 30 <>
             G . translate (1,0) . scale 0.6 . rotate (-45)
-    in G aSegment # iterate f # take 8 # mconcat # rotate 90
+    in G aSegment # iterate f # take 8 # rotate 90
 
   writeSVG 300 (path <> "serp.svg") $
     let tr t = t `above` (t `beside` t)
-    in G aCircle # iterate tr # take 5 # mconcat # rotate 225 # scaleX 0.6
+    in G aCircle # iterate tr # take 5 # rotate 225 # scaleX 0.6

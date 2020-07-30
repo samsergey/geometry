@@ -155,7 +155,7 @@ instance Eq Polyline where
 
 -- | Addition of polylines, excluding zero segments.
 instance Semigroup Polyline where
-  p1 <> p2 = Polyline $ vs
+  p1 <> p2 = Polyline vs
     where
       vs | null v1 = v2
          | null v2 = v1
@@ -352,7 +352,17 @@ instance Affine Rectangle where
   cmp = cmp . asPolyline
   asCmp = Rectangle . scanl (+) 0 . take 3 . iterate (rotate 90)
 
--- | Returns a figures' box as a rectangle.
+{- | Returns a figures' box as a rectangle.
+
+> let fs = scanl1 (<+>) [ G $ segment (-1,1) (1,2)
+>                       , G $ point (1, 3)
+>                       , G $ circle 1 (3, 4)
+>                       , G $ aTriangle ]
+>     withBox f = f <+> boxRectangle f #: thin <> dotted
+> in rowSep (space 1) $ withBox <$> fs
+
+<< figs/boxRectangle.svg >>
+-}
 boxRectangle :: Figure f => f -> Rectangle
 boxRectangle f = Rectangle [ p4, p3, p2, p1 ]
   where ((p4,p3),(p1,p2)) = corner f

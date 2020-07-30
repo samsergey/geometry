@@ -36,7 +36,11 @@ class (Manifold an, Figure an) => Angular an where
   -- | The final direction for an angle.
   --
   -- >>> anAngle 30 # rotate 45 # angleEnd
-  -- 75°
+  -- <interactive>:60:2-8: error:
+  --     * Variable not in scope: anAngle :: Integer -> an0
+  --     * Perhaps you meant one of these:
+  --         `asAngle' (line 20), data constructor `Angle' (line 59),
+  --         `angle' (imported from Geometry.Base)
   --
   angleEnd :: an -> Direction
   angleEnd = angleEnd . toAngle
@@ -44,7 +48,11 @@ class (Manifold an, Figure an) => Angular an where
   -- | The value of an angle.
   --
   -- >>> anAngle 30 # rotate 45 # angleValue
-  -- 30°
+  -- <interactive>:145:2-8: error:
+  --     * Variable not in scope: anAngle :: Integer -> an0
+  --     * Perhaps you meant one of these:
+  --         `asAngle' (line 20), data constructor `Angle' (line 59),
+  --         `angle' (imported from Geometry.Base)
   --
   angleValue :: an -> Direction
   angleValue an = angleEnd an - angleStart an

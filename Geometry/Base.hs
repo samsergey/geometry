@@ -52,7 +52,7 @@ module Geometry.Base
   )
 where
 
-import Data.Fixed (mod')
+--import Data.Fixed (mod')
 import Data.Complex
 import Data.List.Extra (minimumOn)
 import Data.Semigroup hiding (First)
@@ -143,7 +143,18 @@ instance Metric a => Metric (Maybe a) where
   dist2 x y = fromMaybe 0 (dist2 <$> x <*> y)
 
 ------------------------------------------------------------
+mod' :: (Real a) => a -> a -> a
+{-# INLINE mod' #-}
+mod' n d = n - (fromInteger $ floor ((toRational n) / (toRational d))) * d
+  
+mod2pi :: Double -> Double
+{-# INLINE mod2pi #-}
+mod2pi n = n - (fromInteger $ floor (n / (2*pi))) * 2 * pi
 
+mod360 :: Double -> Double
+{-# INLINE mod360 #-}
+mod360 n = n - (fromInteger $ floor (n / 360)) * 360
+   
 {- | The representation of a directed value isomorphic either to an angle
  or to a complex number or coordinates.
 -}
@@ -152,11 +163,11 @@ newtype Direction = Direction Double
 
 -- | Constructs a directed value from an angle given in degrees. Invers of `deg`.
 asDeg :: Double -> Direction
-asDeg = Direction . (`mod'` 360)
+asDeg = Direction . mod360
 
 -- | Returns a representation of a directed value as an angle in degrees. Invers of `asDeg`.
 deg :: Direction -> Double
-deg (Direction a) = a `mod'` 360
+deg (Direction a) = mod360 a
 
 -- | Constructs a directed value from an angle given in radians. Invers of `rad`.
 asRad :: Double -> Direction
@@ -164,7 +175,7 @@ asRad r = asDeg (180 * r / pi)
 
 -- | Returns a representation of a directed value as an angle in radians. Invers of `asDeg`.
 rad :: Direction -> Double
-rad (Direction a) = (a / 180 * pi) `mod'` (2*pi)
+rad (Direction a) = mod2pi (a / 180 * pi)
 
 -- | Constructs a directed value from a number of turns. Invers of `turns`.
 asTurns :: Double -> Direction
@@ -172,7 +183,7 @@ asTurns a = asDeg $ a*360
 
 -- | Returns a representation of a directed value as a number of turns. Invers of `asTurns`.
 turns :: Direction -> Double
-turns (Direction a) = (a / 360)  `mod'` 1
+turns (Direction a) = mod360 a / 360
 
 instance Show Direction where
   show a = show (round $ deg a) <> "°"

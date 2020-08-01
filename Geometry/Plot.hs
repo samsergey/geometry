@@ -23,7 +23,6 @@ import Geometry.Line
 import Geometry.Polygon
 import Numeric.MathFunctions.Comparison
 import qualified Numeric.RootFinding as RF
-import qualified Data.DList
 import Data.Monoid
 --------------------------------------------------------------------------------
 -- | Class for objects representing plots.
@@ -154,7 +153,7 @@ plotManifold = plotParam . param
 --------------------------------------------------------------------------------
 
 plotParam :: Affine a => (Double -> a) -> Polyline
-plotParam mf = Polyline $ clean $ pts -- Data.DList.toList pts
+plotParam mf = Polyline $ clean pts
   where
     f = cmp . mf
     phi = (sqrt 5 - 1) / 2

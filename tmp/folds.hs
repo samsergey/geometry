@@ -1,6 +1,11 @@
+{-# language DeriveTraversable #-}
+{-# language DeriveFoldable #-}
+{-# language DeriveFunctor #-}
+
 import Text.Read
 import Control.Monad
 import Data.Monoid
+import Data.List
 
 type Program = String
 type Stack = [Double]
@@ -45,3 +50,4 @@ quicksort = (`appEndo` []) . fold . unfold
         fold (N l x r) = fold l <> Endo ([x]++) <> fold r
 
 longlist n = foldMap show [0..n]
+

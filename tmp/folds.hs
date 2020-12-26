@@ -1,6 +1,8 @@
 import Text.Read
 import Control.Monad
 import Data.Monoid
+import Data.List
+
 
 type Program = String
 type Stack = [Double]
@@ -35,13 +37,17 @@ unop cmd _ [] = Left $ cmd <> ": expected one args, got none."
 data T a = L | N (T a) a (T a)
 
 quicksort :: Ord a => [a] -> [a]
-quicksort = (`appEndo` []) . fold . unfold
+quicksort = postprocess . fold . unfold
   where unfold [] = L
         unfold (x:xs) = N (unfold [y | y <- xs , y <= x])
                           x
                           (unfold [y | y <- xs , y > x])
 
         fold L = mempty
-        fold (N l x r) = fold l <> Endo ([x]++) <> fold r
+        fold (N l x r) = fold l <> single x <> fold r
+
+        single x = Endo (x:)
+        postprocess = (`appEndo` [])
 
 longlist n = foldMap show [0..n]
+

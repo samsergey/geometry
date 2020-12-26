@@ -1,8 +1,15 @@
+{-# language DeriveTraversable #-}
+{-# language DeriveFoldable #-}
+{-# language DeriveFunctor #-}
+
 import Text.Read
 import Control.Monad
 import Data.Monoid
 import Data.List
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6c5b16206cba171454a97fa3463a9b46f6165605
 
 type Program = String
 type Stack = [Double]

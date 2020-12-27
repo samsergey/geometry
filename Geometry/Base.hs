@@ -58,6 +58,7 @@ import Data.List.Extra (minimumOn)
 import Data.Semigroup hiding (First)
 import Data.Maybe
 import Numeric.MathFunctions.Comparison
+import Data.Ratio
 
 ------------------------------------------------------------
 -- | Type alias for a complex number.

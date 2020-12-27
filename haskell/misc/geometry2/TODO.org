@@ -1,4 +1,0 @@
-** Triangle
-** Angle
-*** Values
-** Double lines
